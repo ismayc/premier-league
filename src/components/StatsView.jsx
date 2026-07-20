@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import TeamLogo from './TeamLogo.jsx'
 import { ALL_ABBRS, TEAMS, TEAM_BY_ABBR } from '../data/teams.js'
 import { PLAYER_STATS, STAT_CATEGORIES, STAT_SEASONS } from '../data/players.js'
 import { HISTORY, HISTORY_BY_YEAR } from '../data/history.js'
+import { fetchAthlete } from '../services/athlete.js'
 import { leaderboard, seasonScoring, seasonTotals, teamScoring } from '../utils/stats.js'
 
 /**
@@ -159,26 +160,136 @@ function Leaders({ onPickTeam }) {
         </thead>
         <tbody>
           {ranked.map((p) => (
-            <tr key={`${p.id}-${p.rank}`}>
-              <td className="col-pos">{p.rank}</td>
-              <td>
-                <span className="lead-name">{p.name}</span>
-                {p.pos && <span className="lead-pos">{p.pos}</span>}
-              </td>
-              <td className="hide-sm">
-                {p.team && <PlayerClub player={p} onPickTeam={onPickTeam} />}
-              </td>
-              <td className="col-bar">
-                {/* Single series, so no legend — the column header names it, and
-                    every bar is directly labelled by the value beside it. */}
-                <span className="bar" style={{ '--w': `${(p.value / max) * 100}%` }} />
-              </td>
-              <td className="col-val">{p.value}</td>
-            </tr>
+            <LeaderRow
+              key={`${p.id}-${p.rank}`}
+              player={p}
+              meta={meta}
+              season={active}
+              max={max}
+              onPickTeam={onPickTeam}
+            />
           ))}
         </tbody>
       </table>
     </section>
+  )
+}
+
+/**
+ * One leaderboard row, expandable to the player's biography.
+ *
+ * Expanded in place rather than in a dialog, matching the team-sheet player
+ * detail — the row already sits in a table, and a second focus trap for a
+ * name and four facts would be more machinery than the content warrants.
+ */
+function LeaderRow({ player, meta, season, max, onPickTeam }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <tr className={open ? 'is-open' : ''}>
+        <td className="col-pos">{player.rank}</td>
+        <td>
+          <button
+            type="button"
+            className="lead-player"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+          >
+            <span className="lead-name">{player.name}</span>
+            {player.pos && <span className="lead-pos">{player.pos}</span>}
+            <span className="lead-caret" aria-hidden="true">
+              {open ? '▾' : '▸'}
+            </span>
+          </button>
+        </td>
+        <td className="hide-sm">{player.team && <PlayerClub player={player} onPickTeam={onPickTeam} />}</td>
+        <td className="col-bar">
+          {/* Single series, so no legend — the column header names it, and
+              every bar is directly labelled by the value beside it. */}
+          <span className="bar" style={{ '--w': `${(player.value / max) * 100}%` }} />
+        </td>
+        <td className="col-val">{player.value}</td>
+      </tr>
+
+      {open && (
+        <tr className="lead-detail-row">
+          <td colSpan={5}>
+            <PlayerBio player={player} meta={meta} season={season} />
+          </td>
+        </tr>
+      )}
+    </>
+  )
+}
+
+/**
+ * The person behind a leaderboard line: their season tally in words, plus the
+ * biography the leaderboard cannot carry — full position, age, nationality,
+ * height and a headshot.
+ *
+ * The tally shows immediately; the biography is a second request and may not
+ * arrive (or exist), so the panel is useful before it lands rather than
+ * waiting on it.
+ */
+function PlayerBio({ player, meta, season }) {
+  const [bio, setBio] = useState(null)
+
+  useEffect(() => {
+    // Not cancellable: fetchAthlete shares a cache, so aborting here would
+    // poison the entry for every later reader. A late answer is simply
+    // ignored. See services/athlete.js.
+    let cancelled = false
+    fetchAthlete(player.id).then((data) => {
+      if (!cancelled) setBio(data)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [player.id])
+
+  // meta is always the category this leaderboard is showing — it comes from
+  // the same lookup that titled the table — so no defensive fallback here.
+  const tally =
+    `${player.value} ${meta.label.toLowerCase()} in ${seasonLabel(season)}` +
+    (player.matches ? ` · ${player.matches} matches` : '')
+
+  return (
+    <div className="lead-detail">
+      {bio?.headshot && <img className="lead-shot" src={bio.headshot} alt="" aria-hidden="true" loading="lazy" />}
+
+      <div className="lead-facts">
+        <p className="lead-tally">{tally}</p>
+        {bio && (
+          <dl>
+            {bio.position && (
+              <div>
+                <dt>Position</dt>
+                <dd>{bio.position}</dd>
+              </div>
+            )}
+            {bio.age && (
+              <div>
+                <dt>Age</dt>
+                <dd>{bio.age}</dd>
+              </div>
+            )}
+            {bio.citizenship && (
+              <div>
+                <dt>Nationality</dt>
+                <dd>{bio.citizenship}</dd>
+              </div>
+            )}
+            {bio.height && (
+              <div>
+                <dt>Height</dt>
+                <dd>{bio.height}</dd>
+              </div>
+            )}
+          </dl>
+        )}
+      </div>
+    </div>
   )
 }
 

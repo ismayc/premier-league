@@ -1,9 +1,10 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import StatsView from '../src/components/StatsView.jsx'
 import HistoryView from '../src/components/HistoryView.jsx'
+import { clearAthleteCache, fetchAthlete } from '../src/services/athlete.js'
 
 /**
  * View tests for StatsView and HistoryView.
@@ -64,6 +65,10 @@ beforeEach(() => {
   players.STAT_SEASONS.splice(0, players.STAT_SEASONS.length, 2025, 2024)
   players.STAT_CATEGORIES.splice(0, players.STAT_CATEGORIES.length, ...CATEGORIES)
 })
+
+// Opening a leaderboard player fetches a biography, which is memoised for the
+// life of the page; clear it so one test's stub cannot leak into the next.
+afterEach(() => clearAthleteCache())
 
 const played = (home, away, hg, ag, ko = '2025-08-16T14:00:00.000Z') => ({
   id: `${home}${away}`,
@@ -144,8 +149,10 @@ describe('StatsView leaders', () => {
 
     expect(within(rows[0]).getByRole('button', { name: 'Man City' })).toBeInTheDocument()
     expect(within(rows[0]).getByText('F')).toBeInTheDocument()
-    // No club: the cell is empty rather than showing a bare button.
-    expect(within(rows[2]).queryByRole('button')).not.toBeInTheDocument()
+    // No club: the club cell is empty. The player name is itself a button now,
+    // so the check is scoped to the club cell (the third) rather than the row.
+    const clubCell = (row) => within(row).getAllByRole('cell')[2]
+    expect(within(clubCell(rows[2])).queryByRole('button')).not.toBeInTheDocument()
     expect(within(rows[2]).queryByText('F')).not.toBeInTheDocument()
   })
 
@@ -162,7 +169,9 @@ describe('StatsView leaders', () => {
 
     expect(within(rows[3]).getByText('Leicester')).toBeInTheDocument()
     expect(within(rows[3]).queryByText('LEI')).not.toBeInTheDocument()
-    expect(within(rows[3]).queryByRole('button')).not.toBeInTheDocument()
+    // The club cell offers no link; the player name being a button is separate.
+    const clubCell = within(rows[3]).getAllByRole('cell')[2]
+    expect(within(clubCell).queryByRole('button')).not.toBeInTheDocument()
     expect(within(rows[3]).getByTitle(/not in the league this season/)).toBeInTheDocument()
   })
 
@@ -180,7 +189,9 @@ describe('StatsView leaders', () => {
     const table = screen.getByRole('table', { name: /Assists leaders, 2025-26/ })
     const row = within(table).getAllByRole('row')[1]
     expect(within(row).getByText('STK')).toBeInTheDocument()
-    expect(within(row).queryByRole('button')).not.toBeInTheDocument()
+    // The club cell has no button; the player name button is a separate thing.
+    const clubCell = within(row).getAllByRole('cell')[2]
+    expect(within(clubCell).queryByRole('button')).not.toBeInTheDocument()
   })
 
   it('reports the club behind a leader when its badge is clicked', async () => {
@@ -192,6 +203,63 @@ describe('StatsView leaders', () => {
     const leaders = screen.getByRole('group', { name: 'Statistic' }).closest('.card')
     await userEvent.click(within(leaders).getByRole('button', { name: 'Man City' }))
     expect(onPickTeam).toHaveBeenCalledWith('MNC')
+  })
+
+  it('opens a player to their tally and, once it arrives, their biography', async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            athlete: {
+              id: 'p1',
+              displayName: 'Erling Haaland',
+              position: { displayName: 'Forward' },
+              age: 25,
+              citizenship: 'Norway',
+              displayHeight: `6' 5"`,
+              headshot: { href: 'https://example.test/haaland.png' },
+            },
+          }),
+      })
+    )
+    renderStats()
+
+    const row = screen.getByRole('button', { name: /Erling Haaland/ })
+    expect(row).toHaveAttribute('aria-expanded', 'false')
+
+    await userEvent.click(row)
+
+    expect(row).toHaveAttribute('aria-expanded', 'true')
+    // The season tally is written from the leaderboard alone, so it is there
+    // before the request resolves.
+    expect(screen.getByText(/20 goals in 2025-26/)).toBeInTheDocument()
+    // The biography arrives from the second request.
+    expect(await screen.findByText('Forward')).toBeInTheDocument()
+    expect(screen.getByText('25')).toBeInTheDocument()
+    expect(screen.getByText('Norway')).toBeInTheDocument()
+    // The headshot is decorative (empty alt), so it has no img role — assert
+    // on the element itself.
+    expect(document.querySelector('.lead-shot')).toHaveAttribute(
+      'src',
+      'https://example.test/haaland.png'
+    )
+
+    await userEvent.click(row)
+    expect(screen.queryByText(/20 goals in 2025-26/)).not.toBeInTheDocument()
+  })
+
+  it('shows the tally even when no biography can be fetched', async () => {
+    // The bio is a nicety; a player whose record is missing still gets their
+    // season line and an appearance count when the feed carried one.
+    players.PLAYER_STATS[2025].goals[0].matches = 34
+    global.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 404 }))
+    renderStats()
+
+    await userEvent.click(screen.getByRole('button', { name: /Erling Haaland/ }))
+
+    expect(screen.getByText(/20 goals in 2025-26 · 34 matches/)).toBeInTheDocument()
+    await waitFor(() => expect(document.querySelector('.lead-detail dl')).toBeNull())
   })
 
   it('does not present a disciplinary tally as a ranking of merit', async () => {

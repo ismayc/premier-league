@@ -990,14 +990,92 @@ table {
   border-radius: 0 4px 4px 0;
 }
 
+.lead-player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  border-radius: 6px;
+  text-align: left;
+  font-size: inherit;
+}
+
+.lead-player:hover {
+  background: var(--card-2);
+}
+
 .lead-name {
   white-space: nowrap;
 }
 
 .lead-pos {
-  margin-left: 6px;
   font-size: 11px;
   color: var(--muted);
+}
+
+.lead-caret {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.leaders tr.is-open td {
+  border-bottom-color: transparent;
+}
+
+.lead-detail-row td {
+  padding-top: 0;
+}
+
+.lead-detail {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card-2);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.lead-shot {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--card);
+  flex: none;
+}
+
+.lead-facts {
+  flex: 1;
+  min-width: 0;
+}
+
+.lead-tally {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+.lead-facts dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.lead-facts dt {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.lead-facts dd {
+  margin: 0;
+  font-size: 12.5px;
 }
 
 .leaders td:nth-child(2) {
