@@ -236,8 +236,11 @@ describe('StatsView leaders', () => {
     expect(screen.getByText(/20 goals in 2025-26/)).toBeInTheDocument()
     // The biography arrives from the second request.
     expect(await screen.findByText('Forward')).toBeInTheDocument()
-    expect(screen.getByText('25')).toBeInTheDocument()
     expect(screen.getByText('Norway')).toBeInTheDocument()
+    // Age is not shown: the feed gives current age, which is wrong for an
+    // older season. The stub carries age 25, so its absence is the assertion.
+    expect(screen.queryByText('25')).not.toBeInTheDocument()
+    expect(screen.queryByText('Age')).not.toBeInTheDocument()
     // The headshot is decorative (empty alt), so it has no img role — assert
     // on the element itself.
     expect(document.querySelector('.lead-shot')).toHaveAttribute(

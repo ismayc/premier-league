@@ -268,12 +268,10 @@ function PlayerBio({ player, meta, season }) {
                 <dd>{bio.position}</dd>
               </div>
             )}
-            {bio.age && (
-              <div>
-                <dt>Age</dt>
-                <dd>{bio.age}</dd>
-              </div>
-            )}
+            {/* Age is deliberately omitted: the feed reports the player's age
+                now, not during the season being viewed, so on an older
+                leaderboard it is years wrong. Nationality, position and height
+                do not change, so they are safe to show for any season. */}
             {bio.citizenship && (
               <div>
                 <dt>Nationality</dt>
