@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Required by the Pages deployment job.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it mid-publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Coverage thresholds are set to 100% in vite.config.js, so this fails
+      # the build if any line ships untested.
+      - run: npm run test:coverage
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  pages:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  netlify:
+    needs: test
+    # Declared at job level deliberately: a step's own `env:` block is not in
+    # scope for that step's `if:`, so gating there would skip the deploy
+    # forever — green, and silently doing nothing.
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Deploy to Netlify
+        if: env.NETLIFY_AUTH_TOKEN != '' && env.NETLIFY_SITE_ID != ''
+        run: npx netlify-cli@17 deploy --prod --dir dist
+
+  # The refresh workflow runs the fetch scripts without installing anything, so
+  # they must not import from node_modules. This guards that property.
+  scripts-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail if a fetch script imports a dependency
+        run: |
+          if grep -REn "^\s*import .* from ['\"][^.n]" scripts/ \
+             | grep -v "from ['\"]node:"; then
+            echo "::error::scripts/ may only import Node built-ins and local files"
+            exit 1
+          fi
+          echo "scripts/ uses Node built-ins only"

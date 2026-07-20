@@ -1,0 +1,55 @@
+name: Refresh data
+
+# Twice daily during the season. The fetch scripts use Node built-ins only, so
+# this job needs no npm ci to produce the new data — the install happens later,
+# and only to run the tests against it.
+on:
+  schedule:
+    - cron: '15 6 * * *'
+    - cron: '15 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fetch fixtures, stats and history
+        run: npm run fetch:all
+
+      - name: Check for changes
+        id: diff
+        run: |
+          if git diff --quiet -- src/data public/logos; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Standings and stats are derived from the committed results, so a bad
+      # refresh shows up as a failing test rather than a wrong-looking table.
+      - name: Test against the refreshed data
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          npm ci
+          npm test
+
+      - name: Open a pull request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: data/refresh
+          title: 'Refresh Premier League data'
+          commit-message: 'Refresh fixtures, stats and historical tables'
+          body: |
+            Automated refresh from the ESPN and openfootball feeds.
+
+            The test suite ran against this data before the pull request was
+            opened, including the per-season table invariants.
+          add-paths: |
+            src/data
+            public/logos

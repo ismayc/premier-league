@@ -1,0 +1,13 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Single-page app: every path resolves to the entry document, and the view is
+# read from the query string rather than the path.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
