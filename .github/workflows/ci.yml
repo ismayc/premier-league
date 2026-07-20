@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # So a deploy can be re-run without an empty commit.
+  workflow_dispatch:
 
 # Required by the Pages deployment job.
 permissions:
