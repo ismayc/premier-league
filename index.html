@@ -18,6 +18,24 @@
       content="Fixtures in your timezone, the live table, season stats, and every final table since 1992."
     />
     <meta property="og:type" content="website" />
+    <!-- The share image and URL must be absolute; a relative path is ignored by
+         crawlers. This names the Netlify host as canonical — the GitHub Pages
+         copy shares the same image from its own origin at ./og-image.png but a
+         single og:url has to point somewhere. -->
+    <meta property="og:url" content="https://premier-league-viewer.netlify.app/" />
+    <meta property="og:image" content="https://premier-league-viewer.netlify.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Premier League Fixtures — fixtures, table and stats" />
+    <meta property="og:site_name" content="Premier League Fixtures" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Premier League Fixtures" />
+    <meta
+      name="twitter:description"
+      content="Fixtures in your timezone, the live table, season stats, and every final table since 1992."
+    />
+    <meta name="twitter:image" content="https://premier-league-viewer.netlify.app/og-image.png" />
 
     <script>
       // Resolve the theme before first paint. Doing this in React would mean a
