@@ -1,15 +1,66 @@
 # Premier League fixture viewer
 
-**[premier-league-viewer.netlify.app](https://premier-league-viewer.netlify.app)**
-· also on [GitHub Pages](https://ismayc.github.io/premier-league/)
+[![CI](https://github.com/ismayc/premier-league/actions/workflows/ci.yml/badge.svg)](https://github.com/ismayc/premier-league/actions/workflows/ci.yml)
+[![coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/ismayc/premier-league/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-An unofficial, timezone-aware Premier League viewer: fixtures in your own
-timezone, the live table, season statistics, and every final table since the
-competition began in 1992-93.
+A React + Vite web app showing all 380 matches of the Premier League season in
+**your** timezone, with where to watch, the live table, season statistics,
+team sheets, and **every final table since the competition began in 1992-93**.
 
-Not affiliated with the Premier League. Fixtures and player statistics come
-from ESPN's public feeds; historical tables are computed from
-[openfootball/england](https://github.com/openfootball/england) results.
+🔗 **Live:** https://premier-league-viewer.netlify.app · https://ismayc.github.io/premier-league/
+
+![The fixtures, table and stats views](./public/og-image.png)
+
+## Features
+
+- **Your timezone** — kickoff times auto-convert to your detected timezone
+  (switchable to 15+), with the zone shown on each card and UK time alongside
+  in the match detail, so the app can be checked against any published fixture
+  list.
+- **Five views** — a chronological **Fixtures** list grouped by day, a
+  Monday–Sunday **Week** calendar, the live **Table**, season **Stats**, and
+  **History** back to 1992-93.
+- **Fixture cards** — each match shows kickoff time and zone (or a Final / Live
+  badge), both clubs, the score, the **venue**, and **where to watch** once
+  broadcasters are assigned. Styled after a clean schedule card and stacked so
+  club names stay legible on a phone.
+- **Follow clubs** — star any club to highlight it everywhere and filter the
+  fixtures to just the clubs you follow (saved in your browser).
+- **Next-kickoff bar** — a live countdown to the next match still to come.
+- **Live table** — the standings computed from results as they land, with
+  **home/away splits**, recent **form**, and the Champions League / Europa /
+  Conference / relegation bands (named in a legend, never colour alone).
+- **Stats** — player leaderboards across ten categories (goals, assists, shots,
+  saves, cards…) with a season switcher back to 2017-18; click a player for
+  their season tally plus position, nationality and height. Plus season totals
+  and an **attack-and-defence** chart for the current season *or any past one*.
+- **History** — every **final table since 1992-93**, computed from match
+  results (not copied) and verified; an **all-time** table ranked by points and
+  points-per-match; and any club's **finishing position season by season** as a
+  chart.
+- **Team drawer** — click a club anywhere for its form, home and away records,
+  upcoming fixtures, leading scorers, and full season-by-season history.
+- **Team sheets** — opening a match shows both formations, the starting XI by
+  line, the bench, and the substitutions with the minute each was made. Click a
+  player to expand their match — goals, assists, shots, fouls, cards — with
+  their position, nationality and height. (Lineups appear about an hour before
+  kickoff.)
+- **Add to calendar** — per-match and whole-season `.ics` export, optionally
+  filtered to the clubs you follow.
+- **Spoiler-free mode** — hide scores globally; a finished match reads as an
+  ordinary upcoming card until you open it.
+- **Light/dark theme** — follows your system preference, with no flash on load.
+- **Shareable URLs** — view, timezone, spoiler mode, club and season persist to
+  the query string; links unfurl with a title/description/image preview in chat
+  apps.
+- **Accessible** — keyboard-navigable, focus-trapped modals that restore focus
+  on close, screen-reader labels on live/score badges, and data never carried
+  by colour alone.
+- **Live results** — final scores and in-match score + clock overlaid from
+  [ESPN](https://www.espn.com/soccer/)'s public scoreboard (no API key) while
+  games are underway, auto-refreshed; if the fetch fails the committed data
+  still renders.
 
 ## Views
 
@@ -18,21 +69,8 @@ from ESPN's public feeds; historical tables are computed from
 | **Fixtures** | The season as a chronological list, grouped by day, with a next-kickoff countdown. Filter to followed clubs, show or hide played matches, export to calendar. |
 | **Week** | A Monday-to-Sunday grid. Makes an empty midweek and a congested festive period legible at a glance. |
 | **Table** | The live league table, with home/away splits, recent form, and European / relegation bands. |
-| **Stats** | League totals, player leaderboards across ten categories with a season switcher, and a per-club goal-difference chart. |
+| **Stats** | League totals, player leaderboards across ten categories with a season switcher, per-player biographies, and a per-club goal-difference chart for any season. |
 | **History** | Every final table since 1992-93, an all-time table, and any club's finishing position season by season. |
-
-Clicking a club anywhere opens a drawer with its form, home and away records,
-upcoming fixtures, leading scorers, and full season-by-season history.
-
-Opening a match shows both **team sheets** — formation, starting XI by line,
-bench, and the substitutions with the minute each was made. Clicking a player
-expands their match: goals, assists, shots, fouls and cards, alongside their
-position, age, nationality and height.
-
-Team sheets are the one thing fetched per match rather than committed, because
-a lineup does not exist until about an hour before kickoff — a nightly refresh
-would commit 380 empty squads and still be wrong an hour before every match.
-Until then the panel says so rather than showing an error.
 
 ## Running it
 
@@ -122,3 +160,37 @@ League times are published in UK time, which is exactly what a naive "3pm
 Saturday" gets wrong for anyone outside Britain twice a year when the clocks
 shift. The detail view shows both your local time and UK time so the app can be
 checked against any published fixture list.
+
+## Data sources
+
+- **Fixtures, clubs, crests, live scores, broadcasters** —
+  [ESPN](https://www.espn.com/soccer/)'s public, keyless, CORS-open feeds. The
+  fetch scripts snapshot the season into the repo; the app overlays live scores
+  at runtime.
+- **Player statistics** — ESPN's core-API leaders endpoint, per season back to
+  2017-18 (2020-21 is absent upstream and omitted rather than shown as zeroes).
+- **Historical tables** — computed from
+  [openfootball/england](https://github.com/openfootball/england) match results
+  (public domain), which reach back to 1992-93 where ESPN's standings archive
+  stops at 2002-03. Each season is verified against structural invariants before
+  it is written (see *Why historical tables are computed, not fetched* above).
+
+Broadcast listings come from ESPN's US-region feed, so they name US
+broadcasters (NBC, Peacock, USA Network) rather than UK ones.
+
+## Credits
+
+Created by [Chester Ismay](https://chester.rbind.io). Source on
+[GitHub](https://github.com/ismayc/premier-league). Companion to the
+[World Cup 2026 schedule viewer](https://github.com/ismayc/world-cup-viewer).
+
+## Disclaimer
+
+An unofficial, non-commercial fan project. **Not affiliated with, endorsed by,
+or sponsored by the Premier League.** "Premier League", and club, broadcaster,
+and competition names and crests are trademarks of their respective owners.
+Fixtures, statistics and live scores come from
+[ESPN](https://www.espn.com/soccer/); historical results come from the
+public-domain [OpenFootball](https://github.com/openfootball/england) project.
+
+Licensed under the [MIT License](./LICENSE).

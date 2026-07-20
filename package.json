@@ -4,6 +4,13 @@
   "version": "0.1.0",
   "type": "module",
   "description": "An unofficial, timezone-aware Premier League fixture viewer",
+  "license": "MIT",
+  "author": "Chester Ismay (https://chester.rbind.io)",
+  "homepage": "https://ismayc.github.io/premier-league/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ismayc/premier-league.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
