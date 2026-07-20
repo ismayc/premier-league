@@ -209,12 +209,66 @@ describe('MatchCard', () => {
     following('CHE')
     const { container } = withFollow(<MatchCard fixture={fixture({})} tz="Europe/London" />)
 
+    // The card as a whole is tracked if *either* club is followed...
     expect(container.querySelector('.mc')).toHaveClass('is-tracked')
     expect(screen.getByText('Chelsea').closest('button')).toHaveClass('is-followed')
     expect(screen.getByText('Arsenal').closest('button')).not.toHaveClass('is-followed')
-    // The star tracks the home club specifically, not "either club".
-    expect(container.querySelector('.mc-star')).toHaveClass('on')
-    expect(container.querySelector('.mc-star')).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('gives each club its own star, reporting that club’s state', () => {
+    // A single star could not say which club it followed: the old one sat at
+    // the away club's edge, toggled the home club, and took its filled styling
+    // from "either club is followed" while its icon and aria-pressed reported
+    // the home club — so it could render filled while announcing unpressed.
+    following('CHE')
+    withFollow(<MatchCard fixture={fixture({})} tz="Europe/London" />)
+
+    const homeStar = screen.getByRole('button', { name: 'Follow Arsenal' })
+    const awayStar = screen.getByRole('button', { name: 'Follow Chelsea' })
+
+    expect(homeStar).toHaveAttribute('aria-pressed', 'false')
+    expect(homeStar).not.toHaveClass('on')
+    expect(homeStar).toHaveTextContent('☆')
+
+    expect(awayStar).toHaveAttribute('aria-pressed', 'true')
+    expect(awayStar).toHaveClass('on')
+    expect(awayStar).toHaveTextContent('★')
+  })
+
+  it('follows the club whose star was pressed, not the home club', async () => {
+    // The regression that mattered: pressing the right-hand star used to
+    // follow the left-hand club.
+    const user = userEvent.setup()
+    withFollow(<MatchCard fixture={fixture({})} tz="Europe/London" />)
+
+    await user.click(screen.getByRole('button', { name: 'Follow Chelsea' }))
+
+    expect(screen.getByRole('button', { name: 'Follow Chelsea' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+    expect(screen.getByRole('button', { name: 'Follow Arsenal' })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    )
+    expect(JSON.parse(localStorage.getItem('pl:followed'))).toEqual(['CHE'])
+  })
+
+  it('unfollows a club when its star is pressed again', async () => {
+    const user = userEvent.setup()
+    following('ARS')
+    withFollow(<MatchCard fixture={fixture({})} tz="Europe/London" />)
+
+    const homeStar = screen.getByRole('button', { name: 'Follow Arsenal' })
+    expect(homeStar).toHaveAttribute('aria-pressed', 'true')
+
+    await user.click(homeStar)
+
+    expect(screen.getByRole('button', { name: 'Follow Arsenal' })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    )
+    expect(JSON.parse(localStorage.getItem('pl:followed'))).toEqual([])
   })
 
   it('picks a team without also opening the fixture', async () => {

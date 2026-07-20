@@ -33,9 +33,18 @@ const freshStats = () => ({
       { id: 'p2', name: 'Bukayo Saka', pos: 'F', team: 'ARS', value: 12 },
       // No club and no position: both are rendered conditionally.
       { id: 'p3', name: 'Unattached Trialist', value: 5 },
-      // A club that has since been relegated is not in TEAM_BY_ABBR, so the
-      // view has to fall back to the raw abbreviation.
-      { id: 'p4', name: 'Departed Striker', pos: 'M', team: 'LEI', value: 3 },
+      // A club that has since been relegated. The name and crest travel with
+      // the row, exactly as the fetch script writes them, because the
+      // current-season club lookup no longer knows this abbreviation.
+      {
+        id: 'p4',
+        name: 'Departed Striker',
+        pos: 'M',
+        team: 'LEI',
+        teamName: 'Leicester',
+        teamSlug: 'eng.leicester_city',
+        value: 3,
+      },
     ],
     assists: [{ id: 'p2', name: 'Bukayo Saka', pos: 'F', team: 'ARS', value: 9 }],
     yellowCards: [{ id: 'p5', name: 'Rough Tackler', pos: 'D', team: 'CHE', value: 8 }],
@@ -138,8 +147,40 @@ describe('StatsView leaders', () => {
     // No club: the cell is empty rather than showing a bare button.
     expect(within(rows[2]).queryByRole('button')).not.toBeInTheDocument()
     expect(within(rows[2]).queryByText('F')).not.toBeInTheDocument()
-    // Unknown club abbreviation is shown verbatim.
-    expect(within(rows[3]).getByRole('button', { name: 'LEI' })).toBeInTheDocument()
+  })
+
+  it('names a club that has left the league, without offering a dead link', () => {
+    // Leaderboards reach back years, so they name relegated clubs. Resolving
+    // them through the current-season lookup showed a bare "LEI" beside an
+    // empty circle; the name and crest now travel with the row. The club is
+    // not clickable because the drawer is built from this season's fixtures
+    // and would open empty.
+    renderStats()
+
+    const table = screen.getByRole('table', { name: /Goals leaders, 2025-26/ })
+    const rows = within(table).getAllByRole('row').slice(1)
+
+    expect(within(rows[3]).getByText('Leicester')).toBeInTheDocument()
+    expect(within(rows[3]).queryByText('LEI')).not.toBeInTheDocument()
+    expect(within(rows[3]).queryByRole('button')).not.toBeInTheDocument()
+    expect(within(rows[3]).getByTitle(/not in the league this season/)).toBeInTheDocument()
+  })
+
+  it('still shows the abbreviation for a former club written before names were stored', async () => {
+    // players.js is generated, and an older copy of it carries no teamName.
+    // The abbreviation is a poor label but it is better than an empty cell,
+    // so the fallback stays until a refresh fills the name in.
+    players.PLAYER_STATS[2025].assists = [
+      { id: 'p9', name: 'Stale Record', pos: 'M', team: 'STK', value: 4 },
+    ]
+    renderStats()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Assists' }))
+
+    const table = screen.getByRole('table', { name: /Assists leaders, 2025-26/ })
+    const row = within(table).getAllByRole('row')[1]
+    expect(within(row).getByText('STK')).toBeInTheDocument()
+    expect(within(row).queryByRole('button')).not.toBeInTheDocument()
   })
 
   it('reports the club behind a leader when its badge is clicked', async () => {

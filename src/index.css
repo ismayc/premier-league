@@ -565,15 +565,29 @@ select {
   }
 }
 
+/* A star per club, each hugging its own side of the card so it is never
+   ambiguous which club it follows. */
 .mc-star {
   position: relative;
   z-index: 1;
   background: none;
   border: 0;
-  border-left: 1px solid var(--line);
-  padding: 0 12px;
+  padding: 0 10px;
   color: var(--muted);
   font-size: 16px;
+  line-height: 1;
+}
+
+.mc-star-home {
+  border-right: 1px solid var(--line);
+}
+
+.mc-star-away {
+  border-left: 1px solid var(--line);
+}
+
+.mc-star:hover {
+  color: var(--text);
 }
 
 .mc-star.on {
@@ -751,6 +765,18 @@ table {
 .club-btn:hover {
   background: var(--card-2);
   color: var(--accent);
+}
+
+/* A club no longer in the league: shown in full, but not offered as a link to
+   a drawer that would have nothing in it. */
+.club-btn.is-former {
+  color: var(--muted);
+  cursor: default;
+}
+
+.club-btn.is-former:hover {
+  background: none;
+  color: var(--muted);
 }
 
 .club-btn span,

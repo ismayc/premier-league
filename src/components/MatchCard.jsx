@@ -38,6 +38,22 @@ export default function MatchCard({ fixture, tz, hideScores, onOpen, onPickTeam 
     </button>
   )
 
+  // One star per club, each on that club's own side of the card. A single
+  // star cannot say which of the two it follows — the previous version sat at
+  // the right-hand edge, next to the away club, and toggled the home one.
+  const star = (abbr, align) => (
+    <button
+      type="button"
+      className={`mc-star mc-star-${align} ${isFollowed(abbr) ? 'on' : ''}`}
+      onClick={() => toggle(abbr)}
+      aria-pressed={isFollowed(abbr)}
+      aria-label={`Follow ${nameOf(abbr)}`}
+      title={`Follow ${nameOf(abbr)}`}
+    >
+      {isFollowed(abbr) ? '★' : '☆'}
+    </button>
+  )
+
   return (
     <article
       className={`mc ${live ? 'is-live' : ''} ${unplayed ? 'is-off' : ''} ${followed ? 'is-tracked' : ''}`}
@@ -53,6 +69,8 @@ export default function MatchCard({ fixture, tz, hideScores, onOpen, onPickTeam 
         onClick={() => onOpen?.(fixture)}
         aria-label={`${nameOf(home)} versus ${nameOf(away)}, details`}
       />
+
+      {star(home, 'home')}
 
       <div className="mc-body">
         {side(home, score?.[0], 'home')}
@@ -79,16 +97,7 @@ export default function MatchCard({ fixture, tz, hideScores, onOpen, onPickTeam 
         {side(away, score?.[1], 'away')}
       </div>
 
-      <button
-        type="button"
-        className={`mc-star ${followed ? 'on' : ''}`}
-        onClick={() => toggle(home)}
-        aria-pressed={isFollowed(home)}
-        aria-label={`Follow ${nameOf(home)}`}
-        title={`Follow ${nameOf(home)}`}
-      >
-        {isFollowed(home) ? '★' : '☆'}
-      </button>
+      {star(away, 'away')}
     </article>
   )
 }

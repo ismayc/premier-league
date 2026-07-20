@@ -157,12 +157,7 @@ function Leaders({ onPickTeam }) {
                 {p.pos && <span className="lead-pos">{p.pos}</span>}
               </td>
               <td className="hide-sm">
-                {p.team && (
-                  <button type="button" className="club-btn" onClick={() => onPickTeam?.(p.team)}>
-                    <TeamLogo abbr={p.team} size={18} />
-                    <span className="hide-xs">{TEAM_BY_ABBR[p.team]?.name ?? p.team}</span>
-                  </button>
-                )}
+                {p.team && <PlayerClub player={p} onPickTeam={onPickTeam} />}
               </td>
               <td className="col-bar">
                 {/* Single series, so no legend — the column header names it, and
@@ -175,6 +170,40 @@ function Leaders({ onPickTeam }) {
         </tbody>
       </table>
     </section>
+  )
+}
+
+/**
+ * The club a leaderboard row belongs to.
+ *
+ * A leaderboard reaches back years, so it names clubs that are no longer in
+ * the league — Burnley, Leicester, Watford and others. Their name and crest
+ * come from the row itself rather than the current-season lookup, which would
+ * otherwise render a bare abbreviation next to an empty circle.
+ *
+ * Only a club still in the league is clickable: the team drawer is built from
+ * this season's fixtures and table, so opening it for a relegated club would
+ * show an empty panel.
+ */
+function PlayerClub({ player, onPickTeam }) {
+  const current = TEAM_BY_ABBR[player.team]
+  const name = current?.name ?? player.teamName ?? player.team
+  const crest = <TeamLogo abbr={player.team} slug={player.teamSlug} size={18} />
+
+  if (!current) {
+    return (
+      <span className="club-btn is-former" title={`${name} are not in the league this season`}>
+        {crest}
+        <span className="hide-xs">{name}</span>
+      </span>
+    )
+  }
+
+  return (
+    <button type="button" className="club-btn" onClick={() => onPickTeam?.(player.team)}>
+      {crest}
+      <span className="hide-xs">{name}</span>
+    </button>
   )
 }
 

@@ -15,7 +15,7 @@
  * Uses Node built-ins only, so the refresh workflow can run without npm ci.
  */
 
-import { writeFileSync } from 'node:fs'
+import { existsSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
@@ -69,6 +69,16 @@ function resolveRef(url) {
   return refCache.get(url)
 }
 
+/**
+ * Clubs seen anywhere in the leaderboards, keyed by abbreviation.
+ *
+ * A leaderboard reaches back years, so it names clubs that have since been
+ * relegated — Burnley, Leicester, West Ham, Wolves and ten others. The app's
+ * club lookup only holds the *current* twenty, so without capturing the name
+ * and crest here those rows rendered as a bare "BUR" beside an empty circle.
+ */
+const clubs = new Map()
+
 /** "Matches: 35, Goals: 27" -> 35. Appearances aren't a field of their own. */
 function matchesFrom(displayValue) {
   const m = /Matches:\s*(\d+)/.exec(displayValue || '')
@@ -99,12 +109,26 @@ async function fetchSeason(season) {
         ])
         if (!athlete) return null
         resolved++
+
+        if (team?.abbreviation && !clubs.has(team.abbreviation)) {
+          clubs.set(team.abbreviation, {
+            abbr: team.abbreviation,
+            name: team.shortDisplayName ?? team.displayName,
+            slug: team.slug,
+            logos: team.logos ?? [],
+          })
+        }
+
         return {
           id: athlete.id,
           name: athlete.displayName,
           short: athlete.shortName,
           pos: athlete.position?.abbreviation ?? null,
           team: team?.abbreviation ?? null,
+          // Carried per row so a leaderboard never depends on the club still
+          // being in the league.
+          teamName: team?.shortDisplayName ?? team?.displayName ?? null,
+          teamSlug: team?.slug ?? null,
           value: l.value,
           matches: matchesFrom(l.displayValue),
         }
@@ -116,6 +140,39 @@ async function fetchSeason(season) {
   }
 
   return Object.keys(out).length ? { season, categories: out, resolved } : null
+}
+
+/**
+ * Download crests for any club in the leaderboards that fetch-fixtures.mjs
+ * did not already mirror. Files are keyed by slug, exactly as that script
+ * names them, so the two sets sit side by side and the app needs no special
+ * case for a club that has since gone down.
+ */
+async function mirrorMissingCrests() {
+  const resized = (href) =>
+    `https://a.espncdn.com/combiner/i?img=${encodeURIComponent(new URL(href).pathname)}&w=160&h=160`
+
+  let saved = 0
+  for (const club of clubs.values()) {
+    if (!club.slug) continue
+    for (const variant of ['default', 'dark']) {
+      const file = variant === 'dark' ? `${club.slug}-dark.png` : `${club.slug}.png`
+      const path = join(ROOT, 'public/logos', file)
+      if (existsSync(path)) continue
+
+      const logo = club.logos.find((l) => l.rel?.includes(variant))
+      if (!logo) continue
+      try {
+        const res = await fetch(resized(logo.href))
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        writeFileSync(path, Buffer.from(await res.arrayBuffer()))
+        saved++
+      } catch (err) {
+        console.log(`  ⚠ crest ${file}: ${err.message}`)
+      }
+    }
+  }
+  return saved
 }
 
 async function main() {
@@ -145,6 +202,9 @@ async function main() {
   }
 
   if (!seasons.length) throw new Error('no season returned any leader data')
+
+  const mirrored = await mirrorMissingCrests()
+  if (mirrored) console.log(`\n  ${mirrored} crest(s) mirrored for clubs no longer in the league`)
 
   // Newest first, so the UI's default selection is the head of the list.
   seasons.sort((a, b) => b.season - a.season)
