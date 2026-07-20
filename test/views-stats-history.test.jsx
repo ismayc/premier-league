@@ -187,7 +187,10 @@ describe('StatsView leaders', () => {
     const onPickTeam = vi.fn()
     renderStats({ onPickTeam })
 
-    await userEvent.click(screen.getByRole('button', { name: 'Man City' }))
+    // "Man City" is now also a bar in the attack-and-defence chart below, so
+    // scope to the leaders card — the only one carrying the statistic pills.
+    const leaders = screen.getByRole('group', { name: 'Statistic' }).closest('.card')
+    await userEvent.click(within(leaders).getByRole('button', { name: 'Man City' }))
     expect(onPickTeam).toHaveBeenCalledWith('MNC')
   })
 
@@ -217,7 +220,9 @@ describe('StatsView leaders', () => {
 
   it('switches season from the picker', async () => {
     renderStats()
-    await userEvent.selectOptions(screen.getByRole('combobox'), '2024')
+    // The chart below has its own <select>, so pick the leaders card's one.
+    const leaders = screen.getByRole('group', { name: 'Statistic' }).closest('.card')
+    await userEvent.selectOptions(within(leaders).getByRole('combobox'), '2024')
 
     expect(screen.getByText('Mohamed Salah')).toBeInTheDocument()
     expect(screen.queryByText('Erling Haaland')).not.toBeInTheDocument()
@@ -226,14 +231,16 @@ describe('StatsView leaders', () => {
 
   it('falls back to the newest season that has the chosen category', async () => {
     renderStats()
-    expect(screen.getByRole('combobox')).toHaveValue('2025')
+    // The chart below has its own <select>, so pick the leaders card's one.
+    const leaders = screen.getByRole('group', { name: 'Statistic' }).closest('.card')
+    expect(within(leaders).getByRole('combobox')).toHaveValue('2025')
 
     // Simulate a data refresh that drops assists from the selected season: the
     // panel must retarget rather than render an empty leaderboard.
     delete players.PLAYER_STATS[2025].assists
-    await userEvent.click(screen.getByRole('button', { name: 'Assists' }))
+    await userEvent.click(within(leaders).getByRole('button', { name: 'Assists' }))
 
-    expect(screen.getByRole('combobox')).toHaveValue('2024')
+    expect(within(leaders).getByRole('combobox')).toHaveValue('2024')
     expect(screen.getByText('Cole Palmer')).toBeInTheDocument()
   })
 
@@ -250,12 +257,16 @@ describe('StatsView leaders', () => {
     expect(screen.queryByRole('button', { name: 'Goals' })).not.toBeInTheDocument()
   })
 
-  it('renders nothing at all when no season carries player data', () => {
+  it('renders no leaderboard at all when no season carries player data', () => {
     for (const key of Object.keys(players.PLAYER_STATS)) delete players.PLAYER_STATS[key]
     renderStats()
 
+    // The leaders section returns null with no player data. The attack-and-
+    // defence chart still renders history (and has its own <select>), so assert
+    // only that the leaderboard is gone — no statistic pills, no leaders table.
     expect(screen.queryByRole('heading', { name: 'Goals' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Statistic' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: /leaders/ })).not.toBeInTheDocument()
     // The rest of the view still renders.
     expect(screen.getByRole('heading', { name: 'Stats' })).toBeInTheDocument()
   })
@@ -264,12 +275,21 @@ describe('StatsView leaders', () => {
 /* ── StatsView: goal difference chart ──────────────────────────────────── */
 
 describe('StatsView goal difference chart', () => {
-  it('waits for results before drawing anything', () => {
+  it('opens on the most recent completed season when this season is empty', () => {
     render(<StatsView fixtures={[scheduled('ARS', 'CHE')]} tz="UTC" />)
 
-    expect(screen.getByRole('heading', { name: 'Attack and defence' })).toBeInTheDocument()
-    expect(screen.getByText('Appears once clubs have played.')).toBeInTheDocument()
-    expect(screen.queryByRole('table', { name: /Goal difference/ })).not.toBeInTheDocument()
+    // The chart no longer waits for a placeholder: with no results yet it
+    // defaults to the newest completed season (2025-26) and draws its table.
+    const chart = screen.getByRole('heading', { name: 'Goal difference per match' }).closest('.card')
+    expect(within(chart).getByRole('combobox')).toHaveValue('2025')
+    // No current results means "This season" is not on offer.
+    expect(within(chart).queryByRole('option', { name: 'This season' })).not.toBeInTheDocument()
+    const grid = within(chart).getByRole('table', { name: 'Goal difference per match by club' })
+    expect(within(grid).getAllByRole('row')).toHaveLength(20)
+    // The placeholder only appears with neither results nor history — which is
+    // unreachable against the real 34-season history (covered separately with a
+    // mocked empty history below).
+    expect(screen.queryByText('Appears once clubs have played.')).not.toBeInTheDocument()
   })
 
   it('signs each club’s margin and scales the arms symmetrically', async () => {
@@ -321,6 +341,166 @@ describe('StatsView goal difference chart', () => {
     expect(container.querySelectorAll('.margin-bar.neg')).toHaveLength(0)
     for (const track of container.querySelectorAll('.margin-track')) {
       expect(track.style.getPropertyValue('--w')).toBe('0%')
+    }
+  })
+})
+
+/* ── StatsView: attack and defence season switcher ─────────────────────── */
+
+describe('StatsView attack and defence', () => {
+  // The chart carries the same club names — and its own <select> — as the
+  // leaderboard above, so every query scopes to the chart's own card.
+  const chartCard = () =>
+    screen.getByRole('heading', { name: 'Goal difference per match' }).closest('.card')
+  const chartGrid = () =>
+    within(chartCard()).getByRole('table', { name: 'Goal difference per match by club' })
+  const chartRows = () => within(chartGrid()).getAllByRole('row')
+
+  it('defaults to the most recent completed season with no results yet', () => {
+    render(<StatsView fixtures={[scheduled('ARS', 'CHE')]} tz="UTC" />)
+
+    // The picker opens on 2025-26 — the newest completed season — and offers no
+    // "This season" option, because there is nothing to show for it.
+    const select = within(chartCard()).getByRole('combobox')
+    expect(select).toHaveValue('2025')
+    expect(
+      within(select).getByRole('option', { name: '2025-26', selected: true })
+    ).toBeInTheDocument()
+    expect(within(select).queryByRole('option', { name: 'This season' })).not.toBeInTheDocument()
+    expect(chartRows()).toHaveLength(20)
+  })
+
+  it('offers this season once results exist and switches to a past one', async () => {
+    render(
+      <StatsView
+        tz="UTC"
+        fixtures={[played('ARS', 'CHE', 3, 0), played('LIV', 'MCI', 2, 1)]}
+      />
+    )
+
+    // With results in, "This season" is offered and selected by default; only
+    // the four clubs that have played appear.
+    const select = within(chartCard()).getByRole('combobox')
+    expect(select).toHaveValue('current')
+    expect(within(select).getByRole('option', { name: 'This season' })).toBeInTheDocument()
+    expect(chartRows()).toHaveLength(4)
+
+    // Switching to 2003-04 redraws from that season's final table. Arsenal's
+    // Invincibles top the chart on the widest goal difference, so they take the
+    // first row and the full-length (40%) positive arm.
+    await userEvent.selectOptions(select, '2003')
+    expect(within(chartCard()).getByText(/Final table for 2003-04/)).toBeInTheDocument()
+    const rows = chartRows()
+    expect(rows).toHaveLength(20)
+    expect(within(rows[0]).getByRole('button', { name: 'Arsenal' })).toBeInTheDocument()
+    expect(rows[0].querySelector('.margin-track').style.getPropertyValue('--w')).toBe('40%')
+
+    // And back to this season: the historical caveat clears and only the four
+    // clubs that have played remain.
+    await userEvent.selectOptions(within(chartCard()).getByRole('combobox'), 'current')
+    expect(within(chartCard()).queryByText(/Final table for/)).not.toBeInTheDocument()
+    expect(chartRows()).toHaveLength(4)
+  })
+
+  it('drills into a past-season club that is still in the league', async () => {
+    const onPickTeam = vi.fn()
+    render(<StatsView fixtures={[scheduled('ARS', 'CHE')]} onPickTeam={onPickTeam} tz="UTC" />)
+    await userEvent.selectOptions(within(chartCard()).getByRole('combobox'), '2003')
+
+    // Arsenal are still in the league, so the row resolves to a crest and a
+    // clickable button that reports the right abbreviation.
+    const arsenal = within(chartRows()[0]).getByRole('button', { name: 'Arsenal' })
+    expect(arsenal.querySelector('.logo')).toBeInTheDocument()
+    await userEvent.click(arsenal)
+    expect(onPickTeam).toHaveBeenCalledWith('ARS')
+  })
+
+  it('shows a departed club plainly, without a dead link', async () => {
+    const onPickTeam = vi.fn()
+    render(<StatsView fixtures={[scheduled('ARS', 'CHE')]} onPickTeam={onPickTeam} tz="UTC" />)
+    await userEvent.selectOptions(within(chartCard()).getByRole('combobox'), '2003')
+
+    // Charlton Athletic are long gone from the league, so the row names them in
+    // full but is not operable — the current-club lookup knows no crest for it.
+    const charlton = within(chartGrid()).getByText('Charlton Athletic')
+    const cell = charlton.closest('.margin-club')
+    expect(within(cell).queryByRole('button')).not.toBeInTheDocument()
+    expect(cell.querySelector('.is-former')).toBeInTheDocument()
+    await userEvent.click(charlton)
+    expect(onPickTeam).not.toHaveBeenCalled()
+  })
+
+  it('flags a 22-club season only when one is selected', async () => {
+    render(<StatsView fixtures={[scheduled('ARS', 'CHE')]} tz="UTC" />)
+    const select = within(chartCard()).getByRole('combobox')
+
+    // 1992-93 was one of the 22-club, 42-match seasons.
+    await userEvent.selectOptions(select, '1992')
+    expect(within(chartCard()).getByText(/Final table for 1992-93/)).toBeInTheDocument()
+    expect(within(chartCard()).getByText(/a 22-club, 42-match season/)).toBeInTheDocument()
+
+    // 2003-04 was a 20-club season, so the caveat disappears.
+    await userEvent.selectOptions(select, '2003')
+    expect(within(chartCard()).getByText(/Final table for 2003-04/)).toBeInTheDocument()
+    expect(within(chartCard()).queryByText(/22-club, 42-match season/)).not.toBeInTheDocument()
+  })
+})
+
+describe('StatsView attack and defence with a substituted history', () => {
+  /**
+   * Two defensive fallbacks are unreachable against the committed 34-season
+   * history — the chart always has some completed season to show, and every
+   * season carries a full table — so a mocked history is used to reach them.
+   */
+  it('falls back to a placeholder when neither results nor history exist', async () => {
+    vi.resetModules()
+    vi.doMock('../src/data/history.js', () => ({
+      HISTORY: [],
+      HISTORY_BY_YEAR: {},
+      HISTORY_YEARS: [],
+    }))
+
+    try {
+      const { default: MockedStatsView } = await import('../src/components/StatsView.jsx')
+      render(<MockedStatsView fixtures={[scheduled('ARS', 'CHE')]} tz="UTC" />)
+
+      expect(screen.getByRole('heading', { name: 'Attack and defence' })).toBeInTheDocument()
+      expect(screen.getByText('Appears once clubs have played.')).toBeInTheDocument()
+      expect(
+        screen.queryByRole('table', { name: 'Goal difference per match by club' })
+      ).not.toBeInTheDocument()
+    } finally {
+      vi.doUnmock('../src/data/history.js')
+      vi.resetModules()
+    }
+  })
+
+  it('draws nothing when the only completed season has an empty table', async () => {
+    vi.resetModules()
+    vi.doMock('../src/data/history.js', () => {
+      const season = { year: 2025, label: '2025-26', champion: 'None', teams: 20, matches: 0, table: [] }
+      return {
+        HISTORY: [season],
+        HISTORY_BY_YEAR: { 2025: season },
+        HISTORY_YEARS: [2025],
+      }
+    })
+
+    try {
+      const { default: MockedStatsView } = await import('../src/components/StatsView.jsx')
+      render(<MockedStatsView fixtures={[scheduled('ARS', 'CHE')]} tz="UTC" />)
+
+      // The season is selected and named, but its table is empty, so the chart
+      // body falls through to its own placeholder rather than an empty grid.
+      const chart = screen.getByRole('heading', { name: 'Goal difference per match' }).closest('.card')
+      expect(within(chart).getByText(/Final table for 2025-26/)).toBeInTheDocument()
+      expect(within(chart).getByText('Appears once clubs have played.')).toBeInTheDocument()
+      expect(
+        within(chart).queryByRole('table', { name: 'Goal difference per match by club' })
+      ).not.toBeInTheDocument()
+    } finally {
+      vi.doUnmock('../src/data/history.js')
+      vi.resetModules()
     }
   })
 })

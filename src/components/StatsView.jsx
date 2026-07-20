@@ -1,8 +1,18 @@
 import { useMemo, useState } from 'react'
 import TeamLogo from './TeamLogo.jsx'
-import { ALL_ABBRS, TEAM_BY_ABBR } from '../data/teams.js'
+import { ALL_ABBRS, TEAMS, TEAM_BY_ABBR } from '../data/teams.js'
 import { PLAYER_STATS, STAT_CATEGORIES, STAT_SEASONS } from '../data/players.js'
-import { leaderboard, seasonTotals, teamScoring } from '../utils/stats.js'
+import { HISTORY, HISTORY_BY_YEAR } from '../data/history.js'
+import { leaderboard, seasonScoring, seasonTotals, teamScoring } from '../utils/stats.js'
+
+/**
+ * Historical tables name clubs in full; the current-season data is keyed by
+ * abbreviation. This maps one to the other so a past season still shows a
+ * crest for any club that is still in the league.
+ */
+const ABBR_BY_NAME = Object.fromEntries(
+  TEAMS.flatMap((t) => [t.name, t.displayName].map((n) => [n, t.abbr]))
+)
 
 /**
  * Season statistics: league-wide totals, player leaderboards, and a team
@@ -21,7 +31,6 @@ const pct = (n) => `${Math.round(n * 100)}%`
 
 export default function StatsView({ fixtures, onPickTeam }) {
   const totals = useMemo(() => seasonTotals(fixtures), [fixtures])
-  const teams = useMemo(() => teamScoring(fixtures, ALL_ABBRS), [fixtures])
 
   return (
     <main className="view">
@@ -31,7 +40,7 @@ export default function StatsView({ fixtures, onPickTeam }) {
 
       <SeasonTotals totals={totals} />
       <Leaders onPickTeam={onPickTeam} />
-      <GoalDifferenceChart rows={teams} onPickTeam={onPickTeam} />
+      <AttackAndDefence fixtures={fixtures} onPickTeam={onPickTeam} />
     </main>
   )
 }
@@ -209,8 +218,32 @@ function PlayerClub({ player, onPickTeam }) {
 
 /* ── Team goal difference ──────────────────────────────────────────────── */
 
-function GoalDifferenceChart({ rows, onPickTeam }) {
-  if (!rows.length) {
+/**
+ * Attack and defence, for the season in progress or any completed one.
+ *
+ * The current season is derived from its fixtures and a past season from its
+ * final table, but both go through the same ranking, so the two are directly
+ * comparable. Before a ball is kicked the current season has nothing to show,
+ * so the selector opens on the most recent completed season instead of an
+ * empty card.
+ */
+function AttackAndDefence({ fixtures, onPickTeam }) {
+  const current = useMemo(() => teamScoring(fixtures, ALL_ABBRS), [fixtures])
+  const pastYears = useMemo(() => HISTORY.map((s) => s.year).sort((a, b) => b - a), [])
+
+  const [season, setSeason] = useState(current.length ? 'current' : pastYears[0])
+
+  const rows = useMemo(() => {
+    if (season === 'current') return current
+    // This memo runs before the "nothing to show" early return below, so when
+    // history is empty `season` is undefined here and the lookup misses. The
+    // fallback keeps that from throwing on the way to the placeholder.
+    const past = HISTORY_BY_YEAR[season]
+    return past ? seasonScoring(past) : []
+  }, [season, current])
+
+  // Nothing at all to show: no results this season and no history either.
+  if (!current.length && !pastYears.length) {
     return (
       <section className="card">
         <h3>Attack and defence</h3>
@@ -219,56 +252,113 @@ function GoalDifferenceChart({ rows, onPickTeam }) {
     )
   }
 
+  return (
+    <section className="card">
+      <div className="card-head">
+        <h3>Goal difference per match</h3>
+        <label className="season-pick">
+          <span className="sr-only">Season</span>
+          <select
+            value={season}
+            onChange={(e) => {
+              const v = e.target.value
+              setSeason(v === 'current' ? 'current' : Number(v))
+            }}
+          >
+            {current.length > 0 && <option value="current">This season</option>}
+            {pastYears.map((y) => (
+              <option key={y} value={y}>
+                {HISTORY_BY_YEAR[y].label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {season !== 'current' && (
+        <p className="note small">
+          Final table for {HISTORY_BY_YEAR[season].label}
+          {HISTORY_BY_YEAR[season].teams === 22 && ' — a 22-club, 42-match season'}.
+        </p>
+      )}
+
+      <GoalDifferenceChart rows={rows} onPickTeam={onPickTeam} />
+    </section>
+  )
+}
+
+function GoalDifferenceChart({ rows, onPickTeam }) {
+  if (!rows.length) {
+    return <p className="note">Appears once clubs have played.</p>
+  }
+
   // Symmetric scale so a +1.2 bar and a −1.2 bar are the same length.
   const span = Math.max(...rows.map((r) => Math.abs(r.gdpg))) || 1
 
   return (
-    <section className="card">
-      <h3>Goal difference per match</h3>
+    <>
       <p className="note small">
         Bars run right for a positive difference, left for negative. The figures on the right are
         goals scored and conceded per match.
       </p>
 
       <div className="margin-chart" role="table" aria-label="Goal difference per match by club">
-        {rows.map((r) => {
-          const positive = r.gdpg >= 0
-          const width = (Math.abs(r.gdpg) / span) * 40 // each arm gets 40% of the track
-          return (
-            <div key={r.abbr} className="margin-row" role="row">
-              {/* The cell role belongs on a wrapper, not on the button. Put
-                  it on the button itself and it overrides the native button
-                  role, so the only way to drill into a club from this chart
-                  is announced as a table cell and not as something operable. */}
-              <div className="margin-club" role="cell">
-                <button type="button" className="club-btn" onClick={() => onPickTeam?.(r.abbr)}>
-                  <TeamLogo abbr={r.abbr} size={18} />
-                  <span>{TEAM_BY_ABBR[r.abbr]?.name ?? r.abbr}</span>
-                </button>
-              </div>
-
-              <div className="margin-track" role="cell" style={{ '--w': `${width}%` }}>
-                <span className="margin-zero" aria-hidden="true" />
-                <span className={`margin-bar ${positive ? 'pos' : 'neg'}`} aria-hidden="true" />
-                <span className={`margin-label ${positive ? 'pos' : 'neg'}`}>
-                  {positive ? '+' : '−'}
-                  {one(Math.abs(r.gdpg))}
-                </span>
-              </div>
-
-              <span className="margin-split" role="cell">
-                <span title={`${one(r.gfpg)} scored per match (rank ${r.attackRank} of ${rows.length})`}>
-                  {one(r.gfpg)}
-                </span>
-                <i aria-hidden="true">/</i>
-                <span title={`${one(r.gapg)} conceded per match (rank ${r.defenceRank} of ${rows.length})`}>
-                  {one(r.gapg)}
-                </span>
-              </span>
-            </div>
-          )
-        })}
+        {rows.map((r) => (
+          <ScoringRow key={r.key} row={r} span={span} count={rows.length} onPickTeam={onPickTeam} />
+        ))}
       </div>
-    </section>
+    </>
+  )
+}
+
+function ScoringRow({ row, span, count, onPickTeam }) {
+  const positive = row.gdpg >= 0
+  const width = (Math.abs(row.gdpg) / span) * 40 // each arm gets 40% of the track
+
+  // A current-season row is keyed by abbreviation; a historical one by full
+  // name. Resolve an abbreviation either way so a club still in the league
+  // gets its crest and stays clickable, and a relegated one is shown plainly.
+  const abbr = row.abbr ?? ABBR_BY_NAME[row.name] ?? null
+  const label = row.name ?? TEAM_BY_ABBR[abbr]?.name ?? abbr
+
+  return (
+    <div className="margin-row" role="row">
+      {/* The cell role belongs on a wrapper, not on the button. Put it on the
+          button itself and it overrides the native button role, so the only
+          way to drill into a club from this chart is announced as a table cell
+          rather than as something operable. */}
+      <div className="margin-club" role="cell">
+        {abbr ? (
+          <button type="button" className="club-btn" onClick={() => onPickTeam?.(abbr)}>
+            <TeamLogo abbr={abbr} size={18} />
+            <span>{TEAM_BY_ABBR[abbr]?.name ?? label}</span>
+          </button>
+        ) : (
+          <span className="club-btn is-former">
+            <TeamLogo abbr={null} size={18} />
+            <span>{label}</span>
+          </span>
+        )}
+      </div>
+
+      <div className="margin-track" role="cell" style={{ '--w': `${width}%` }}>
+        <span className="margin-zero" aria-hidden="true" />
+        <span className={`margin-bar ${positive ? 'pos' : 'neg'}`} aria-hidden="true" />
+        <span className={`margin-label ${positive ? 'pos' : 'neg'}`}>
+          {positive ? '+' : '−'}
+          {one(Math.abs(row.gdpg))}
+        </span>
+      </div>
+
+      <span className="margin-split" role="cell">
+        <span title={`${one(row.gfpg)} scored per match (rank ${row.attackRank} of ${count})`}>
+          {one(row.gfpg)}
+        </span>
+        <i aria-hidden="true">/</i>
+        <span title={`${one(row.gapg)} conceded per match (rank ${row.defenceRank} of ${count})`}>
+          {one(row.gapg)}
+        </span>
+      </span>
+    </div>
   )
 }

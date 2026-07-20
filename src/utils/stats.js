@@ -43,36 +43,75 @@ export function seasonTotals(fixtures) {
 }
 
 /**
- * Attack and defence per club, each ranked. Ranks are computed here rather
- * than in the view so the tooltip and the bar can't disagree.
+ * Rank a set of clubs on attack and defence and order them by goal
+ * difference. Shared by the current season and by any past one, so the two
+ * are ranked identically rather than by two similar-looking implementations.
+ *
+ * Each row arrives with `key`, `played`, `gf` and `ga`; the per-match rates
+ * and ranks are derived here so a tooltip and a bar cannot disagree.
  */
-export function teamScoring(fixtures, abbrs) {
-  const table = buildTable(fixtures, abbrs).filter((r) => r.played)
+function rankScoring(rows) {
+  const scored = rows
+    .filter((r) => r.played)
+    .map((r) => ({
+      ...r,
+      gd: r.gf - r.ga,
+      gfpg: r.gf / r.played,
+      gapg: r.ga / r.played,
+      gdpg: (r.gf - r.ga) / r.played,
+    }))
 
-  const rows = table.map((r) => ({
-    abbr: r.abbr,
-    played: r.played,
-    points: r.points,
-    gf: r.gf,
-    ga: r.ga,
-    gd: r.gd,
-    gfpg: r.gf / r.played,
-    gapg: r.ga / r.played,
-    gdpg: r.gd / r.played,
-    homePpg: r.home.played ? (r.home.won * 3 + r.home.drawn) / r.home.played : 0,
-    awayPpg: r.away.played ? (r.away.won * 3 + r.away.drawn) / r.away.played : 0,
-  }))
-
-  const rank = (key, dir = -1) => {
-    const sorted = [...rows].sort((a, b) => (a[key] - b[key]) * dir)
-    return Object.fromEntries(sorted.map((r, i) => [r.abbr, i + 1]))
+  const rank = (field, dir = -1) => {
+    const sorted = [...scored].sort((a, b) => (a[field] - b[field]) * dir)
+    return Object.fromEntries(sorted.map((r, i) => [r.key, i + 1]))
   }
   const attack = rank('gfpg')
   const defence = rank('gapg', 1) // conceding fewer is better
 
-  return rows
-    .map((r) => ({ ...r, attackRank: attack[r.abbr], defenceRank: defence[r.abbr] }))
+  return scored
+    .map((r) => ({ ...r, attackRank: attack[r.key], defenceRank: defence[r.key] }))
     .sort((a, b) => b.gdpg - a.gdpg)
+}
+
+/** Attack and defence for the season in progress, derived from its fixtures. */
+export function teamScoring(fixtures, abbrs) {
+  const table = buildTable(fixtures, abbrs)
+
+  return rankScoring(
+    table.map((r) => ({
+      key: r.abbr,
+      abbr: r.abbr,
+      name: null, // resolved from the club lookup at render time
+      played: r.played,
+      points: r.points,
+      gf: r.gf,
+      ga: r.ga,
+      homePpg: r.home.played ? (r.home.won * 3 + r.home.drawn) / r.home.played : 0,
+      awayPpg: r.away.played ? (r.away.won * 3 + r.away.drawn) / r.away.played : 0,
+    }))
+  )
+}
+
+/**
+ * The same view for a completed season, taken from its final table.
+ *
+ * Historical rows name clubs in full and carry no abbreviation, because the
+ * table was computed from match results rather than from a club list. The
+ * name is therefore the key, and the caller resolves a crest from it where
+ * the club still exists.
+ */
+export function seasonScoring(season) {
+  return rankScoring(
+    season.table.map((r) => ({
+      key: r.team,
+      abbr: null,
+      name: r.team,
+      played: r.played,
+      points: r.points,
+      gf: r.gf,
+      ga: r.ga,
+    }))
+  )
 }
 
 /**
