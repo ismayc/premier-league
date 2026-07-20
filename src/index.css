@@ -1289,6 +1289,259 @@ table {
   font-size: 13.5px;
 }
 
+/* ── Team sheets ──────────────────────────────────────────────────────── */
+
+.lineups {
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.lineups h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.lu-sides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.lu-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.lu-formation {
+  color: var(--accent);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.lu-line {
+  margin-bottom: 8px;
+}
+
+.lu-line-name {
+  display: block;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.lu-line ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lu-line li {
+  font-size: 12.5px;
+}
+
+.lu-player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  border-radius: 5px;
+  text-align: left;
+  font-size: inherit;
+}
+
+.lu-player:hover {
+  background: var(--card-2);
+}
+
+.lu-caret {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+/* ── One player's match ───────────────────────────────────────────────── */
+
+.lu-detail {
+  margin: 4px 0 8px 22px;
+  padding: 8px 10px;
+  background: var(--card-2);
+  border-radius: 7px;
+}
+
+.lu-bio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.lu-bio img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--card);
+  flex: none;
+}
+
+.lu-bio dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 4px 10px;
+  margin: 0;
+  flex: 1;
+}
+
+.lu-bio dt {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.lu-bio dd {
+  margin: 0;
+  font-size: 12px;
+}
+
+.lu-stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lu-stats li {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  background: var(--card);
+  border-radius: 5px;
+  padding: 3px 7px;
+}
+
+.lu-stat-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+
+.lu-stat-label {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.lu-nothing {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.lu-jersey {
+  flex: none;
+  width: 18px;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
+
+.lu-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lu-bench .lu-name {
+  color: var(--text-2);
+}
+
+.lu-out {
+  color: var(--viz-neg);
+  font-size: 9px;
+}
+
+.lu-in {
+  color: var(--win);
+  font-size: 9px;
+}
+
+.lu-subs-head {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 14px 0 6px;
+}
+
+.lu-subs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.lu-subs li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  background: var(--card-2);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.lu-min {
+  flex: none;
+  width: 30px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.lu-on {
+  color: var(--win);
+}
+
+.lu-off {
+  color: var(--text-2);
+}
+
+.lu-arrow {
+  color: var(--muted);
+}
+
+.lu-subteam {
+  margin-left: auto;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .lu-sides {
+    grid-template-columns: 1fr;
+  }
+}
+
 .tp-head {
   display: flex;
   align-items: center;

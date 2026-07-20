@@ -1,4 +1,5 @@
 import TeamLogo from './TeamLogo.jsx'
+import Lineups from './Lineups.jsx'
 import { TEAM_BY_ABBR } from '../data/teams.js'
 import { longDayOf, timeOf, countdown } from '../utils/time.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
@@ -115,6 +116,8 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
             </div>
           )}
         </dl>
+
+        <Lineups fixture={fixture} />
       </div>
     </div>
   )

@@ -1,6 +1,12 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+
+// MatchDetail renders team sheets, which fetch when the match is opened.
+// These tests are about the detail panel itself, and an unawaited async state
+// update from a child turns every one of them into an act() warning. Lineups
+// has its own suite, so it is stubbed out here.
+vi.mock('../src/components/Lineups.jsx', () => ({ default: () => null }))
 import TeamLogo from '../src/components/TeamLogo.jsx'
 import MatchCard from '../src/components/MatchCard.jsx'
 import MatchDetail from '../src/components/MatchDetail.jsx'

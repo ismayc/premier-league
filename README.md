@@ -24,6 +24,16 @@ from ESPN's public feeds; historical tables are computed from
 Clicking a club anywhere opens a drawer with its form, home and away records,
 upcoming fixtures, leading scorers, and full season-by-season history.
 
+Opening a match shows both **team sheets** — formation, starting XI by line,
+bench, and the substitutions with the minute each was made. Clicking a player
+expands their match: goals, assists, shots, fouls and cards, alongside their
+position, age, nationality and height.
+
+Team sheets are the one thing fetched per match rather than committed, because
+a lineup does not exist until about an hour before kickoff — a nightly refresh
+would commit 380 empty squads and still be wrong an hour before every match.
+Until then the panel says so rather than showing an error.
+
 ## Running it
 
 ```sh
