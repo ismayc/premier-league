@@ -415,18 +415,27 @@ select {
   gap: 6px;
 }
 
+/* A narrow "when" column, the two clubs stacked, and a faint meta line — the
+   shape of the WNBA schedule's card, adapted to football. */
 .mc {
   position: relative;
-  display: flex;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: 66px 1fr;
+  gap: 12px;
+  align-items: center;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  overflow: hidden;
+  padding: 11px 14px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.mc:hover {
+  border-color: var(--accent);
 }
 
 .mc.is-live {
-  border-color: color-mix(in srgb, var(--live) 55%, var(--line));
+  border-color: color-mix(in srgb, var(--live) 60%, var(--line));
 }
 
 .mc.is-tracked {
@@ -434,11 +443,11 @@ select {
 }
 
 .mc.is-off {
-  opacity: 0.65;
+  opacity: 0.6;
 }
 
-/* The open-details control fills the card and sits underneath the content, so
-   the whole card is clickable without nesting buttons inside a button. */
+/* The open-details control fills the card and sits behind the content, so the
+   whole card is clickable without nesting buttons inside a button. */
 .mc-open {
   position: absolute;
   inset: 0;
@@ -446,6 +455,7 @@ select {
   background: none;
   border: 0;
   padding: 0;
+  border-radius: var(--radius);
   z-index: 0;
 }
 
@@ -453,96 +463,54 @@ select {
   background: var(--card-2);
 }
 
-.mc-body {
+/* Content sits above the click layer but lets clicks fall through to it,
+   except on the real buttons (stars, club names), which re-enable pointers. */
+.mc-when,
+.mc-main {
   position: relative;
   z-index: 1;
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 84px 1fr;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 12px;
-  text-align: left;
-  /* Let clicks fall through to the control beneath, except on the real
-     buttons layered above it. */
   pointer-events: none;
-}
-
-.mc-team {
-  pointer-events: auto;
-}
-
-.mc-team {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   min-width: 0;
-  background: none;
-  border: 0;
-  padding: 2px 4px;
-  border-radius: 6px;
 }
 
-.mc-team:hover {
-  background: var(--card-2);
-}
-
-.mc-away {
-  flex-direction: row-reverse;
-  text-align: right;
-}
-
-.mc-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mc-team.is-winner .mc-name {
-  font-weight: 700;
-}
-
-.mc-team.is-followed .mc-name {
-  color: var(--accent);
-}
-
-.mc-goals {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  font-size: 17px;
-  margin-left: auto;
-}
-
-.mc-away .mc-goals {
-  margin-left: 0;
-  margin-right: auto;
-}
-
-.mc-mid {
+.mc-when {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 2px;
-  color: var(--muted);
-  font-size: 12.5px;
   font-variant-numeric: tabular-nums;
 }
 
 .mc-ko {
-  font-size: 14px;
-  color: var(--text-2);
+  font-size: 15px;
+  font-weight: 600;
 }
 
-.mc-ft,
-.mc-off {
+.mc-zone {
   font-size: 11px;
+  color: var(--muted);
+}
+
+.mc-ft {
+  font-size: 12px;
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.mc-clock {
+.mc-off-badge {
+  font-size: 11.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mc-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   color: var(--live);
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 12.5px;
 }
 
 .mc-live-dot {
@@ -565,25 +533,30 @@ select {
   }
 }
 
-/* A star per club, each hugging its own side of the card so it is never
-   ambiguous which club it follows. */
+.mc-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mc-side {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
 .mc-star {
-  position: relative;
-  z-index: 1;
+  pointer-events: auto;
+  order: -1;
+  flex: none;
   background: none;
   border: 0;
-  padding: 0 10px;
+  padding: 1px 3px;
+  border-radius: 5px;
   color: var(--muted);
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
-}
-
-.mc-star-home {
-  border-right: 1px solid var(--line);
-}
-
-.mc-star-away {
-  border-left: 1px solid var(--line);
 }
 
 .mc-star:hover {
@@ -592,6 +565,86 @@ select {
 
 .mc-star.on {
   color: var(--accent);
+}
+
+.mc-team {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.mc-team:hover {
+  background: var(--card-2);
+}
+
+.mc-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.mc-side.is-winner .mc-name {
+  font-weight: 700;
+}
+
+.mc-side.is-followed .mc-name {
+  color: var(--accent);
+}
+
+.mc-score {
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+}
+
+.mc-side.is-winner .mc-score {
+  color: var(--accent);
+}
+
+/* Venue and where-to-watch, wrapping onto their own faint line. */
+.mc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 12px;
+  margin-top: 7px;
+  padding-left: 4px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.mc-tv {
+  color: var(--text-2);
+}
+
+.mc-countdown {
+  color: var(--accent);
+}
+
+@media (max-width: 520px) {
+  /* The kickoff time drops onto one horizontal line above the clubs, freeing
+     the full width for names — the same idea as the WNBA card on a phone. */
+  .mc {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px 12px;
+  }
+  .mc-when {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+  }
 }
 
 /* ── Week grid ────────────────────────────────────────────────────────── */
@@ -1742,10 +1795,6 @@ table {
 }
 
 @media (max-width: 520px) {
-  .mc-open {
-    grid-template-columns: 1fr 68px 1fr;
-    padding: 10px 8px;
-  }
   .drawer {
     max-width: none;
     border-radius: 14px;

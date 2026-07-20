@@ -116,6 +116,36 @@ describe('fetchLive', () => {
     expect(map.get('404').score).toBeUndefined()
   })
 
+  it('picks up broadcasters for an imminent match, de-duplicated', async () => {
+    // Assignments land only a few weeks out, so the committed fixtures carry
+    // none; the live poll surfaces them without waiting for a data refresh.
+    const withTv = {
+      ...event('406', { type: { state: 'pre', shortDetail: '3:00 PM' } }, sides('0', '0')),
+    }
+    withTv.competitions[0].broadcasts = [
+      { market: 'national', names: ['Sky Sports', 'NBC'] },
+      { market: 'national', names: ['NBC'] },
+    ]
+    routeFetch({ 20260823: { events: [withTv] } })
+
+    const map = await fetchLive({ now: NOW })
+    expect(map.get('406').tv).toEqual(['Sky Sports', 'NBC'])
+  })
+
+  it('adds no tv field when a match has no broadcasters listed', async () => {
+    routeFetch({
+      20260823: { events: [event('407', { type: { state: 'pre', shortDetail: '3:00 PM' } }, sides('0', '0'))] },
+    })
+    expect((await fetchLive({ now: NOW })).get('407').tv).toBeUndefined()
+  })
+
+  it('ignores a broadcast entry that carries no names', async () => {
+    const ev = event('408', { type: { state: 'pre', shortDetail: '3:00 PM' } }, sides('0', '0'))
+    ev.competitions[0].broadcasts = [{ market: 'national' }]
+    routeFetch({ 20260823: { events: [ev] } })
+    expect((await fetchLive({ now: NOW })).get('408').tv).toBeUndefined()
+  })
+
   it('tolerates a status block the feed omitted entirely', async () => {
     routeFetch({ 20260822: { events: [event('405', undefined, sides('1', '1'))] } })
 

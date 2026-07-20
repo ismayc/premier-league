@@ -140,7 +140,9 @@ describe('MatchCard', () => {
     )
 
     expect(container.querySelector('.mc-ko')).toHaveTextContent('20:00')
-    expect(container.querySelector('.mc-goals')).toBeNull()
+    // The zone abbreviation sits beneath the time in the when-column.
+    expect(container.querySelector('.mc-zone')).toBeInTheDocument()
+    expect(container.querySelector('.mc-score')).toBeNull()
     expect(container.querySelector('.mc')).not.toHaveClass('is-live', 'is-off', 'is-tracked')
   })
 
@@ -149,7 +151,7 @@ describe('MatchCard', () => {
       <MatchCard fixture={fixture({ unplayed: 'Postponed' })} tz="Europe/London" />
     )
 
-    expect(screen.getByText('Postponed')).toHaveClass('mc-off')
+    expect(screen.getByText('Postponed')).toHaveClass('mc-off-badge')
     expect(container.querySelector('.mc')).toHaveClass('is-off')
     expect(container.querySelector('.mc-ko')).toBeNull()
   })
@@ -159,16 +161,16 @@ describe('MatchCard', () => {
       <MatchCard fixture={fixture({ live: true, clock: "67'", score: [1, 0] })} tz="Europe/London" />
     )
 
-    expect(container.querySelector('.mc-clock')).toHaveTextContent("67'")
+    expect(container.querySelector('.mc-live-badge')).toHaveTextContent("67'")
     expect(container.querySelector('.mc')).toHaveClass('is-live')
   })
 
-  it('falls back to LIVE when the feed sends no clock', () => {
+  it('falls back to a generic live label when the feed sends no clock', () => {
     // ESPN drops `clock` at half time; the card must still read as in-progress.
     const { container } = render(
       <MatchCard fixture={fixture({ live: true, score: [1, 0] })} tz="Europe/London" />
     )
-    expect(container.querySelector('.mc-clock')).toHaveTextContent('LIVE')
+    expect(container.querySelector('.mc-live-badge')).toHaveTextContent('Live')
   })
 
   it('shows the score and marks the winning side once a match is finished', () => {
@@ -177,33 +179,75 @@ describe('MatchCard', () => {
     )
 
     expect(container.querySelector('.mc-ft')).toHaveTextContent('FT')
-    expect([...container.querySelectorAll('.mc-goals')].map((n) => n.textContent)).toEqual(['2', '0'])
-    expect(screen.getByText('Arsenal').closest('button')).toHaveClass('is-winner')
-    expect(screen.getByText('Chelsea').closest('button')).not.toHaveClass('is-winner')
+    expect([...container.querySelectorAll('.mc-score')].map((n) => n.textContent)).toEqual(['2', '0'])
+    // The winner styling is on the whole side row, not the club button.
+    expect(screen.getByText('Arsenal').closest('.mc-side')).toHaveClass('is-winner')
+    expect(screen.getByText('Chelsea').closest('.mc-side')).not.toHaveClass('is-winner')
   })
 
   it('marks the away side as the winner when it wins', () => {
     render(<MatchCard fixture={fixture({ score: [0, 3] })} tz="Europe/London" />)
-    expect(screen.getByText('Chelsea').closest('button')).toHaveClass('is-winner')
-    expect(screen.getByText('Arsenal').closest('button')).not.toHaveClass('is-winner')
+    expect(screen.getByText('Chelsea').closest('.mc-side')).toHaveClass('is-winner')
+    expect(screen.getByText('Arsenal').closest('.mc-side')).not.toHaveClass('is-winner')
   })
 
   it('marks neither side on a draw', () => {
     render(<MatchCard fixture={fixture({ score: [1, 1] })} tz="Europe/London" />)
-    expect(screen.getByText('Arsenal').closest('button')).not.toHaveClass('is-winner')
-    expect(screen.getByText('Chelsea').closest('button')).not.toHaveClass('is-winner')
+    expect(screen.getByText('Arsenal').closest('.mc-side')).not.toHaveClass('is-winner')
+    expect(screen.getByText('Chelsea').closest('.mc-side')).not.toHaveClass('is-winner')
   })
 
-  it('hides a finished score behind a marker when scores are hidden', () => {
-    // The spoiler guard is the point: the fact a match is over may be shown,
-    // the score may not.
+  it('withholds the score and shows the kickoff time when scores are hidden', () => {
+    // Spoiler-free: a finished match reads as an ordinary upcoming card —
+    // its kickoff time, no score, and no "FT" that would hint it is over.
     const { container } = render(
-      <MatchCard fixture={fixture({ score: [2, 0] })} tz="Europe/London" hideScores />
+      <MatchCard fixture={fixture({ score: [2, 0], ko: '2026-08-21T19:00:00.000Z' })} tz="Europe/London" hideScores />
     )
 
-    expect(container.querySelector('.mc-hidden')).toHaveAttribute('title', 'Scores hidden')
-    expect(container.querySelector('.mc-goals')).toBeNull()
+    expect(container.querySelector('.mc-score')).toBeNull()
     expect(container.querySelector('.mc-ft')).toBeNull()
+    expect(container.querySelector('.mc-ko')).toHaveTextContent('20:00')
+  })
+
+  it('shows the venue and where to watch beneath the clubs', () => {
+    const { container } = render(
+      <MatchCard
+        fixture={fixture({
+          venue: 'Emirates Stadium',
+          city: 'London',
+          tv: ['Sky Sports', 'NBC', 'Peacock', 'Extra Channel'],
+        })}
+        tz="Europe/London"
+      />
+    )
+
+    const meta = container.querySelector('.mc-meta')
+    expect(meta).toHaveTextContent('Emirates Stadium, London')
+    // Broadcasters are capped at three so a long list can't blow out the card.
+    expect(container.querySelector('.mc-tv')).toHaveTextContent('Sky Sports · NBC · Peacock')
+    expect(container.querySelector('.mc-tv')).not.toHaveTextContent('Extra Channel')
+  })
+
+  it('shows the venue without a city when the feed omits one', () => {
+    const { container } = render(
+      <MatchCard fixture={fixture({ venue: 'Somewhere' })} tz="Europe/London" />
+    )
+    expect(container.querySelector('.mc-meta')).toHaveTextContent('Somewhere')
+    expect(container.querySelector('.mc-tv')).toBeNull()
+  })
+
+  it('counts down only for a match that kicks off soon', () => {
+    const { container } = render(
+      <MatchCard fixture={fixture({ ko: at(3 * HOUR) })} tz="Europe/London" />
+    )
+    expect(container.querySelector('.mc-countdown')).toHaveTextContent(/in \d/)
+  })
+
+  it('does not count down a fixture that is still days away', () => {
+    const { container } = render(
+      <MatchCard fixture={fixture({ ko: at(5 * DAY) })} tz="Europe/London" />
+    )
+    expect(container.querySelector('.mc-countdown')).toBeNull()
   })
 
   it('falls back to the abbreviation for a club it does not know', () => {
@@ -217,8 +261,8 @@ describe('MatchCard', () => {
 
     // The card as a whole is tracked if *either* club is followed...
     expect(container.querySelector('.mc')).toHaveClass('is-tracked')
-    expect(screen.getByText('Chelsea').closest('button')).toHaveClass('is-followed')
-    expect(screen.getByText('Arsenal').closest('button')).not.toHaveClass('is-followed')
+    expect(screen.getByText('Chelsea').closest('.mc-side')).toHaveClass('is-followed')
+    expect(screen.getByText('Arsenal').closest('.mc-side')).not.toHaveClass('is-followed')
   })
 
   it('gives each club its own star, reporting that club’s state', () => {

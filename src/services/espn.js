@@ -52,6 +52,13 @@ function readEvent(ev) {
   // A match ESPN has stopped without completing is postponed or abandoned.
   if (state === 'post' && !type.completed) out.unplayed = type.description
 
+  // Broadcasters are assigned only a few weeks out, so the committed fixtures
+  // carry none until a refresh close to matchday. Picking them up here means
+  // an imminent match shows where to watch as soon as the assignment lands,
+  // without waiting for the next data refresh.
+  const tv = comp.broadcasts?.flatMap((b) => b.names || []) ?? []
+  if (tv.length) out.tv = [...new Set(tv)]
+
   return out
 }
 

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { countdown, dateKey, groupByDay, isValidZone, startOfWeek, timeOf } from '../src/utils/time.js'
+import {
+  countdown,
+  dateKey,
+  groupByDay,
+  isValidZone,
+  startOfWeek,
+  timeOf,
+  zoneAbbr,
+} from '../src/utils/time.js'
 import { buildCalendar } from '../src/utils/ics.js'
 import { readState, writeState } from '../src/utils/urlState.js'
 import { applyLive } from '../src/services/espn.js'
@@ -18,6 +26,15 @@ describe('time', () => {
   it('keys a match to the local calendar day, which can differ by zone', () => {
     expect(dateKey(ko, 'Europe/London')).toBe('2026-08-21')
     expect(dateKey(ko, 'Australia/Sydney')).toBe('2026-08-22')
+  })
+
+  it('gives a short zone label for the card, and nothing for a bad zone', () => {
+    // British Summer Time in August; the exact spelling is the platform's, so
+    // this asserts a plausible short form rather than a fixed string.
+    expect(zoneAbbr(ko, 'Europe/London')).toMatch(/BST|GMT/)
+    expect(zoneAbbr(ko, 'America/New_York')).toMatch(/EDT|GMT|ET/)
+    // An invalid zone must not throw — the card just shows no abbreviation.
+    expect(zoneAbbr(ko, 'Mars/Olympus')).toBe('')
   })
 
   it('validates timezones against the platform rather than a list', () => {

@@ -35,6 +35,22 @@ const fmt = (tz, opts) => new Intl.DateTimeFormat('en-GB', { timeZone: tz, ...op
 export const timeOf = (iso, tz) =>
   fmt(tz, { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso))
 
+/** The short zone name for an instant — "BST", "MST", "GMT+2" — for the card. */
+export function zoneAbbr(iso, tz) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: tz,
+      timeZoneName: 'short',
+      hour: '2-digit',
+    }).formatToParts(new Date(iso))
+    // The one try/catch covers both an invalid zone and — should a platform
+    // ever omit the part — the missing-part case, which then throws on .value.
+    return parts.find((p) => p.type === 'timeZoneName').value
+  } catch {
+    return ''
+  }
+}
+
 export const dayOf = (iso, tz) =>
   fmt(tz, { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(iso))
 
