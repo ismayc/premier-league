@@ -931,6 +931,23 @@ table {
   }
 }
 
+/* Phone width. The historical tables carry full club names and many columns,
+   so the least-essential ones drop here to keep the position, club, goal
+   difference and points on screen without a sideways scroll. Cells also
+   tighten so the survivors have room. */
+@media (max-width: 520px) {
+  .hide-phone {
+    display: none;
+  }
+
+  .league th,
+  .league td,
+  .leaders th,
+  .leaders td {
+    padding: 7px 4px;
+  }
+}
+
 @media (max-width: 420px) {
   .hide-xs {
     display: none;

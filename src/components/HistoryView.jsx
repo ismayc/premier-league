@@ -90,9 +90,9 @@ function SeasonTable({ season, onSeason }) {
               <th className="col-pos" scope="col">#</th>
               <th className="col-club" scope="col">Club</th>
               <th scope="col">P</th>
-              <th scope="col">W</th>
-              <th scope="col">D</th>
-              <th scope="col">L</th>
+              <th className="hide-phone" scope="col">W</th>
+              <th className="hide-phone" scope="col">D</th>
+              <th className="hide-phone" scope="col">L</th>
               <th className="hide-sm" scope="col">GF</th>
               <th className="hide-sm" scope="col">GA</th>
               <th scope="col">GD</th>
@@ -113,9 +113,9 @@ function SeasonTable({ season, onSeason }) {
                   {r.pos === 1 && <span className="crown" title="Champions">★</span>}
                 </td>
                 <td>{r.played}</td>
-                <td>{r.won}</td>
-                <td>{r.drawn}</td>
-                <td>{r.lost}</td>
+                <td className="hide-phone">{r.won}</td>
+                <td className="hide-phone">{r.drawn}</td>
+                <td className="hide-phone">{r.lost}</td>
                 <td className="hide-sm">{r.gf}</td>
                 <td className="hide-sm">{r.ga}</td>
                 <td className={r.gd > 0 ? 'pos' : r.gd < 0 ? 'neg' : ''}>
@@ -170,9 +170,9 @@ function AllTime() {
             <tr>
               <th className="col-pos" scope="col">#</th>
               <th className="col-club" scope="col">Club</th>
-              <th scope="col" title="Seasons">S</th>
-              <th scope="col">P</th>
-              <th scope="col">W</th>
+              <th className="hide-phone" scope="col" title="Seasons">S</th>
+              <th className="hide-phone" scope="col">P</th>
+              <th className="hide-phone" scope="col">W</th>
               <th className="hide-sm" scope="col">D</th>
               <th className="hide-sm" scope="col">L</th>
               <th scope="col">GD</th>
@@ -188,9 +188,9 @@ function AllTime() {
                 <td className="col-club">
                   <span className="club-plain">{r.team}</span>
                 </td>
-                <td>{r.seasons}</td>
-                <td>{r.played}</td>
-                <td>{r.won}</td>
+                <td className="hide-phone">{r.seasons}</td>
+                <td className="hide-phone">{r.played}</td>
+                <td className="hide-phone">{r.won}</td>
                 <td className="hide-sm">{r.drawn}</td>
                 <td className="hide-sm">{r.lost}</td>
                 <td className={r.gd > 0 ? 'pos' : r.gd < 0 ? 'neg' : ''}>
