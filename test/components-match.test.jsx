@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 // MatchDetail renders team sheets, which fetch when the match is opened.
@@ -1046,5 +1046,70 @@ describe('CalendarModal', () => {
     await user.click(container.querySelector('.modal-backdrop'))
     await user.click(screen.getByRole('button', { name: 'Close' }))
     expect(onClose).toHaveBeenCalledTimes(2)
+  })
+
+  const FEED = 'https://premier-league-viewer.netlify.app/calendar.ics'
+
+  it('offers an "All clubs" subscribe row with webcal + Google links', () => {
+    render(<CalendarModal fixtures={all} onClose={vi.fn()} />)
+    expect(screen.getByText('All clubs')).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Subscribe' })[0]).toHaveAttribute(
+      'href',
+      'webcal://premier-league-viewer.netlify.app/calendar.ics'
+    )
+    expect(screen.getAllByRole('link', { name: 'Google' })[0].getAttribute('href')).toBe(
+      'https://www.google.com/calendar/render?cid=webcal://premier-league-viewer.netlify.app/calendar.ics'
+    )
+  })
+
+  it('adds a "Followed" subscribe row carrying a ?teams= filter when following', () => {
+    following('ARS', 'LIV')
+    withFollow(<CalendarModal fixtures={all} onClose={vi.fn()} />)
+    expect(screen.getByText('Followed (2)')).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Subscribe' }).at(-1)).toHaveAttribute(
+      'href',
+      'webcal://premier-league-viewer.netlify.app/calendar.ics?teams=ARS,LIV'
+    )
+  })
+
+  it('shows no "Followed" subscribe row when nothing is followed', () => {
+    render(<CalendarModal fixtures={all} onClose={vi.fn()} />)
+    expect(screen.queryByText(/^Followed \(/)).toBeNull()
+  })
+
+  it('copies the feed URL and flips the label to "Copied!" then back', async () => {
+    vi.useFakeTimers()
+    const writeText = vi.fn().mockResolvedValue()
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+    render(<CalendarModal fixtures={all} onClose={vi.fn()} />)
+
+    const copy = screen.getAllByRole('button', { name: 'Copy URL' })[0]
+    await act(async () => {
+      fireEvent.click(copy)
+    })
+    expect(writeText).toHaveBeenCalledWith(FEED)
+    expect(copy).toHaveTextContent('Copied!')
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500)
+    })
+    expect(copy).toHaveTextContent('Copy URL')
+
+    vi.unstubAllGlobals()
+    vi.useRealTimers()
+  })
+
+  it('leaves the copy label unchanged when the clipboard write is rejected', async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal('navigator', {
+      clipboard: { writeText: vi.fn().mockRejectedValue(new Error('denied')) },
+    })
+    render(<CalendarModal fixtures={all} onClose={vi.fn()} />)
+
+    const copy = screen.getAllByRole('button', { name: 'Copy URL' })[0]
+    await user.click(copy)
+    expect(copy).toHaveTextContent('Copy URL')
+
+    vi.unstubAllGlobals()
   })
 })

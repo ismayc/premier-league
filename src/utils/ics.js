@@ -79,3 +79,14 @@ export function downloadCalendar(fixtures, filename = 'premier-league.ics', opti
   a.remove()
   URL.revokeObjectURL(url)
 }
+
+// Turn an http(s) feed URL into a webcal:// subscription URL — what a calendar app
+// expects when *registering a live subscription* (an https link only downloads a
+// one-time snapshot). Non-http schemes pass through unchanged.
+export const webcalUrl = (httpsUrl) => httpsUrl.replace(/^https?:/, 'webcal:')
+
+// A "subscribe in Google Calendar" deep link. Google's `cid` must be a RAW webcal://
+// URL — an https:// or percent-encoded one is rejected with "check the URL". Our feed
+// uses "," (not "&") to separate clubs, so the query string survives inside `cid`.
+export const googleCalendarUrl = (httpsUrl) =>
+  `https://www.google.com/calendar/render?cid=${webcalUrl(httpsUrl)}`

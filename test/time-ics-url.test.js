@@ -8,7 +8,7 @@ import {
   timeOf,
   zoneAbbr,
 } from '../src/utils/time.js'
-import { buildCalendar } from '../src/utils/ics.js'
+import { buildCalendar, webcalUrl, googleCalendarUrl } from '../src/utils/ics.js'
 import { readState, writeState } from '../src/utils/urlState.js'
 import { applyLive } from '../src/services/espn.js'
 
@@ -150,5 +150,30 @@ describe('applyLive', () => {
     const [f] = applyLive(fixtures, live)
     expect(f.score).toBeUndefined()
     expect(f.live).toBe(true)
+  })
+})
+
+describe('webcalUrl / googleCalendarUrl', () => {
+  it('swaps https/http for the webcal scheme so a calendar app subscribes', () => {
+    expect(webcalUrl('https://premier-league-viewer.netlify.app/calendar.ics')).toBe(
+      'webcal://premier-league-viewer.netlify.app/calendar.ics'
+    )
+    expect(webcalUrl('http://x/y.ics')).toBe('webcal://x/y.ics')
+  })
+
+  it('leaves a query string (and its commas) intact', () => {
+    expect(webcalUrl('https://host/calendar.ics?teams=ARS,LIV')).toBe(
+      'webcal://host/calendar.ics?teams=ARS,LIV'
+    )
+  })
+
+  it('passes through a non-http scheme unchanged', () => {
+    expect(webcalUrl('webcal://host/y.ics')).toBe('webcal://host/y.ics')
+  })
+
+  it('wraps a RAW (un-encoded) webcal URL in Google’s cid deep link', () => {
+    expect(googleCalendarUrl('https://host/calendar.ics?teams=ARS,LIV')).toBe(
+      'https://www.google.com/calendar/render?cid=webcal://host/calendar.ics?teams=ARS,LIV'
+    )
   })
 })

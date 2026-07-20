@@ -5,6 +5,16 @@
 [build.environment]
   NODE_VERSION = "22"
 
+[functions]
+  directory = "netlify/functions"
+
+# Pretty URL for the live calendar feed. Order matters: this must sit ABOVE the SPA
+# catch-all, or /*  would swallow /calendar.ics and serve index.html instead.
+[[redirects]]
+  from = "/calendar.ics"
+  to = "/.netlify/functions/calendar"
+  status = 200
+
 # Single-page app: every path resolves to the entry document, and the view is
 # read from the query string rather than the path.
 [[redirects]]
