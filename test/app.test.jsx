@@ -103,6 +103,39 @@ describe('App views', () => {
     // `team` opens the club drawer, so a shared link can point at one club.
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
+
+  // The fixtures filters used to be FixturesView's own useState, so a reload
+  // reset them and a shared link silently dropped them. They now live in the
+  // shell alongside every other choice; this holds both halves of that.
+  it('restores the fixtures filters from the URL and writes them back', async () => {
+    stubZone('Europe/London')
+    // FollowProvider lives in main.jsx, so App on its own sees an empty
+    // follow set and the Followed chip stays disabled. This case needs the
+    // real provider to click it.
+    localStorage.setItem('pl:followed', JSON.stringify(['ARS']))
+    setSearch('?past=1&mine=1')
+    const user = userEvent.setup()
+    render(
+      <FollowProvider>
+        <App />
+      </FollowProvider>
+    )
+    await act(async () => {})
+
+    expect(screen.getByRole('button', { name: 'Played' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: /Followed/ })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+
+    // Switching one off has to leave the URL, not just the chip.
+    await user.click(screen.getByRole('button', { name: 'Played' }))
+    expect(window.location.search).toBe('?mine=1')
+
+    // And with both off the URL is clean again, rather than carrying mine=0.
+    await user.click(screen.getByRole('button', { name: /Followed/ }))
+    expect(window.location.search).toBe('')
+  })
 })
 
 describe('App shell controls', () => {

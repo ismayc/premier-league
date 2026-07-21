@@ -41,6 +41,11 @@ export default function App() {
   const [view, setView] = useState(initial.view)
   const [tz, setTz] = useState(initial.tz)
   const [hideScores, setHideScores] = useState(initial.hide)
+  // The fixtures filters live here rather than in FixturesView so that they
+  // survive a reload and travel in a shared link, the same as every other
+  // choice below. Held in the shell purely so writeState can see them.
+  const [onlyFollowed, setOnlyFollowed] = useState(initial.mine)
+  const [showPast, setShowPast] = useState(initial.past)
   const [season, setSeason] = useState(initial.season)
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'dark')
 
@@ -61,8 +66,11 @@ export default function App() {
   /* ── URL + theme persistence ─────────────────────────────────────────── */
 
   useEffect(() => {
-    writeState({ view, tz, team: teamPanel, hide: hideScores, season }, detected)
-  }, [view, tz, teamPanel, hideScores, season, detected])
+    writeState(
+      { view, tz, team: teamPanel, hide: hideScores, mine: onlyFollowed, past: showPast, season },
+      detected
+    )
+  }, [view, tz, teamPanel, hideScores, onlyFollowed, showPast, season, detected])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -174,6 +182,10 @@ export default function App() {
           fixtures={fixtures}
           tz={tz}
           hideScores={hideScores}
+          onlyFollowed={onlyFollowed}
+          onToggleFollowed={() => setOnlyFollowed((v) => !v)}
+          showPast={showPast}
+          onTogglePast={() => setShowPast((v) => !v)}
           onOpen={setDetail}
           onPickTeam={openTeam}
           onExport={() => setShowCalendar(true)}

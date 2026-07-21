@@ -15,6 +15,8 @@ const DEFAULTS = {
   view: 'fixtures',
   team: null,
   hide: false, // hide scores (spoiler-free)
+  mine: false, // fixtures view: only followed clubs
+  past: false, // fixtures view: include days already played
   season: null, // history/stats season override
 }
 
@@ -31,6 +33,8 @@ export function readState(search = window.location.search) {
     tz: isValidZone(tz) ? tz : detected,
     team: q.get('team') || DEFAULTS.team,
     hide: q.get('hide') === '1',
+    mine: q.get('mine') === '1',
+    past: q.get('past') === '1',
     season: season && /^\d{4}$/.test(season) ? Number(season) : DEFAULTS.season,
   }
 }
@@ -41,6 +45,8 @@ export function writeState(state, detected = detectZone()) {
   if (state.tz && state.tz !== detected) q.set('tz', state.tz)
   if (state.team) q.set('team', state.team)
   if (state.hide) q.set('hide', '1')
+  if (state.mine) q.set('mine', '1')
+  if (state.past) q.set('past', '1')
   if (state.season) q.set('season', String(state.season))
 
   const qs = q.toString()

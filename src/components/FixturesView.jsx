@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import MatchCard from './MatchCard.jsx'
 import { groupByDay, longDayOf, countdown, dateKey } from '../utils/time.js'
 import { TEAM_BY_ABBR } from '../data/teams.js'
@@ -11,10 +11,19 @@ import { useFollow } from '../context/follow.jsx'
  * season — in August that is matchweek one, and in April it is whatever is on
  * this weekend, which is what someone opening the page actually wants.
  */
-export default function FixturesView({ fixtures, tz, hideScores, onOpen, onPickTeam, onExport }) {
+export default function FixturesView({
+  fixtures,
+  tz,
+  hideScores,
+  onlyFollowed,
+  onToggleFollowed,
+  showPast,
+  onTogglePast,
+  onOpen,
+  onPickTeam,
+  onExport,
+}) {
   const { followed } = useFollow()
-  const [onlyFollowed, setOnlyFollowed] = useState(false)
-  const [showPast, setShowPast] = useState(false)
 
   const now = new Date()
   const todayKey = dateKey(now.toISOString(), tz)
@@ -47,7 +56,7 @@ export default function FixturesView({ fixtures, tz, hideScores, onOpen, onPickT
           <button
             type="button"
             className={`chip ${showPast ? 'on' : ''}`}
-            onClick={() => setShowPast((v) => !v)}
+            onClick={onTogglePast}
             aria-pressed={showPast}
           >
             Played
@@ -55,7 +64,7 @@ export default function FixturesView({ fixtures, tz, hideScores, onOpen, onPickT
           <button
             type="button"
             className={`chip ${onlyFollowed ? 'on' : ''}`}
-            onClick={() => setOnlyFollowed((v) => !v)}
+            onClick={onToggleFollowed}
             aria-pressed={onlyFollowed}
             disabled={!followed.size}
             title={followed.size ? 'Only followed clubs' : 'Follow a club first'}

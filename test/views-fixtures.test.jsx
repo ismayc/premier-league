@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -61,10 +62,29 @@ afterEach(() => {
 
 const setup = () => userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
 
+// FixturesView is controlled: the two filter chips are props so that App can
+// serialise them into the query string, which is what makes them survive a
+// reload and travel in a shared link. These tests stand in for the shell's
+// half of that contract. Props passed by a test still win, so a case can pin
+// a filter on from the start.
+function Fixtures(props) {
+  const [onlyFollowed, setOnlyFollowed] = useState(false)
+  const [showPast, setShowPast] = useState(false)
+  return (
+    <FixturesView
+      onlyFollowed={onlyFollowed}
+      onToggleFollowed={() => setOnlyFollowed((v) => !v)}
+      showPast={showPast}
+      onTogglePast={() => setShowPast((v) => !v)}
+      {...props}
+    />
+  )
+}
+
 describe('FixturesView', () => {
   it('shows upcoming days only, and flags the one that is today', async () => {
     render(
-      <FixturesView
+      <Fixtures
         fixtures={[
           fx('a', LAST_WEEK, 'ARS', 'CHE', { score: [2, 1] }),
           fx('b', TODAY, 'LIV', 'MNC'),
@@ -89,7 +109,7 @@ describe('FixturesView', () => {
   it('reveals results already played when the Played chip is pressed', async () => {
     const user = setup()
     render(
-      <FixturesView
+      <Fixtures
         fixtures={[
           fx('a', LAST_WEEK, 'ARS', 'CHE', { score: [2, 1] }),
           fx('b', TODAY, 'LIV', 'MNC'),
@@ -111,7 +131,7 @@ describe('FixturesView', () => {
     // Without the `live` escape hatch the one match people most want to see
     // would disappear the moment it started.
     render(
-      <FixturesView
+      <Fixtures
         fixtures={[fx('a', LAST_WEEK, 'ARS', 'CHE', { live: true, clock: "67'" })]}
         tz={TZ}
       />
@@ -120,7 +140,7 @@ describe('FixturesView', () => {
   })
 
   it('disables the followed filter until a club is followed', () => {
-    render(<FixturesView fixtures={[fx('b', TODAY, 'LIV', 'MNC')]} tz={TZ} />)
+    render(<Fixtures fixtures={[fx('b', TODAY, 'LIV', 'MNC')]} tz={TZ} />)
 
     const chip = screen.getByRole('button', { name: /Followed/ })
     expect(chip).toBeDisabled()
@@ -134,7 +154,7 @@ describe('FixturesView', () => {
 
     render(
       <FollowProvider>
-        <FixturesView
+        <Fixtures
           fixtures={[fx('b', TODAY, 'LIV', 'MNC'), fx('c', TODAY, 'TOT', 'EVE')]}
           tz={TZ}
         />
@@ -158,7 +178,7 @@ describe('FixturesView', () => {
 
     render(
       <FollowProvider>
-        <FixturesView fixtures={[fx('b', TODAY, 'LIV', 'MNC')]} tz={TZ} />
+        <Fixtures fixtures={[fx('b', TODAY, 'LIV', 'MNC')]} tz={TZ} />
       </FollowProvider>
     )
 
@@ -170,14 +190,14 @@ describe('FixturesView', () => {
   it('explains an empty list caused by everything being in the past', () => {
     // A different cause needs a different remedy, hence two messages.
     render(
-      <FixturesView fixtures={[fx('a', LAST_WEEK, 'ARS', 'CHE', { score: [2, 1] })]} tz={TZ} />
+      <Fixtures fixtures={[fx('a', LAST_WEEK, 'ARS', 'CHE', { score: [2, 1] })]} tz={TZ} />
     )
     expect(screen.getByText(/Turn on/)).toBeInTheDocument()
   })
 
   it('banners the next kickoff with a countdown', () => {
     render(
-      <FixturesView
+      <Fixtures
         fixtures={[
           fx('a', LAST_WEEK, 'ARS', 'CHE', { score: [2, 1] }),
           fx('c', NEXT_WEEK, 'TOT', 'EVE'),
@@ -195,7 +215,7 @@ describe('FixturesView', () => {
     // Played, postponed, and a past fixture the feed never scored: none of
     // them is a kickoff still to come.
     render(
-      <FixturesView
+      <Fixtures
         fixtures={[
           fx('a', LAST_WEEK, 'ARS', 'CHE', { score: [2, 1] }),
           fx('c', NEXT_WEEK, 'TOT', 'EVE', { unplayed: 'Postponed' }),
@@ -208,7 +228,7 @@ describe('FixturesView', () => {
   })
 
   it('falls back to the raw abbreviation for an unknown club in the banner', () => {
-    render(<FixturesView fixtures={[fx('c', NEXT_WEEK, 'ZZZ', 'CHE')]} tz={TZ} />)
+    render(<Fixtures fixtures={[fx('c', NEXT_WEEK, 'ZZZ', 'CHE')]} tz={TZ} />)
     expect(screen.getByText('Next kickoff').closest('.next-up')).toHaveTextContent(/v Chelsea/)
   })
 
@@ -218,7 +238,7 @@ describe('FixturesView', () => {
     // had already passed, and the banner sat on an expired countdown until
     // the fixture list itself changed.
     render(
-      <FixturesView
+      <Fixtures
         fixtures={[
           fx('c', '2026-09-12T09:01:00.000Z', 'TOT', 'EVE'),
           fx('d', '2026-09-12T11:00:00.000Z', 'ARS', 'CHE'),
@@ -242,7 +262,7 @@ describe('FixturesView', () => {
   })
 
   it('drops the banner entirely when no fixture is still to come', () => {
-    render(<FixturesView fixtures={[fx('c', '2026-09-12T09:01:00.000Z', 'TOT', 'EVE')]} tz={TZ} />)
+    render(<Fixtures fixtures={[fx('c', '2026-09-12T09:01:00.000Z', 'TOT', 'EVE')]} tz={TZ} />)
     expect(screen.getByText('Next kickoff')).toBeInTheDocument()
 
     vi.setSystemTime(new Date('2026-09-12T09:05:00.000Z'))
@@ -255,7 +275,7 @@ describe('FixturesView', () => {
     const onExport = vi.fn()
     const user = setup()
     render(
-      <FixturesView
+      <Fixtures
         fixtures={[
           fx('a', LAST_WEEK, 'ARS', 'CHE', { score: [2, 1] }),
           fx('b', TODAY, 'LIV', 'MNC'),
@@ -273,7 +293,7 @@ describe('FixturesView', () => {
 
   it('tolerates Export with no handler wired up', async () => {
     const user = setup()
-    render(<FixturesView fixtures={[fx('b', TODAY, 'LIV', 'MNC')]} tz={TZ} />)
+    render(<Fixtures fixtures={[fx('b', TODAY, 'LIV', 'MNC')]} tz={TZ} />)
 
     await user.click(screen.getByRole('button', { name: 'Export' }))
 

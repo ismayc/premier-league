@@ -125,8 +125,29 @@ describe('urlState', () => {
     expect(s).toMatchObject({ view: 'table', tz: 'Europe/London', team: 'ARS', hide: true, season: 2015 })
   })
 
+  // The fixtures filters were component-local state until they were lifted
+  // here, which meant a reload dropped them and a shared link never carried
+  // them. Both directions are pinned so they cannot quietly regress.
+  it('round-trips the fixtures filters', () => {
+    writeState({ view: 'fixtures', tz: 'UTC', mine: true, past: true }, 'UTC')
+    expect(window.location.search).toBe('?mine=1&past=1')
+
+    const s = readState(window.location.search)
+    expect(s.mine).toBe(true)
+    expect(s.past).toBe(true)
+  })
+
+  it('reads the fixtures filters as off when the link says nothing', () => {
+    const s = readState('?view=fixtures')
+    expect(s.mine).toBe(false)
+    expect(s.past).toBe(false)
+  })
+
   it('omits defaults so a first-time URL stays clean', () => {
-    writeState({ view: 'fixtures', tz: 'UTC', team: null, hide: false, season: null }, 'UTC')
+    writeState(
+      { view: 'fixtures', tz: 'UTC', team: null, hide: false, mine: false, past: false, season: null },
+      'UTC'
+    )
     expect(window.location.search).toBe('')
   })
 })
