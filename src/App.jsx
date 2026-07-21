@@ -8,6 +8,7 @@ import MatchDetail from './components/MatchDetail.jsx'
 import TeamPanel from './components/TeamPanel.jsx'
 import CalendarModal from './components/CalendarModal.jsx'
 import Toasts from './components/Toasts.jsx'
+import ServicesModal from './components/ServicesModal.jsx'
 import { FIXTURES } from './data/fixtures.js'
 import { SEASON_LABEL } from './data/teams.js'
 import { applyLive, fetchLive } from './services/espn.js'
@@ -60,6 +61,17 @@ export default function App() {
     }
   })
   const [toasts, setToasts] = useState([])
+  // Kept in localStorage rather than the URL, unlike the other two fixture
+  // filters: a shared link carrying "on my services" would filter the
+  // recipient's list by the sender's subscriptions, which is nonsense.
+  const [watchOnly, setWatchOnly] = useState(() => {
+    try {
+      return localStorage.getItem('pl:watchOnly') === '1'
+    } catch {
+      return false
+    }
+  })
+  const [showServices, setShowServices] = useState(false)
   const prevFixtures = useRef(null)
   const { followed } = useFollow()
 
@@ -252,6 +264,17 @@ export default function App() {
           onToggleFollowed={() => setOnlyFollowed((v) => !v)}
           showPast={showPast}
           onTogglePast={() => setShowPast((v) => !v)}
+          watchOnly={watchOnly}
+          onToggleWatch={() => {
+            const next = !watchOnly
+            setWatchOnly(next)
+            try {
+              localStorage.setItem('pl:watchOnly', next ? '1' : '0')
+            } catch {
+              // Private mode; the filter still applies for this session.
+            }
+          }}
+          onEditServices={() => setShowServices(true)}
           onOpen={setDetail}
           onPickTeam={openTeam}
           onExport={() => setShowCalendar(true)}
@@ -290,6 +313,7 @@ export default function App() {
       {showCalendar && (
         <CalendarModal fixtures={fixtures} onClose={() => setShowCalendar(false)} />
       )}
+      {showServices && <ServicesModal onClose={() => setShowServices(false)} />}
 
       <Toasts
         events={toasts}

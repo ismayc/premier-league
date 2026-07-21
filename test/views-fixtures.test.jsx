@@ -6,6 +6,7 @@ import FixturesView from '../src/components/FixturesView.jsx'
 import WeekView from '../src/components/WeekView.jsx'
 import TableView from '../src/components/TableView.jsx'
 import { FollowProvider } from '../src/context/follow.jsx'
+import { ServicesProvider } from '../src/context/services.jsx'
 
 // The league roster is normally fixed, but TableView is written to survive an
 // abbreviation it has no club record for. The only way to exercise that is to
@@ -560,5 +561,68 @@ describe('TableView', () => {
     render(<TableView fixtures={RESULTS} />)
     await user.click(screen.getByRole('button', { name: 'Arsenal' }))
     expect(onPickTeam).toHaveBeenCalledTimes(1)
+  })
+})
+
+/* ── The "on my services" filter ─────────────────────────────────────────── */
+
+describe('FixturesView watch filter', () => {
+  const withServices = (keys, props) => {
+    localStorage.setItem('pl:services', JSON.stringify(keys))
+    return render(
+      <ServicesProvider>
+        <Fixtures {...props} />
+      </ServicesProvider>
+    )
+  }
+
+  const LISTED = [
+    fx('a', TODAY, 'LIV', 'MNC', { tv: ['Peacock'] }),
+    fx('b', TODAY, 'ARS', 'CHE', { tv: ['CNBC'] }),
+    fx('c', TODAY, 'TOT', 'EVE'), // no listing published yet
+  ]
+
+  it('narrows to matches the chosen services carry', () => {
+    withServices(['peacock'], { fixtures: LISTED, tz: TZ, watchOnly: true })
+
+    expect(screen.getByText('Liverpool')).toBeInTheDocument()
+    // CNBC is not on Peacock, so that one goes.
+    expect(screen.queryByText('Arsenal')).not.toBeInTheDocument()
+  })
+
+  it('keeps a match whose broadcaster has not been announced', () => {
+    // Listings land only weeks ahead. Treating "unknown" as "cannot watch"
+    // would empty most of the season.
+    withServices(['peacock'], { fixtures: LISTED, tz: TZ, watchOnly: true })
+    expect(screen.getByText('Spurs')).toBeInTheDocument()
+  })
+
+  it('is a no-op until services are chosen, so nothing vanishes', () => {
+    withServices([], { fixtures: LISTED, tz: TZ, watchOnly: true })
+    expect(screen.getByText('Liverpool')).toBeInTheDocument()
+    expect(screen.getByText('Arsenal')).toBeInTheDocument()
+  })
+
+  it('shows the filter chip only once services are chosen', () => {
+    const { unmount } = withServices([], { fixtures: LISTED, tz: TZ })
+    expect(screen.queryByRole('button', { name: /On my services/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /My services/ })).toBeInTheDocument()
+    unmount()
+
+    withServices(['peacock', 'fubo'], { fixtures: LISTED, tz: TZ })
+    expect(screen.getByRole('button', { name: /On my services \(2\)/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit services' })).toBeInTheDocument()
+  })
+
+  it('hands the toggles back to the shell', () => {
+    const onToggleWatch = vi.fn()
+    const onEditServices = vi.fn()
+    withServices(['peacock'], { fixtures: LISTED, tz: TZ, onToggleWatch, onEditServices })
+
+    fireEvent.click(screen.getByRole('button', { name: /On my services/ }))
+    expect(onToggleWatch).toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit services' }))
+    expect(onEditServices).toHaveBeenCalled()
   })
 })

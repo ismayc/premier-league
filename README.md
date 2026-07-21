@@ -27,6 +27,13 @@ team sheets, and **every final table since the competition began in 1992-93**.
   club names stay legible on a phone.
 - **Follow clubs** — star any club to highlight it everywhere and filter the
   fixtures to just the clubs you follow (saved in your browser).
+- **Live alerts** — switch on the bell and the app toasts goals, red cards,
+  kick-off and full time as they happen, narrowed to the clubs you follow.
+  Detected by diffing successive polls, so it needs no play-by-play feed.
+- **My services** — tell the app which streaming services and TV packages you
+  have and the fixtures list can be narrowed to matches you can actually watch.
+  Kept in your browser rather than the URL, since a shared link should not
+  filter someone else's list by your subscriptions.
 - **Next-kickoff bar** — a live countdown to the next match still to come.
 - **Live table** — the standings computed from results as they land, with
   **home/away splits**, recent **form**, and the Champions League / Europa /
@@ -129,6 +136,11 @@ data, so a bad refresh fails the build instead of shipping a wrong table.
   data. They switch over automatically once matches are played.
 - **ESPN publishes no player leaders for 2020-21.** That season is absent from
   the Stats switcher rather than shown as zeroes.
+- **Broadcasters are assigned only weeks ahead**, so most of a freshly-fetched
+  season carries no listing at all. The scheduled data refresh fills them in as
+  they are published, and the "on my services" filter deliberately keeps a
+  match whose broadcaster is still unannounced — not yet listed is not the same
+  as not available.
 - **The first three seasons had 22 clubs and 42 matches.** Point totals from
   1992-93 to 1994-95 are not comparable with later seasons, and the History
   view says so. Four clubs were relegated in 1994-95 to cut the League to 20.

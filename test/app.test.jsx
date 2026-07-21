@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from '../src/App.jsx'
 import { FollowProvider, useFollow } from '../src/context/follow.jsx'
+import { ServicesProvider } from '../src/context/services.jsx'
 import { useModalA11y } from '../src/hooks/useModalA11y.js'
 import { FIXTURES } from '../src/data/fixtures.js'
 
@@ -801,5 +802,87 @@ describe('App live alerts in private browsing', () => {
 
     await user.click(screen.getByRole('button', { name: 'Live alerts off' }))
     expect(screen.getByRole('button', { name: 'Live alerts on' })).toBeInTheDocument()
+  })
+})
+
+/* ── App: services and the watch filter ──────────────────────────────────── */
+
+describe('App services', () => {
+  const renderWithServices = async () => {
+    const result = render(
+      <ServicesProvider>
+        <App />
+      </ServicesProvider>
+    )
+    await act(async () => {})
+    return result
+  }
+
+  it('opens the services picker from the fixtures view', async () => {
+    stubZone('Europe/London')
+    const user = userEvent.setup()
+    await renderWithServices()
+
+    await user.click(screen.getByRole('button', { name: /My services/ }))
+    expect(screen.getByRole('dialog', { name: 'Choose your services' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog', { name: 'Choose your services' })).not.toBeInTheDocument()
+  })
+
+  it('remembers the watch filter per device, and keeps it out of the URL', async () => {
+    stubZone('Europe/London')
+    localStorage.setItem('pl:services', JSON.stringify(['peacock']))
+    const user = userEvent.setup()
+    await renderWithServices()
+
+    const chip = screen.getByRole('button', { name: /On my services/ })
+    expect(chip).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(chip)
+    expect(chip).toHaveAttribute('aria-pressed', 'true')
+    expect(localStorage.getItem('pl:watchOnly')).toBe('1')
+    // Subscriptions are this device's, so a shared link must not carry them.
+    expect(window.location.search).toBe('')
+
+    await user.click(chip)
+    expect(localStorage.getItem('pl:watchOnly')).toBe('0')
+  })
+
+  it('restores the watch filter on the next visit', async () => {
+    stubZone('Europe/London')
+    localStorage.setItem('pl:services', JSON.stringify(['peacock']))
+    localStorage.setItem('pl:watchOnly', '1')
+    await renderWithServices()
+
+    expect(screen.getByRole('button', { name: /On my services/ })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+  })
+
+  it('starts the watch filter off when storage cannot be read', async () => {
+    stubZone('Europe/London')
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('SecurityError')
+    })
+    await renderWithServices()
+    expect(screen.getByRole('button', { name: /My services/ })).toBeInTheDocument()
+  })
+
+  it('still applies the watch filter when storage refuses the write', async () => {
+    stubZone('Europe/London')
+    localStorage.setItem('pl:services', JSON.stringify(['peacock']))
+    const user = userEvent.setup()
+    await renderWithServices()
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('QuotaExceededError')
+    })
+
+    await user.click(screen.getByRole('button', { name: /On my services/ }))
+    expect(screen.getByRole('button', { name: /On my services/ })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
   })
 })

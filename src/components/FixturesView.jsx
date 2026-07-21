@@ -3,6 +3,8 @@ import MatchCard from './MatchCard.jsx'
 import { groupByDay, longDayOf, countdown, dateKey } from '../utils/time.js'
 import { TEAM_BY_ABBR } from '../data/teams.js'
 import { useFollow } from '../context/follow.jsx'
+import { useServices } from '../context/services.jsx'
+import { watchableServices } from '../utils/watch.js'
 
 /**
  * The season as a chronological list, grouped by day.
@@ -19,11 +21,15 @@ export default function FixturesView({
   onToggleFollowed,
   showPast,
   onTogglePast,
+  watchOnly,
+  onToggleWatch,
+  onEditServices,
   onOpen,
   onPickTeam,
   onExport,
 }) {
   const { followed } = useFollow()
+  const { services, count: serviceCount } = useServices()
 
   const now = new Date()
   const todayKey = dateKey(now.toISOString(), tz)
@@ -36,8 +42,24 @@ export default function FixturesView({
     if (!showPast) {
       list = list.filter((f) => f.live || dateKey(f.ko, tz) >= todayKey)
     }
+    // A no-op until services are chosen, so clearing them all cannot empty the
+    // list. A fixture with no listing yet is kept: broadcasters are assigned
+    // only weeks ahead, and "not announced" is not "you cannot watch it".
+    if (watchOnly && serviceCount) {
+      list = list.filter((f) => !f.tv?.length || watchableServices(f.tv, services).length > 0)
+    }
     return list
-  }, [fixtures, onlyFollowed, followed, showPast, tz, todayKey])
+  }, [
+    fixtures,
+    onlyFollowed,
+    followed,
+    showPast,
+    watchOnly,
+    services,
+    serviceCount,
+    tz,
+    todayKey,
+  ])
 
   const days = useMemo(() => groupByDay(visible, tz), [visible, tz])
 
@@ -70,6 +92,25 @@ export default function FixturesView({
             title={followed.size ? 'Only followed clubs' : 'Follow a club first'}
           >
             ★ Followed
+          </button>
+          {serviceCount ? (
+            <button
+              type="button"
+              className={`chip ${watchOnly ? 'on' : ''}`}
+              onClick={onToggleWatch}
+              aria-pressed={watchOnly}
+              title="Only matches on the services you have"
+            >
+              📺 On my services ({serviceCount})
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="chip"
+            onClick={onEditServices}
+            title="Pick the streaming services and TV packages you have"
+          >
+            {serviceCount ? 'Edit services' : '📺 My services'}
           </button>
           <button type="button" className="chip" onClick={() => onExport?.(visible)}>
             Export
