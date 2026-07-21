@@ -184,6 +184,11 @@ Created by [Chester Ismay](https://chester.rbind.io). Source on
 [GitHub](https://github.com/ismayc/premier-league). Companion to the
 [World Cup 2026 schedule viewer](https://github.com/ismayc/world-cup-viewer).
 
+The favicon lion is [Lion by Lorc](https://game-icons.net/1x1/lorc/lion.html)
+from [game-icons.net](https://game-icons.net), used under
+[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) and recoloured to the
+app's accent. It is not the Premier League's crowned-lion mark.
+
 ## Disclaimer
 
 An unofficial, non-commercial fan project. **Not affiliated with, endorsed by,
