@@ -9,7 +9,12 @@
       content="An unofficial Premier League fixture viewer — fixtures in your timezone, the live table, season stats, and every final table since 1992."
     />
     <meta name="theme-color" content="#12121a" />
+    <!-- Relative paths throughout: this ships to GitHub Pages under a repo
+         subpath as well as to the Netlify root, so a leading slash would
+         break the Pages copy. -->
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="PL Fixtures" />
     <link rel="manifest" href="./manifest.webmanifest" />
 
     <meta property="og:title" content="Premier League Fixtures" />
