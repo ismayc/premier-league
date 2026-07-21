@@ -7,9 +7,12 @@ import HistoryView from './components/HistoryView.jsx'
 import MatchDetail from './components/MatchDetail.jsx'
 import TeamPanel from './components/TeamPanel.jsx'
 import CalendarModal from './components/CalendarModal.jsx'
+import Toasts from './components/Toasts.jsx'
 import { FIXTURES } from './data/fixtures.js'
 import { SEASON_LABEL } from './data/teams.js'
 import { applyLive, fetchLive } from './services/espn.js'
+import { detectEvents, eventKey } from './services/alerts.js'
+import { useFollow } from './context/follow.jsx'
 import { readState, writeState } from './utils/urlState.js'
 import { COMMON_ZONES, detectZone } from './utils/time.js'
 
@@ -48,6 +51,17 @@ export default function App() {
   const [showPast, setShowPast] = useState(initial.past)
   const [season, setSeason] = useState(initial.season)
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'dark')
+  const [alerts, setAlerts] = useState(() => {
+    try {
+      return localStorage.getItem('pl:alerts') === '1'
+    } catch {
+      // Private mode: alerts simply start off.
+      return false
+    }
+  })
+  const [toasts, setToasts] = useState([])
+  const prevFixtures = useRef(null)
+  const { followed } = useFollow()
 
   const [live, setLive] = useState(null)
   const [detail, setDetail] = useState(null)
@@ -104,6 +118,33 @@ export default function App() {
     }
   }, [load, liveCount, seasonOver])
 
+  /* ── Live alerts ─────────────────────────────────────────────────────── */
+
+  // The snapshot is advanced on every poll whether or not alerts are on, so
+  // switching them on mid-match reports what happens next rather than
+  // replaying everything that has already happened.
+  useEffect(() => {
+    const prev = prevFixtures.current
+    prevFixtures.current = fixtures
+    if (!prev || !alerts) return
+
+    const found = detectEvents(prev, fixtures, { teams: followed })
+    if (!found.length) return
+
+    setToasts((cur) => {
+      const seen = new Set(cur.map((t) => t.key))
+      const fresh = found.map((e) => ({ ...e, key: eventKey(e) })).filter((e) => !seen.has(e.key))
+      return [...fresh, ...cur].slice(0, 4)
+    })
+  }, [fixtures, alerts, followed])
+
+  // Oldest first, so a burst of goals drains in the order it arrived.
+  useEffect(() => {
+    if (!toasts.length) return
+    const id = setTimeout(() => setToasts((cur) => cur.slice(0, -1)), 9000)
+    return () => clearTimeout(id)
+  }, [toasts])
+
   /* ── Handlers ────────────────────────────────────────────────────────── */
 
   const openTeam = useCallback((abbr) => {
@@ -150,6 +191,31 @@ export default function App() {
             title="Hide scores until you open a match"
           >
             {hideScores ? 'Scores hidden' : 'Scores shown'}
+          </button>
+
+          <button
+            type="button"
+            className={`chip ${alerts ? 'on' : ''}`}
+            onClick={() => {
+              const next = !alerts
+              setAlerts(next)
+              try {
+                localStorage.setItem('pl:alerts', next ? '1' : '0')
+              } catch {
+                // Private mode; alerts still work for this session.
+              }
+            }}
+            aria-pressed={alerts}
+            // The emoji alone would be the whole accessible name, which tells a
+            // screen-reader user nothing about what the control does.
+            aria-label={alerts ? 'Live alerts on' : 'Live alerts off'}
+            title={
+              alerts
+                ? 'Live alerts on: goals, red cards, kick-off and full time'
+                : 'Live alerts off'
+            }
+          >
+            {alerts ? '🔔' : '🔕'}
           </button>
 
           <button
@@ -224,6 +290,15 @@ export default function App() {
       {showCalendar && (
         <CalendarModal fixtures={fixtures} onClose={() => setShowCalendar(false)} />
       )}
+
+      <Toasts
+        events={toasts}
+        onOpen={(f) => {
+          setToasts([])
+          setDetail(f)
+        }}
+        onDismiss={(key) => setToasts((cur) => cur.filter((t) => t.key !== key))}
+      />
 
       <footer className="foot">
         <p>

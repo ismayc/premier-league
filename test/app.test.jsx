@@ -696,3 +696,110 @@ describe('useModalA11y', () => {
     expect(opener).toHaveFocus()
   })
 })
+
+/* ── App: live alerts ────────────────────────────────────────────────────── */
+
+describe('App live alerts', () => {
+  const goLive = (over = {}) =>
+    new Map([[FIXTURES[0].id, { id: FIXTURES[0].id, live: true, score: [0, 0], clock: "1'", ...over }]])
+
+  it('remembers the alert switch across visits', async () => {
+    stubZone('Europe/London')
+    const user = userEvent.setup()
+    await renderApp()
+
+    const bell = screen.getByRole('button', { name: /Live alerts/ })
+    expect(bell).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(bell)
+    expect(bell).toHaveAttribute('aria-pressed', 'true')
+    expect(localStorage.getItem('pl:alerts')).toBe('1')
+
+    await user.click(bell)
+    expect(localStorage.getItem('pl:alerts')).toBe('0')
+  })
+
+  it('toasts a moment while alerts are on, and opens the match from it', async () => {
+    stubZone('Europe/London')
+    localStorage.setItem('pl:alerts', '1')
+    fetchLive.mockResolvedValue(goLive())
+    const user = userEvent.setup()
+    await renderApp()
+    await act(async () => {})
+
+    expect(screen.getByText('Kick-off')).toBeInTheDocument()
+
+    // A toast is a way into the match, not a dead end.
+    await user.click(screen.getByText('Kick-off'))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('stays silent while alerts are off', async () => {
+    stubZone('Europe/London')
+    fetchLive.mockResolvedValue(goLive())
+    await renderApp()
+    await act(async () => {})
+
+    expect(screen.queryByText('Kick-off')).not.toBeInTheDocument()
+  })
+
+  it('lets a toast be dismissed without opening the match', async () => {
+    stubZone('Europe/London')
+    localStorage.setItem('pl:alerts', '1')
+    fetchLive.mockResolvedValue(goLive())
+    const user = userEvent.setup()
+    await renderApp()
+    await act(async () => {})
+
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }))
+    expect(screen.queryByText('Kick-off')).not.toBeInTheDocument()
+  })
+
+  it('retires a toast on its own after a while', async () => {
+    vi.useFakeTimers()
+    try {
+      stubZone('Europe/London')
+      localStorage.setItem('pl:alerts', '1')
+      fetchLive.mockResolvedValue(goLive())
+      await renderApp()
+      await act(async () => {})
+      expect(screen.getByText('Kick-off')).toBeInTheDocument()
+
+      await act(async () => {
+        vi.advanceTimersByTime(9000)
+      })
+      expect(screen.queryByText('Kick-off')).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
+describe('App live alerts in private browsing', () => {
+  // Storage that refuses to answer must not stop the shell rendering; the
+  // switch simply starts off and does not persist.
+  it('starts alerts off when storage cannot be read', async () => {
+    stubZone('Europe/London')
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('SecurityError')
+    })
+    await renderApp()
+
+    expect(screen.getByRole('button', { name: 'Live alerts off' })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    )
+  })
+
+  it('still switches alerts on when storage refuses the write', async () => {
+    stubZone('Europe/London')
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('QuotaExceededError')
+    })
+    const user = userEvent.setup()
+    await renderApp()
+
+    await user.click(screen.getByRole('button', { name: 'Live alerts off' }))
+    expect(screen.getByRole('button', { name: 'Live alerts on' })).toBeInTheDocument()
+  })
+})

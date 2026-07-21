@@ -204,6 +204,58 @@ describe('fetchLive', () => {
   })
 })
 
+describe("red cards", () => {
+  it("lifts dismissals out of the match incidents, in the order they happened", async () => {
+    // The scoreboard reports incidents in `details`; only red cards are kept,
+    // and the side is resolved by matching the incident team to the home club.
+    routeFetch({
+      20260822: {
+        events: [
+          {
+            id: "409",
+            competitions: [
+              {
+                status: { type: { state: "in", shortDetail: "70'" }, displayClock: "70'" },
+                competitors: [
+                  { homeAway: "home", score: "1", team: { id: "359" } },
+                  { homeAway: "away", score: "0", team: { id: "363" } },
+                ],
+                details: [
+                  { redCard: false, yellowCard: true, team: { id: "359" } },
+                  {
+                    redCard: true,
+                    team: { id: "363" },
+                    clock: { displayValue: "44'" },
+                    athletesInvolved: [{ shortName: "B. Two" }],
+                  },
+                  { redCard: true, team: { id: "359" } },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    const map = await fetchLive({ now: NOW })
+    expect(map.get("409").reds).toEqual([
+      { side: "away", player: "B. Two", clock: "44'" },
+      // The feed does not always name the player or the minute.
+      { side: "home", player: undefined, clock: undefined },
+    ])
+  })
+
+  it("leaves reds off a match with no incidents", async () => {
+    routeFetch({
+      20260822: {
+        events: [event("410", { type: { state: "in", shortDetail: "10'" } }, sides("0", "0"))],
+      },
+    })
+    const map = await fetchLive({ now: NOW })
+    expect(map.get("410")).not.toHaveProperty("reds")
+  })
+})
+
 describe('applyLive', () => {
   it('leaves fixtures the feed said nothing about untouched', () => {
     // The window covers three days; the other 377 fixtures must come back as

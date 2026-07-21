@@ -59,6 +59,19 @@ function readEvent(ev) {
   const tv = comp.broadcasts?.flatMap((b) => b.names || []) ?? []
   if (tv.length) out.tv = [...new Set(tv)]
 
+  // ESPN lists a match's incidents in `details`. Only dismissals are lifted:
+  // a goal already shows up in the score, but a red card reshapes a match and
+  // appears nowhere else in this feed. `side` rather than an abbreviation
+  // because the committed fixture already knows who is home and away.
+  const reds = (comp.details ?? [])
+    .filter((d) => d.redCard)
+    .map((d) => ({
+      side: d.team?.id === home.team?.id ? 'home' : 'away',
+      player: d.athletesInvolved?.[0]?.shortName,
+      clock: d.clock?.displayValue,
+    }))
+  if (reds.length) out.reds = reds
+
   return out
 }
 
