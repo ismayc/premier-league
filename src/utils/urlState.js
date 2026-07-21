@@ -32,6 +32,10 @@ export function readState(search = window.location.search) {
     view: VIEWS.includes(view) ? view : DEFAULTS.view,
     tz: isValidZone(tz) ? tz : detected,
     team: q.get('team') || DEFAULTS.team,
+    // A one-shot deep link (the family hub sends these): open straight onto this
+    // match's detail. Read-only — toSearch never emits it, so the first state
+    // write returns the URL to plain shareable filter state.
+    game: q.get('game') || '',
     hide: q.get('hide') === '1',
     mine: q.get('mine') === '1',
     past: q.get('past') === '1',

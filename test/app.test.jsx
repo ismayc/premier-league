@@ -886,3 +886,19 @@ describe('App services', () => {
     )
   })
 })
+
+describe('game deep link', () => {
+  it('opens straight onto the linked match detail, then drops the one-shot param', async () => {
+    setSearch(`?game=${FIXTURES[0].id}`)
+    await renderApp()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    // The param is read-only: the first URL write returns to plain filter state.
+    expect(window.location.search).not.toContain('game=')
+  })
+
+  it('ignores a deep link to a match not in the committed season', async () => {
+    setSearch('?game=000000')
+    await renderApp()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+})

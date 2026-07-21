@@ -76,7 +76,10 @@ export default function App() {
   const { followed } = useFollow()
 
   const [live, setLive] = useState(null)
-  const [detail, setDetail] = useState(null)
+  // A ?game= deep link opens straight onto that match's detail (see urlState.js).
+  const [detail, setDetail] = useState(
+    () => (initial.game && FIXTURES.find((f) => f.id === initial.game)) || null
+  )
   const [teamPanel, setTeamPanel] = useState(initial.team)
   const [showCalendar, setShowCalendar] = useState(false)
 
