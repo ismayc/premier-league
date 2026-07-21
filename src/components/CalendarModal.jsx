@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useModalA11y } from '../hooks/useModalA11y.js'
+import Modal from './Modal.jsx'
 import { useFollow } from '../context/follow.jsx'
 import { downloadCalendar, webcalUrl, googleCalendarUrl } from '../utils/ics.js'
 import { TEAM_BY_ABBR } from '../data/teams.js'
@@ -52,7 +52,6 @@ function SubRow({ label, httpsUrl }) {
  * worse than no calendar).
  */
 export default function CalendarModal({ fixtures, onClose }) {
-  const ref = useModalA11y(onClose)
   const { followed } = useFollow()
   const [scope, setScope] = useState(followed.size ? 'followed' : 'all')
   const [skipPast, setSkipPast] = useState(true)
@@ -70,20 +69,7 @@ export default function CalendarModal({ fixtures, onClose }) {
   const clubs = [...followed].map((a) => TEAM_BY_ABBR[a]?.name ?? a)
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="presentation">
-      <div
-        className="modal"
-        ref={ref}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Export fixtures to calendar"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
-          ×
-        </button>
-
+    <Modal label="Export fixtures to calendar" onClose={onClose}>
         <h2>Add to calendar</h2>
 
         <div className="cal-sub">
@@ -148,7 +134,6 @@ export default function CalendarModal({ fixtures, onClose }) {
         >
           Download .ics
         </button>
-      </div>
-    </div>
+    </Modal>
   )
 }

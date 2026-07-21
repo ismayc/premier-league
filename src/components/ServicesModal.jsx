@@ -1,4 +1,4 @@
-import { useModalA11y } from '../hooks/useModalA11y.js'
+import Modal from './Modal.jsx'
 import { useServices } from '../context/services.jsx'
 import { SERVICE_CATALOG } from '../utils/watch.js'
 
@@ -13,24 +13,10 @@ const GROUPS = [
 ]
 
 export default function ServicesModal({ onClose }) {
-  const ref = useModalA11y(onClose)
   const { has, toggle, clear, count } = useServices()
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="presentation">
-      <div
-        className="modal"
-        ref={ref}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Choose your services"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
-          ×
-        </button>
-
+    <Modal label="Choose your services" onClose={onClose}>
         <h2>My services</h2>
         <p className="modal-note">
           Pick what you subscribe to and the fixture list can be narrowed to matches you can
@@ -69,7 +55,6 @@ export default function ServicesModal({ onClose }) {
             </button>
           )}
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

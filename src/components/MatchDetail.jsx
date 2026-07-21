@@ -2,7 +2,7 @@ import TeamLogo from './TeamLogo.jsx'
 import Lineups from './Lineups.jsx'
 import { TEAM_BY_ABBR } from '../data/teams.js'
 import { longDayOf, timeOf, countdown } from '../utils/time.js'
-import { useModalA11y } from '../hooks/useModalA11y.js'
+import Modal from './Modal.jsx'
 
 const nameOf = (abbr) => TEAM_BY_ABBR[abbr]?.name ?? abbr
 
@@ -15,7 +15,6 @@ const nameOf = (abbr) => TEAM_BY_ABBR[abbr]?.name ?? abbr
  * lets someone check this app against a fixture list elsewhere.
  */
 export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose, onPickTeam }) {
-  const ref = useModalA11y(onClose)
   if (!fixture) return null
 
   const { home, away, score, live, unplayed } = fixture
@@ -31,19 +30,7 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
   )
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="presentation">
-      <div
-        className="modal"
-        ref={ref}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label={`${nameOf(home)} versus ${nameOf(away)}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
-          ×
-        </button>
+    <Modal label={`${nameOf(home)} versus ${nameOf(away)}`} onClose={onClose}>
 
         <div className="md-score">
           <button type="button" className="md-team" onClick={() => onPickTeam?.(home)}>
@@ -118,7 +105,6 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
         </dl>
 
         <Lineups fixture={fixture} />
-      </div>
-    </div>
+    </Modal>
   )
 }

@@ -196,20 +196,23 @@ describe('ServicesModal', () => {
     expect(screen.getByText('Nothing selected')).toBeInTheDocument()
   })
 
-  it('closes from the button and from the backdrop', () => {
+  it('closes from the button and from a press on the backdrop', () => {
     const onClose = vi.fn()
-    open(onClose)
+    const { container } = open(onClose)
 
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     expect(onClose).toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('presentation'))
+    // The shared Modal closes on mousedown ON the backdrop itself — a press,
+    // not a click, so a drag that merely ends there can't dismiss the dialog.
+    fireEvent.mouseDown(container.querySelector('.modal-wrap'))
     expect(onClose).toHaveBeenCalledTimes(2)
   })
 
-  it('does not close when the dialog itself is clicked', () => {
+  it('does not close when the dialog itself is pressed', () => {
     const onClose = vi.fn()
     open(onClose)
+    fireEvent.mouseDown(screen.getByRole('dialog'))
     fireEvent.click(screen.getByRole('dialog'))
     expect(onClose).not.toHaveBeenCalled()
   })

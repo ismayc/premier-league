@@ -553,7 +553,7 @@ describe('MatchDetail', () => {
     await user.click(screen.getByRole('dialog'))
     expect(onClose).not.toHaveBeenCalled()
 
-    await user.click(container.querySelector('.modal-backdrop'))
+    await user.click(container.querySelector('.modal-wrap'))
     expect(onClose).toHaveBeenCalledTimes(1)
 
     await user.click(screen.getByRole('button', { name: 'Close' }))
@@ -864,7 +864,7 @@ describe('TeamPanel', () => {
     await user.click(screen.getByRole('dialog'))
     expect(onClose).not.toHaveBeenCalled()
 
-    await user.click(container.querySelector('.modal-backdrop'))
+    await user.click(container.querySelector('.modal-wrap'))
     await user.click(screen.getByRole('button', { name: 'Close' }))
     expect(onClose).toHaveBeenCalledTimes(2)
   })
@@ -1043,7 +1043,7 @@ describe('CalendarModal', () => {
     await user.click(screen.getByRole('dialog'))
     expect(onClose).not.toHaveBeenCalled()
 
-    await user.click(container.querySelector('.modal-backdrop'))
+    await user.click(container.querySelector('.modal-wrap'))
     await user.click(screen.getByRole('button', { name: 'Close' }))
     expect(onClose).toHaveBeenCalledTimes(2)
   })

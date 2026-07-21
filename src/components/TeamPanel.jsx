@@ -60,7 +60,7 @@ export default function TeamPanel({ abbr, fixtures, tz, hideScores, onClose, onO
   const titles = past.filter((s) => s.pos === 1).length
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="presentation">
+    <div className="modal-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <aside
         className="drawer"
         ref={ref}
@@ -68,10 +68,9 @@ export default function TeamPanel({ abbr, fixtures, tz, hideScores, onClose, onO
         role="dialog"
         aria-modal="true"
         aria-label={team.displayName}
-        onClick={(e) => e.stopPropagation()}
       >
-        <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
-          ×
+        <button className="modal-x" onClick={onClose} aria-label="Close">
+          ✕
         </button>
 
         <header className="tp-head">

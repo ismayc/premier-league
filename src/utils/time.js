@@ -7,9 +7,20 @@
  * Premier League kickoffs are published in UK time, which is the one thing a
  * naive "3pm Saturday" string gets wrong for anyone outside Britain twice a
  * year when the clocks shift. Storing the instant sidesteps that entirely.
+ *
+ * The shared implementation lives in timeCore.js (copied from
+ * sports-viewer-meta); this file declares the league facts ONCE — en-GB,
+ * Monday-start — instead of hardcoding them per call site, and keeps this
+ * app's public API stable on top.
  */
+import { createTimeUtils } from './timeCore.js'
 
 export const UK = 'Europe/London'
+
+// The league facts — matches adapters/epl.js in sports-viewer-meta. en-GB
+// renders 24-hour with the leading zero ("09:05"); the football week starts
+// Monday.
+const T = createTimeUtils({ locale: 'en-GB', weekStart: 1 })
 
 export function detectZone() {
   try {
@@ -30,15 +41,12 @@ export function isValidZone(tz) {
   }
 }
 
-const fmt = (tz, opts) => new Intl.DateTimeFormat('en-GB', { timeZone: tz, ...opts })
-
-export const timeOf = (iso, tz) =>
-  fmt(tz, { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso))
+export const timeOf = T.formatTime
 
 /** The short zone name for an instant — "BST", "MST", "GMT+2" — for the card. */
 export function zoneAbbr(iso, tz) {
   try {
-    const parts = new Intl.DateTimeFormat('en-GB', {
+    const parts = new Intl.DateTimeFormat(T.locale, {
       timeZone: tz,
       timeZoneName: 'short',
       hour: '2-digit',
@@ -51,20 +59,13 @@ export function zoneAbbr(iso, tz) {
   }
 }
 
-export const dayOf = (iso, tz) =>
-  fmt(tz, { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(iso))
+export const dayOf = T.formatDate
 
 export const longDayOf = (iso, tz) =>
-  fmt(tz, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso))
+  T.formatDate(iso, tz, { weekday: 'long', month: 'long', year: 'numeric' })
 
 /** A stable YYYY-MM-DD key *in the viewer's zone*, for grouping by matchday. */
-export function dateKey(iso, tz) {
-  const parts = fmt(tz, { year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(
-    new Date(iso)
-  )
-  const get = (t) => parts.find((p) => p.type === t)?.value
-  return `${get('year')}-${get('month')}-${get('day')}`
-}
+export const dateKey = T.dayKey
 
 /** Group fixtures into ordered day buckets in the viewer's zone. */
 export function groupByDay(fixtures, tz) {
@@ -80,24 +81,9 @@ export function groupByDay(fixtures, tz) {
 }
 
 /** Monday-based week key — the Premier League week runs Sat through midweek. */
-export function startOfWeek(iso, tz) {
-  const key = dateKey(iso, tz)
-  const d = new Date(`${key}T12:00:00Z`)
-  const dow = (d.getUTCDay() + 6) % 7 // Monday = 0
-  d.setUTCDate(d.getUTCDate() - dow)
-  return d.toISOString().slice(0, 10)
-}
+export const startOfWeek = T.startOfWeek
 
-export function countdown(iso, now = new Date()) {
-  const ms = new Date(iso) - now
-  if (ms <= 0) return null
-  const mins = Math.floor(ms / 60000)
-  const days = Math.floor(mins / 1440)
-  const hours = Math.floor((mins % 1440) / 60)
-  if (days) return `${days}d ${hours}h`
-  if (hours) return `${hours}h ${mins % 60}m`
-  return `${mins}m`
-}
+export const countdown = T.countdown
 
 /** Zones offered in the picker, with the viewer's own prepended if unusual. */
 export const COMMON_ZONES = [
