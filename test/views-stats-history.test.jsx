@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -217,6 +217,7 @@ describe('StatsView leaders', () => {
               position: { displayName: 'Forward' },
               age: 25,
               citizenship: 'Norway',
+              flag: { href: 'https://a.espncdn.com/i/teamlogos/countries/500/nor.png' },
               displayHeight: `6' 5"`,
               headshot: { href: 'https://example.test/haaland.png' },
             },
@@ -237,6 +238,11 @@ describe('StatsView leaders', () => {
     // The biography arrives from the second request.
     expect(await screen.findByText('Forward')).toBeInTheDocument()
     expect(screen.getByText('Norway')).toBeInTheDocument()
+    const flag = document.querySelector('img.bio-flag')
+    expect(flag).toHaveAttribute('src', 'https://a.espncdn.com/i/teamlogos/countries/500/nor.png')
+    // A flag that 404s hides itself rather than showing a broken image.
+    fireEvent.error(flag)
+    expect(flag.style.display).toBe('none')
     // Age is not shown: the feed gives current age, which is wrong for an
     // older season. The stub carries age 25, so its absence is the assertion.
     expect(screen.queryByText('25')).not.toBeInTheDocument()

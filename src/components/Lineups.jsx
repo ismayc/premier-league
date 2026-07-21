@@ -208,7 +208,22 @@ function PlayerDetail({ player }) {
             {bio.citizenship && (
               <div>
                 <dt>Nationality</dt>
-                <dd>{bio.citizenship}</dd>
+                <dd className="bio-nat">
+                  {bio.flag && (
+                    <img
+                      className="bio-flag"
+                      src={bio.flag}
+                      alt=""
+                      width="20"
+                      height="14"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  )}
+                  {bio.citizenship}
+                </dd>
               </div>
             )}
             {bio.height && (

@@ -1148,6 +1148,22 @@ table {
   font-size: 12.5px;
 }
 
+/* Nationality line: country flag sits just before the name, shared by the
+   leaderboard bio and the lineup team-sheet bio. */
+.bio-nat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bio-flag {
+  width: 20px;
+  height: 14px;
+  border-radius: 2px;
+  object-fit: cover;
+  flex: none;
+}
+
 .leaders td:nth-child(2) {
   text-align: left;
   width: 100%;

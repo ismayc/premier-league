@@ -47,6 +47,9 @@ export async function fetchAthlete(id) {
         height: a.displayHeight ?? null,
         weight: a.displayWeight ?? null,
         citizenship: a.citizenship ?? null,
+        // The soccer feed ships the country flag alongside citizenship, so the
+        // nationality line gets a flag for free — no country-code mapping.
+        flag: a.flag?.href ?? null,
         headshot: a.headshot?.href ?? null,
       }
     } catch {

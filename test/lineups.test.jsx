@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import Lineups from '../src/components/Lineups.jsx'
@@ -545,6 +545,7 @@ describe('<Lineups>', () => {
         position: { displayName: 'Forward' },
         age: 21,
         citizenship: 'Gambia',
+        flag: { href: 'https://a.espncdn.com/i/teamlogos/countries/500/gam.png' },
         displayHeight: `5' 11"`,
         headshot: { href: 'https://example.test/head.png' },
       },
@@ -563,9 +564,15 @@ describe('<Lineups>', () => {
 
     expect(await screen.findByText('Forward')).toBeInTheDocument()
     // Scoped: an age of 21 would otherwise collide with a shirt number.
-    const bioPanel = within(row.closest('li').querySelector('.lu-bio'))
+    const bioEl = row.closest('li').querySelector('.lu-bio')
+    const bioPanel = within(bioEl)
     expect(bioPanel.getByText('21')).toBeInTheDocument()
     expect(bioPanel.getByText('Gambia')).toBeInTheDocument()
+    const flag = bioEl.querySelector('img.bio-flag')
+    expect(flag?.getAttribute('src')).toContain('/countries/500/gam.png')
+    // A flag that 404s hides itself rather than showing a broken image.
+    fireEvent.error(flag)
+    expect(flag.style.display).toBe('none')
     expect(bioPanel.getByText(`5' 11"`)).toBeInTheDocument()
   })
 
