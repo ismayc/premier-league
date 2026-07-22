@@ -345,7 +345,7 @@ describe('<RecentMatches>', () => {
     global.fetch = respondWith(twoLeague)
     show()
 
-    await screen.findByText('Recent league matches')
+    await screen.findByText(/Recent league matches/)
     const rows = screen.getAllByRole('listitem')
     expect(rows).toHaveLength(2)
 
@@ -379,7 +379,7 @@ describe('<RecentMatches>', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'All competitions (1 more)' }))
 
-    expect(screen.getByText('Recent matches')).toBeInTheDocument()
+    expect(screen.getByText(/^Recent matches/)).toBeInTheDocument()
     expect(screen.getAllByRole('listitem')).toHaveLength(2)
     expect(screen.getByText('2 goals')).toBeInTheDocument()
     // Now that the list is mixed, each row says where it came from.
@@ -406,6 +406,57 @@ describe('<RecentMatches>', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'All competitions (1 more)' }))
     expect(screen.getAllByRole('listitem')).toHaveLength(1)
+  })
+
+  it('names the season when the matches are not from the current one', async () => {
+    // May 2026 belongs to 2025-26; the app is showing 2026-27. Without the
+    // label these read as current form.
+    global.fetch = respondWith(twoLeague)
+    show()
+    expect(await screen.findByText('2025-26')).toBeInTheDocument()
+  })
+
+  it('drops last season the moment the player has played in this one', async () => {
+    // Two matches into the new season beats five from last May, even though it
+    // is the shorter list — and there is no season label, because it is the
+    // season the rest of the app is already showing.
+    global.fetch = respondWith(
+      overview({
+        events: [
+          { eventId: 'new1', stats: statLine({ G: 1 }) },
+          { eventId: 'new2', stats: statLine({ A: 1 }) },
+          { eventId: 'old1', stats: statLine({ G: 3 }) },
+          { eventId: 'old2', stats: statLine({ G: 3 }) },
+        ],
+        meta: {
+          new1: meta({ date: '2026-08-22T14:00:00.000Z' }),
+          new2: meta({ date: '2026-08-29T14:00:00.000Z' }),
+          old1: meta({ date: '2026-05-24T14:00:00.000Z' }),
+          old2: meta({ date: '2026-05-17T14:00:00.000Z' }),
+        },
+      })
+    )
+    show()
+
+    const rows = await screen.findAllByRole('listitem')
+    expect(rows).toHaveLength(2)
+    expect(screen.queryByText('2025-26')).not.toBeInTheDocument()
+    // Last season's hat-tricks are not this season's form.
+    expect(screen.queryByText('3 goals')).not.toBeInTheDocument()
+  })
+
+  it('counts an August match as the new season, and a May one as the old', async () => {
+    // The league runs August to May, so the year alone does not say which
+    // season a match belongs to — both of these are in 2026.
+    global.fetch = respondWith(
+      overview({
+        events: [{ eventId: 'aug', stats: statLine({ G: 1 }) }],
+        meta: { aug: meta({ date: '2026-08-15T14:00:00.000Z' }) },
+      })
+    )
+    show()
+    await screen.findAllByRole('listitem')
+    expect(screen.queryByText('2025-26')).not.toBeInTheDocument()
   })
 
   it('shows at most five, however many the feed sent', async () => {

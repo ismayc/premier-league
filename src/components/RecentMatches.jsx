@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchRecentMatches } from '../services/athlete.js'
+import { SEASON } from '../data/teams.js'
 import { dayOf } from '../utils/time.js'
 
 /**
@@ -18,10 +19,31 @@ import { dayOf } from '../utils/time.js'
  * read about somewhere, but it is not what a Premier League leaderboard is
  * asking about. The rest stay one click away rather than being thrown out,
  * because "what has he been doing since May" is a reasonable question too.
+ *
+ * Which league matches, though, depends on where in the calendar we are. Once
+ * the player has kicked a ball in the current season, that is their form and
+ * nothing earlier belongs beside it — two matches into August beats five from
+ * last May, even though it is a shorter list. Before then, the most recent
+ * league matches are the best answer available, and they are labelled with the
+ * season they come from so nobody reads a May result as a fresh one.
  */
 
 /** "Jul 19" — the weekday the shared formatter defaults to is noise in a list. */
 const matchDay = (iso) => dayOf(iso, 'UTC', { weekday: undefined })
+
+/**
+ * The season a match belongs to, named by the year it began.
+ *
+ * The league runs August to May, so a match in the first half of the year
+ * belongs to the season that started the previous August. Nothing is played in
+ * June or July, which leaves the boundary free to sit anywhere in the summer.
+ */
+const seasonOf = (iso) => {
+  const at = new Date(iso)
+  return at.getUTCMonth() >= 6 ? at.getUTCFullYear() : at.getUTCFullYear() - 1
+}
+
+const seasonLabel = (year) => `${year}-${String((year + 1) % 100).padStart(2, '0')}`
 
 const SHOWN = 5
 
@@ -47,13 +69,25 @@ export default function RecentMatches({ playerId }) {
   if (!matches?.length) return null
 
   const league = matches.filter((m) => m.isLeague)
-  const shown = (everything ? matches : league).slice(0, SHOWN)
+  const current = league.filter((m) => seasonOf(m.date) === SEASON)
+
+  // Anything this season wins outright, however short the list. Only when the
+  // player has not yet played does the previous season stand in for it.
+  const pool = current.length ? current : league
+  const shown = (everything ? matches : pool).slice(0, SHOWN)
   const others = matches.length - league.length
+
+  // Named only when it is not the season the rest of the app is showing —
+  // otherwise the label is noise on every pop-out.
+  const past = !current.length && shown.length ? seasonLabel(seasonOf(shown[0].date)) : null
 
   return (
     <section className="recent">
       <div className="recent-head">
-        <h4>{everything ? 'Recent matches' : 'Recent league matches'}</h4>
+        <h4>
+          {everything ? 'Recent matches' : 'Recent league matches'}
+          {!everything && past && <span className="rm-season">{past}</span>}
+        </h4>
         {others > 0 && (
           <button type="button" className="rm-toggle" onClick={() => setEverything((v) => !v)}>
             {everything ? 'Premier League only' : `All competitions (${others} more)`}

@@ -1700,6 +1700,18 @@ table {
   color: var(--muted);
 }
 
+/* The season these matches came from, shown only when it is not the current
+   one — a quiet chip beside the heading, not a second heading. */
+.rm-season {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--text-2);
+  font-size: 9.5px;
+  letter-spacing: 0;
+}
+
 .rm-toggle {
   background: none;
   border: 0;

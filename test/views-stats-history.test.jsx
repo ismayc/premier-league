@@ -333,7 +333,7 @@ describe('StatsView leaders', () => {
     const leaders = screen.getByRole('group', { name: 'Statistic' }).closest('.card')
 
     await userEvent.click(screen.getByRole('button', { name: /Erling Haaland/ }))
-    expect(await screen.findByText('Recent league matches')).toBeInTheDocument()
+    expect(await screen.findByText(/Recent league matches/)).toBeInTheDocument()
 
     await userEvent.selectOptions(within(leaders).getByRole('combobox'), '2024')
     await userEvent.click(screen.getByRole('button', { name: /Mohamed Salah/ }))
