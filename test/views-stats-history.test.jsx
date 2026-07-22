@@ -306,6 +306,43 @@ describe('StatsView leaders', () => {
     expect(screen.getByRole('table', { name: /Goals leaders, 2024-25/ })).toBeInTheDocument()
   })
 
+  it('offers recent form on this season only', async () => {
+    // Recent matches are the player's form *now*. On a past leaderboard that is
+    // the wrong answer to the question the row is asking — the same reason age
+    // is left out of the biography above — so the section is current-season
+    // only. Both boards are checked here because the difference is the point.
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            gameLog: {
+              statistics: [{ labels: ['G'], events: [{ eventId: 'm1', stats: ['1'] }] }],
+              events: {
+                m1: {
+                  gameDate: '2026-05-24T14:00:00.000Z',
+                  opponent: { abbreviation: 'BUR' },
+                  leagueName: 'English Premier League',
+                },
+              },
+            },
+          }),
+      })
+    )
+    renderStats()
+    const leaders = screen.getByRole('group', { name: 'Statistic' }).closest('.card')
+
+    await userEvent.click(screen.getByRole('button', { name: /Erling Haaland/ }))
+    expect(await screen.findByText('Recent league matches')).toBeInTheDocument()
+
+    await userEvent.selectOptions(within(leaders).getByRole('combobox'), '2024')
+    await userEvent.click(screen.getByRole('button', { name: /Mohamed Salah/ }))
+
+    // The biography still loads; only the form is withheld.
+    expect(await screen.findByText(/18 goals in 2024-25/)).toBeInTheDocument()
+    expect(screen.queryByText(/Recent (league )?matches/)).not.toBeInTheDocument()
+  })
+
   it('falls back to the newest season that has the chosen category', async () => {
     renderStats()
     // The chart below has its own <select>, so pick the leaders card's one.

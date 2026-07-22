@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchLineup, groupByLine, lineOf } from '../services/lineups.js'
 import { fetchAthlete } from '../services/athlete.js'
+import RecentMatches from './RecentMatches.jsx'
 
 /**
  * Team sheets inside the match detail.
@@ -248,6 +249,9 @@ function PlayerDetail({ player }) {
       ) : (
         <p className="lu-nothing">No goals, cards or saves recorded.</p>
       )}
+
+      {/* The figures above are this match; these are the matches around it. */}
+      <RecentMatches playerId={player.id} />
     </div>
   )
 }

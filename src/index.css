@@ -1675,6 +1675,164 @@ table {
   color: var(--muted);
 }
 
+/* ── Recent matches (player pop-outs) ──────────────────────────────────── */
+
+.recent {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.recent-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.recent h4 {
+  margin: 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.rm-toggle {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 10.5px;
+  font-family: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rm-toggle:hover {
+  text-decoration: underline;
+}
+
+.rm-none {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.recent-list li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.rm-date {
+  flex: none;
+  width: 44px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rm-opp {
+  flex: none;
+  min-width: 62px;
+  font-weight: 600;
+}
+
+.rm-atvs {
+  color: var(--muted);
+  font-weight: 400;
+  margin-right: 3px;
+}
+
+.rm-result {
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-weight: 700;
+}
+
+.rm-w { color: var(--win); }
+.rm-d { color: var(--draw); }
+.rm-l { color: var(--loss); }
+
+.rm-score {
+  color: var(--text-2);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.rm-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text-2);
+}
+
+.rm-app {
+  color: var(--muted);
+}
+
+.rm-quiet {
+  color: var(--muted);
+}
+
+/* Cards are drawn rather than named — a coloured chip reads faster in a list
+   than the words, and the accessible name is on the element. */
+.rm-card {
+  flex: none;
+  width: 7px;
+  height: 10px;
+  border-radius: 1.5px;
+  display: inline-block;
+}
+
+.rm-yc { background: var(--zone-conference); }
+.rm-rc { background: var(--loss); }
+
+.rm-comp {
+  flex: none;
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* The leaderboard pop-out is a single flex row of headshot + facts; the match
+   list needs the full width beneath both rather than a third column. */
+.lead-detail {
+  flex-wrap: wrap;
+}
+
+.lead-detail .recent {
+  flex-basis: 100%;
+}
+
+/* The table's cells are right-aligned for the figures, and only the player and
+   club columns opt out — so the full-width pop-out row inherited it too, which
+   pushed the biography's labels away from their values. Prose belongs on the
+   left, and it may wrap: the nowrap is there to keep a leaderboard line intact,
+   not to hold a match list on one line. */
+.leaders td.lead-detail-cell {
+  text-align: left;
+  white-space: normal;
+}
+
 .lu-jersey {
   flex: none;
   width: 18px;

@@ -4,6 +4,7 @@ import { ALL_ABBRS, TEAMS, TEAM_BY_ABBR } from '../data/teams.js'
 import { PLAYER_STATS, STAT_CATEGORIES, STAT_SEASONS } from '../data/players.js'
 import { HISTORY, HISTORY_BY_YEAR } from '../data/history.js'
 import { fetchAthlete } from '../services/athlete.js'
+import RecentMatches from './RecentMatches.jsx'
 import { leaderboard, seasonScoring, seasonTotals, teamScoring } from '../utils/stats.js'
 
 /**
@@ -214,7 +215,7 @@ function LeaderRow({ player, meta, season, max, onPickTeam }) {
 
       {open && (
         <tr className="lead-detail-row">
-          <td colSpan={5}>
+          <td className="lead-detail-cell" colSpan={5}>
             <PlayerBio player={player} meta={meta} season={season} />
           </td>
         </tr>
@@ -302,6 +303,11 @@ function PlayerBio({ player, meta, season }) {
           </dl>
         )}
       </div>
+
+      {/* Recent form is the player's now, not the season being read. On a 2015
+          leaderboard it would be a decade adrift — the same reason age is left
+          off above — so it appears only on the current season's board. */}
+      {season === STAT_SEASONS[0] && <RecentMatches playerId={player.id} />}
     </div>
   )
 }
