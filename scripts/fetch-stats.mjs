@@ -160,7 +160,11 @@ async function mirrorMissingCrests() {
       const path = join(ROOT, 'public/logos', file)
       if (existsSync(path)) continue
 
-      const logo = club.logos.find((l) => l.rel?.includes(variant))
+      // Fall back to the default crest for a dark variant ESPN doesn't provide, so a
+      // club is never left without a `${slug}-dark.png` (invisible in the dark theme).
+      const logo =
+        club.logos.find((l) => l.rel?.includes(variant)) ||
+        (variant === 'dark' ? club.logos.find((l) => l.rel?.includes('default')) : null)
       if (!logo) continue
       try {
         const res = await fetch(resized(logo.href))

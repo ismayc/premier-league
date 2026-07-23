@@ -125,22 +125,32 @@ async function mirrorLogos(teams) {
   const resized = (href) =>
     `https://a.espncdn.com/combiner/i?img=${encodeURIComponent(new URL(href).pathname)}&w=160&h=160`
 
+  const grab = async (href) => {
+    try {
+      const res = await fetch(resized(href))
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return Buffer.from(await res.arrayBuffer())
+    } catch (err) {
+      console.log(`  ⚠ logo ${href}: ${err.message}`)
+      return null
+    }
+  }
+
   let saved = 0
   for (const t of teams) {
-    for (const variant of ['default', 'dark']) {
-      const logo = t._logos.find((l) => l.rel?.includes(variant))
-      if (!logo) continue
-      const file = variant === 'dark' ? `${t.slug}-dark.png` : `${t.slug}.png`
-      try {
-        const res = await fetch(resized(logo.href))
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const buf = Buffer.from(await res.arrayBuffer())
-        writeFileSync(join(ROOT, 'public/logos', file), buf)
-        saved++
-      } catch (err) {
-        console.log(`  ⚠ logo ${file}: ${err.message}`)
-      }
-    }
+    const lightLogo = t._logos.find((l) => l.rel?.includes('default')) || t._logos[0]
+    if (!lightLogo) continue
+    const light = await grab(lightLogo.href)
+    if (!light) continue
+    writeFileSync(join(ROOT, 'public/logos', `${t.slug}.png`), light)
+    saved++
+    // Some clubs (e.g. newly promoted) have no ESPN "dark" crest, but the app's dark
+    // theme renders `${slug}-dark.png` — fall back to the light crest so it never shows
+    // an invisible (missing) logo. A full-colour crest reads fine on the dark ground.
+    const darkLogo = t._logos.find((l) => l.rel?.includes('dark'))
+    const dark = (darkLogo && (await grab(darkLogo.href))) || light
+    writeFileSync(join(ROOT, 'public/logos', `${t.slug}-dark.png`), dark)
+    saved++
   }
   return saved
 }
