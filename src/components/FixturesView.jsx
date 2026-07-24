@@ -136,6 +136,9 @@ export default function FixturesView({
     setExpanded((prev) => new Set(prev).add(nowMonth))
     setPendingScroll(nowKey)
   }
+  // "Top" jump: back to the very top of the page — where the settings toolbar
+  // lives, which the landing scroll otherwise leaves above the fold.
+  const jumpToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
   // Landing scroll (full season only): the "now" day (today / next fixture-day),
   // which its open month renders.
@@ -272,6 +275,13 @@ export default function FixturesView({
                 {monthShort(mk)}
               </button>
             ))}
+            <button
+              type="button"
+              className="chip month-chip month-top"
+              onClick={jumpToTop}
+            >
+              ↑ Top
+            </button>
             <button
               type="button"
               className="chip month-chip month-today"

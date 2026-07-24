@@ -330,7 +330,9 @@ describe('FixturesView full season', () => {
   it('renders a jump chip per month and opens only the current month', () => {
     const { container } = view()
     // Four months -> four jump chips (plus the Today button) and four sections.
-    expect(container.querySelectorAll('.month-jump .month-chip:not(.month-today)')).toHaveLength(4)
+    expect(
+      container.querySelectorAll('.month-jump .month-chip:not(.month-today):not(.month-top)')
+    ).toHaveLength(4)
     expect(container.querySelector('.month-today')).toBeTruthy()
     expect(container.querySelectorAll('.month')).toHaveLength(4)
     // Only the current month is open, so only its two days render.
@@ -373,6 +375,14 @@ describe('FixturesView full season', () => {
     const last = spy.mock.contexts[spy.mock.contexts.length - 1]
     expect(last).toHaveClass('day')
     expect(last).toHaveClass('is-today')
+  })
+
+  it('has a Top jump that scrolls the page to the top (to reach the settings)', () => {
+    const scrollSpy = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const { container } = view()
+    fireEvent.click(container.querySelector('.month-top'))
+    expect(scrollSpy).toHaveBeenCalledWith(expect.objectContaining({ top: 0 }))
+    scrollSpy.mockRestore()
   })
 
   it('Today jump goes to the next fixture-day when today has no fixture', () => {
