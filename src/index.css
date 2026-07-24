@@ -415,6 +415,77 @@ select {
   gap: 6px;
 }
 
+/* Full-season navigation: a sticky month jump-bar over collapsible month
+   sections, shown only when "Played" opens the whole season. */
+.month-jump {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0;
+  margin-bottom: 14px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.month-chip.is-current {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* "Today" sits at the far right of the bar. */
+.month-today {
+  margin-left: auto;
+  font-weight: 600;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.month {
+  margin-bottom: 14px;
+}
+
+.month-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.month-head:hover {
+  border-color: var(--accent);
+}
+
+.month-head.open {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.month-count {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.month-days {
+  padding: 16px 2px 4px;
+}
+
 /* A narrow "when" column, the two clubs stacked, and a faint meta line — the
    shape of the WNBA schedule's card, adapted to football. */
 .mc {

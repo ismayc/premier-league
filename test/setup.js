@@ -10,6 +10,11 @@ beforeEach(() => {
     Promise.resolve({ ok: true, json: () => Promise.resolve({ events: [] }) })
   )
 
+  // jsdom has no layout, so scrollIntoView is absent. FixturesView's
+  // full-season month navigation calls it; stub it so those effects don't
+  // throw, and so tests can assert on the jump.
+  Element.prototype.scrollIntoView = vi.fn()
+
   // jsdom has no matchMedia; the pre-paint theme script and any responsive
   // hooks need it. Defaulting `matches` to false selects the desktop branch.
   if (!window.matchMedia) {

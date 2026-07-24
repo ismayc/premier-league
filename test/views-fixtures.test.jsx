@@ -188,11 +188,18 @@ describe('FixturesView', () => {
     expect(screen.getByText(/clubs you follow/)).toBeInTheDocument()
   })
 
-  it('explains an empty list caused by everything being in the past', () => {
-    // A different cause needs a different remedy, hence two messages.
+  it('falls back to the season tail when nothing is upcoming (off-season)', () => {
+    // With no upcoming or live fixture the default view would be blank, so it
+    // shows the last week of results instead of an empty page.
     render(
       <Fixtures fixtures={[fx('a', LAST_WEEK, 'ARS', 'CHE', { score: [2, 1] })]} tz={TZ} />
     )
+    expect(screen.getByText('Arsenal')).toBeInTheDocument()
+    expect(screen.queryByText(/Turn on/)).not.toBeInTheDocument()
+  })
+
+  it('shows the empty message only when there are no fixtures at all', () => {
+    render(<Fixtures fixtures={[]} tz={TZ} />)
     expect(screen.getByText(/Turn on/)).toBeInTheDocument()
   })
 
@@ -299,6 +306,87 @@ describe('FixturesView', () => {
     await user.click(screen.getByRole('button', { name: 'Export' }))
 
     expect(screen.getByText('Liverpool')).toBeInTheDocument()
+  })
+})
+
+/* ── Full season: collapsible months + the sticky jump-bar ───────────────── */
+
+describe('FixturesView full season', () => {
+  // Four distinct months relative to NOW (2026-09): August, the current month
+  // (with two days, one of them today), October and November.
+  const AUG = '2026-08-15T14:00:00.000Z'
+  const OCT = '2026-10-17T14:00:00.000Z'
+  const NOV = '2026-11-21T14:00:00.000Z'
+  const season = [
+    fx('aug', AUG, 'ARS', 'CHE', { score: [1, 0] }),
+    fx('cur', LAST_WEEK, 'LIV', 'MNC', { score: [2, 2] }),
+    fx('today', TODAY, 'TOT', 'EVE'),
+    fx('oct', OCT, 'NEW', 'AVL'),
+    fx('nov', NOV, 'BRE', 'BHA'),
+  ]
+  const view = (fixtures = season) =>
+    render(<Fixtures fixtures={fixtures} tz={TZ} showPast />)
+
+  it('renders a jump chip per month and opens only the current month', () => {
+    const { container } = view()
+    // Four months -> four jump chips (plus the Today button) and four sections.
+    expect(container.querySelectorAll('.month-jump .month-chip:not(.month-today)')).toHaveLength(4)
+    expect(container.querySelector('.month-today')).toBeTruthy()
+    expect(container.querySelectorAll('.month')).toHaveLength(4)
+    // Only the current month is open, so only its two days render.
+    expect(container.querySelectorAll('.month-days')).toHaveLength(1)
+    expect(container.querySelectorAll('.day')).toHaveLength(2)
+    // The current month's chip is flagged, and its header count is pluralised.
+    expect(container.querySelector('.month-chip.is-current')).toBeTruthy()
+    expect(container.querySelector('.month-head.open .month-count').textContent).toBe('2 matches')
+  })
+
+  it('expands a collapsed month on click, then collapses the current one', () => {
+    const { container } = view()
+    const currentHead = container.querySelector('.month-head.open')
+    const collapsed = [...container.querySelectorAll('.month-head')].find(
+      (h) => !h.classList.contains('open')
+    )
+    fireEvent.click(collapsed)
+    expect(container.querySelectorAll('.month-days')).toHaveLength(2)
+    expect(collapsed.querySelector('.month-count').textContent).toBe('1 match') // singular
+    // Collapsing the current month hides its days again.
+    fireEvent.click(currentHead)
+    expect(container.querySelectorAll('.month-days')).toHaveLength(1)
+  })
+
+  it('jumping to a month expands it and scrolls it into view', () => {
+    const spy = Element.prototype.scrollIntoView
+    const { container } = view()
+    const openedBefore = container.querySelectorAll('.month-days').length
+    const calledBefore = spy.mock.calls.length
+    // The first chip is August, which starts collapsed.
+    fireEvent.click(container.querySelector('.month-jump .month-chip'))
+    expect(container.querySelectorAll('.month-days').length).toBeGreaterThan(openedBefore)
+    expect(spy.mock.calls.length).toBeGreaterThan(calledBefore)
+  })
+
+  it('has a Today jump that scrolls to today and keeps its month open', () => {
+    const spy = Element.prototype.scrollIntoView
+    const { container } = view() // includes a fixture dated today
+    const calledBefore = spy.mock.calls.length
+    fireEvent.click(container.querySelector('.month-today'))
+    expect(spy.mock.calls.length).toBeGreaterThan(calledBefore)
+    expect(container.querySelector('.month-head.open')).toBeTruthy()
+  })
+
+  it('Today jump falls back to the current month header when today has no fixture', () => {
+    const spy = Element.prototype.scrollIntoView
+    // A current-month fixture on a non-today day, plus August — no fixture is
+    // dated today, so the today ref is null and the jump lands on the section.
+    const noToday = [
+      fx('cur', LAST_WEEK, 'LIV', 'MNC', { score: [2, 2] }),
+      fx('aug', AUG, 'ARS', 'CHE', { score: [1, 0] }),
+    ]
+    const { container } = view(noToday)
+    const calledBefore = spy.mock.calls.length
+    fireEvent.click(container.querySelector('.month-today'))
+    expect(spy.mock.calls.length).toBeGreaterThan(calledBefore)
   })
 })
 
