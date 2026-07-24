@@ -5,10 +5,15 @@ import { TEAM_BY_ABBR } from '../data/teams.js'
 import { useFollow } from '../context/follow.jsx'
 import { useServices } from '../context/services.jsx'
 import { watchableServices } from '../utils/watch.js'
+import { parseQuery, matchesSearch } from '../utils/search.js'
 
 // The tail of the season the default view falls back to when nothing is left to
 // come — an off-season page shows the last week of results rather than blank.
 const OFFSEASON_TAIL_DAYS = 7
+
+// One-click examples that demonstrate the scoped-search syntax, each matched to
+// something that really appears in the committed fixture list.
+const SEARCH_EXAMPLES = ['team: Arsenal', 'city: London', 'venue: Anfield', 'tv: Peacock']
 
 // Month labels derived from a 'YYYY-MM' key itself (UTC so the month never
 // shifts across a zone boundary).
@@ -52,12 +57,26 @@ export default function FixturesView({
   const { followed } = useFollow()
   const { services, count: serviceCount } = useServices()
 
+  // Free-text / scoped search over the fixtures. Deliberately component-local —
+  // it is never written to the URL or localStorage, so it can't add a persisted
+  // key or change any shared link (which would break the deep-link tests).
+  const [search, setSearch] = useState('')
+  // Parse the search box once per keystroke, not once per fixture.
+  const parsedSearch = useMemo(() => parseQuery(search), [search])
+  // The filter panel is collapsed by default, but opens on load if a shared link
+  // already applies "followed", or the device remembers a watch-only filter — so
+  // an active filter is never hidden behind a closed panel. (Search starts empty.)
+  const [filtersOpen, setFiltersOpen] = useState(() => Boolean(onlyFollowed) || Boolean(watchOnly))
+  const filterBarRef = useRef(null)
+  const monthJumpRef = useRef(null)
+
   const now = new Date()
   const todayKey = dateKey(now.toISOString(), tz)
   const thisMonth = todayKey.slice(0, 7)
 
-  // The followed and watch filters apply in every mode; the past cut is layered
-  // on top for the default view only, so this base list can also feed the tail.
+  // The followed, watch and search filters apply in every mode; the past cut is
+  // layered on top for the default view only, so this base list can also feed
+  // the tail.
   const baseList = useMemo(() => {
     let list = fixtures
     if (onlyFollowed && followed.size) {
@@ -69,8 +88,28 @@ export default function FixturesView({
     if (watchOnly && serviceCount) {
       list = list.filter((f) => !f.tv?.length || watchableServices(f.tv, services).length > 0)
     }
-    return list
-  }, [fixtures, onlyFollowed, followed, watchOnly, services, serviceCount])
+    // An empty query matches everything, so this is a no-op until something is typed.
+    return list.filter((f) => matchesSearch(f, parsedSearch))
+  }, [fixtures, onlyFollowed, followed, watchOnly, services, serviceCount, parsedSearch])
+
+  // How many filters are actively narrowing the list — drives the toggle badge
+  // and the auto-open. A followed/service toggle only counts once there are
+  // clubs/services for it to act on, mirroring what baseList applies.
+  const activeFilterCount = useMemo(() => {
+    let n = 0
+    if (search.trim()) n++
+    if (onlyFollowed && followed.size) n++
+    if (watchOnly && serviceCount) n++
+    return n
+  }, [search, onlyFollowed, followed, watchOnly, serviceCount])
+
+  // Clears everything the badge counts. The followed/watch toggles are the
+  // shell's, so flip them off only when they're on (they're plain toggles).
+  const clearAllFilters = () => {
+    setSearch('')
+    if (onlyFollowed) onToggleFollowed()
+    if (watchOnly) onToggleWatch()
+  }
 
   // The whole season as day buckets (all filters bar the past cut) — what
   // "Played" shows, and the pool the off-season tail is drawn from.
@@ -157,6 +196,37 @@ export default function FixturesView({
     setPendingScroll(null)
   }, [pendingScroll])
 
+  // Publish the sticky filter bar's height as --filter-bar-h so the sticky
+  // month jump-bar can pin directly beneath it, not behind it. The bar is always
+  // rendered here, so its ref is set by the time this runs. Re-measured whenever
+  // the bar's height can change (panel open/close, an active-filter chip
+  // appearing) and on resize (it wraps on narrow screens).
+  useEffect(() => {
+    const publish = () =>
+      document.documentElement.style.setProperty(
+        '--filter-bar-h',
+        `${filterBarRef.current.offsetHeight}px`
+      )
+    publish()
+    window.addEventListener('resize', publish)
+    return () => window.removeEventListener('resize', publish)
+  }, [filtersOpen, activeFilterCount, showPast, serviceCount])
+
+  // Publish the sticky month jump-bar's height as --month-jump-h so a day/month
+  // scrolled to `block: 'start'` clears BOTH sticky bars (filter bar + this one)
+  // instead of landing behind them. 0 in the default view, where the bar isn't
+  // rendered. Re-measured when the mode or month set changes and on resize.
+  useEffect(() => {
+    const publish = () =>
+      document.documentElement.style.setProperty(
+        '--month-jump-h',
+        `${monthJumpRef.current?.offsetHeight ?? 0}px`
+      )
+    publish()
+    window.addEventListener('resize', publish)
+    return () => window.removeEventListener('resize', publish)
+  }, [showPast, months.length])
+
   // Deliberately not memoised on [fixtures]. `now` is rebuilt every render, so
   // a memo keyed only on the fixture list would pin the banner to a kickoff
   // that has since passed: countdown() then returns null and the banner reads
@@ -196,7 +266,28 @@ export default function FixturesView({
     <main className="view">
       <div className="view-head">
         <h2>Fixtures</h2>
-        <div className="view-tools">
+      </div>
+
+      <div className="filter-bar" ref={filterBarRef}>
+        <div className="filter-controls">
+          <button
+            type="button"
+            className={`chip filter-toggle ${filtersOpen ? 'on' : ''}`}
+            onClick={() => setFiltersOpen((o) => !o)}
+            aria-expanded={filtersOpen}
+            aria-controls="filters-panel"
+          >
+            ⚙ Filters
+            {activeFilterCount > 0 && <span className="filter-badge">{activeFilterCount}</span>}
+            <span className="chev" aria-hidden="true">
+              {filtersOpen ? '▲' : '▼'}
+            </span>
+          </button>
+          {activeFilterCount > 0 && (
+            <button type="button" className="chip filter-clear" onClick={clearAllFilters}>
+              Clear all
+            </button>
+          )}
           <button
             type="button"
             className={`chip ${showPast ? 'on' : ''}`}
@@ -205,39 +296,70 @@ export default function FixturesView({
           >
             Played
           </button>
-          <button
-            type="button"
-            className={`chip ${onlyFollowed ? 'on' : ''}`}
-            onClick={onToggleFollowed}
-            aria-pressed={onlyFollowed}
-            disabled={!followed.size}
-            title={followed.size ? 'Only followed clubs' : 'Follow a club first'}
-          >
-            ★ Followed
-          </button>
-          {serviceCount ? (
-            <button
-              type="button"
-              className={`chip ${watchOnly ? 'on' : ''}`}
-              onClick={onToggleWatch}
-              aria-pressed={watchOnly}
-              title="Only matches on the services you have"
-            >
-              📺 On my services ({serviceCount})
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className="chip"
-            onClick={onEditServices}
-            title="Pick the streaming services and TV packages you have"
-          >
-            {serviceCount ? 'Edit services' : '📺 My services'}
-          </button>
           <button type="button" className="chip" onClick={() => onExport?.(visible)}>
             Export
           </button>
         </div>
+
+        {filtersOpen && (
+          <div className="filters-panel" id="filters-panel">
+            <div className="filters">
+              <label className="field search-field">
+                <span className="sr-only">Search fixtures</span>
+                <input
+                  className="search"
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder='Search — try "team: Arsenal" or "city: London"'
+                />
+              </label>
+              <button
+                type="button"
+                className={`chip ${onlyFollowed ? 'on' : ''}`}
+                onClick={onToggleFollowed}
+                aria-pressed={onlyFollowed}
+                disabled={!followed.size}
+                title={followed.size ? 'Only followed clubs' : 'Follow a club first'}
+              >
+                ★ Followed
+              </button>
+              {serviceCount ? (
+                <button
+                  type="button"
+                  className={`chip ${watchOnly ? 'on' : ''}`}
+                  onClick={onToggleWatch}
+                  aria-pressed={watchOnly}
+                  title="Only matches on the services you have"
+                >
+                  📺 On my services ({serviceCount})
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className="chip"
+                onClick={onEditServices}
+                title="Pick the streaming services and TV packages you have"
+              >
+                {serviceCount ? 'Edit services' : '📺 My services'}
+              </button>
+            </div>
+            <div className="search-hints">
+              <span className="hint-label">Try:</span>
+              {SEARCH_EXAMPLES.map((ex) => (
+                <button
+                  key={ex}
+                  type="button"
+                  className="hint-chip"
+                  onClick={() => setSearch(ex)}
+                >
+                  {ex}
+                </button>
+              ))}
+              <span className="hint-note">fields: team · city · venue · tv</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {next && (
@@ -264,7 +386,7 @@ export default function FixturesView({
 
       {days.length > 0 && showPast && (
         <>
-          <nav className="month-jump" aria-label="Jump to month">
+          <nav className="month-jump" aria-label="Jump to month" ref={monthJumpRef}>
             {months.map(([mk]) => (
               <button
                 key={mk}

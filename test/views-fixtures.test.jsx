@@ -63,6 +63,11 @@ afterEach(() => {
 
 const setup = () => userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
 
+// The followed / services / search controls live in a panel that's collapsed
+// unless a filter is already active on load; open it before reaching inside.
+const openFilters = () =>
+  fireEvent.click(screen.getByRole('button', { name: /⚙ Filters/ }))
+
 // FixturesView is controlled: the two filter chips are props so that App can
 // serialise them into the query string, which is what makes them survive a
 // reload and travel in a shared link. These tests stand in for the shell's
@@ -143,6 +148,7 @@ describe('FixturesView', () => {
   it('disables the followed filter until a club is followed', () => {
     render(<Fixtures fixtures={[fx('b', TODAY, 'LIV', 'MNC')]} tz={TZ} />)
 
+    openFilters()
     const chip = screen.getByRole('button', { name: /Followed/ })
     expect(chip).toBeDisabled()
     expect(chip).toHaveAttribute('title', 'Follow a club first')
@@ -162,6 +168,7 @@ describe('FixturesView', () => {
       </FollowProvider>
     )
 
+    openFilters()
     const chip = screen.getByRole('button', { name: /Followed/ })
     expect(chip).toBeEnabled()
     expect(chip).toHaveAttribute('title', 'Only followed clubs')
@@ -183,6 +190,7 @@ describe('FixturesView', () => {
       </FollowProvider>
     )
 
+    openFilters()
     await user.click(screen.getByRole('button', { name: /Followed/ }))
 
     expect(screen.getByText(/clubs you follow/)).toBeInTheDocument()
@@ -306,6 +314,117 @@ describe('FixturesView', () => {
     await user.click(screen.getByRole('button', { name: 'Export' }))
 
     expect(screen.getByText('Liverpool')).toBeInTheDocument()
+  })
+})
+
+/* ── The collapsible filter panel + scoped search ────────────────────────── */
+
+describe('FixturesView filter panel', () => {
+  const toggle = () => screen.getByRole('button', { name: /⚙ Filters/ })
+
+  it('is collapsed by default and toggles open/closed with aria-expanded', () => {
+    render(<Fixtures fixtures={[fx('b', TODAY, 'LIV', 'MNC')]} tz={TZ} />)
+
+    // Collapsed: the search box isn't in the DOM.
+    expect(toggle()).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByLabelText('Search fixtures')).not.toBeInTheDocument()
+
+    fireEvent.click(toggle())
+    expect(toggle()).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByLabelText('Search fixtures')).toBeInTheDocument()
+
+    fireEvent.click(toggle())
+    expect(toggle()).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByLabelText('Search fixtures')).not.toBeInTheDocument()
+  })
+
+  it('narrows the fixtures as you type a scoped query', async () => {
+    const user = setup()
+    render(
+      <Fixtures
+        fixtures={[fx('b', TODAY, 'LIV', 'MNC'), fx('c', TODAY, 'TOT', 'EVE')]}
+        tz={TZ}
+      />
+    )
+
+    fireEvent.click(toggle())
+    await user.type(screen.getByLabelText('Search fixtures'), 'team: Liverpool')
+
+    expect(screen.getByText('Liverpool')).toBeInTheDocument()
+    expect(screen.queryByText('Spurs')).not.toBeInTheDocument()
+  })
+
+  it('badges an active search and clears it with Clear all', async () => {
+    const user = setup()
+    render(<Fixtures fixtures={[fx('b', TODAY, 'LIV', 'MNC')]} tz={TZ} />)
+
+    // No badge and no Clear all with nothing applied.
+    expect(within(toggle()).queryByText('1')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Clear all' })).not.toBeInTheDocument()
+
+    fireEvent.click(toggle())
+    await user.type(screen.getByLabelText('Search fixtures'), 'Liverpool')
+    expect(within(toggle()).getByText('1')).toBeInTheDocument()
+
+    // Clear all with only a search active exercises the "toggles already off" path.
+    await user.click(screen.getByRole('button', { name: 'Clear all' }))
+    expect(screen.getByLabelText('Search fixtures')).toHaveValue('')
+    expect(within(toggle()).queryByText('1')).not.toBeInTheDocument()
+  })
+
+  it('fills the search box from an example chip', async () => {
+    const user = setup()
+    render(<Fixtures fixtures={[fx('b', TODAY, 'LIV', 'MNC')]} tz={TZ} />)
+
+    fireEvent.click(toggle())
+    await user.click(screen.getByRole('button', { name: 'team: Arsenal' }))
+    expect(screen.getByLabelText('Search fixtures')).toHaveValue('team: Arsenal')
+  })
+
+  it('auto-opens on load and Clear all turns off both followed and watch filters', async () => {
+    // A followed club plus chosen services make both toggles start active; the
+    // panel auto-opens and Clear all resets both (the "toggle was on" path).
+    localStorage.setItem('pl:followed', JSON.stringify(['LIV']))
+    localStorage.setItem('pl:services', JSON.stringify(['peacock']))
+    const user = setup()
+
+    function Both() {
+      const [onlyFollowed, setOnlyFollowed] = useState(true)
+      const [watchOnly, setWatchOnly] = useState(true)
+      return (
+        <FixturesView
+          fixtures={[fx('b', TODAY, 'LIV', 'MNC', { tv: ['Peacock'] })]}
+          tz={TZ}
+          onlyFollowed={onlyFollowed}
+          onToggleFollowed={() => setOnlyFollowed((v) => !v)}
+          watchOnly={watchOnly}
+          onToggleWatch={() => setWatchOnly((v) => !v)}
+          showPast={false}
+          onTogglePast={() => {}}
+        />
+      )
+    }
+
+    render(
+      <FollowProvider>
+        <ServicesProvider>
+          <Both />
+        </ServicesProvider>
+      </FollowProvider>
+    )
+
+    // Two active filters (followed + watch) with the panel already open.
+    expect(toggle()).toHaveAttribute('aria-expanded', 'true')
+    expect(within(toggle()).getByText('2')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Clear all' }))
+
+    expect(screen.getByRole('button', { name: /Followed/ })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: /On my services/ })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    )
+    expect(within(toggle()).queryByText('2')).not.toBeInTheDocument()
   })
 })
 
@@ -704,11 +823,13 @@ describe('FixturesView watch filter', () => {
 
   it('shows the filter chip only once services are chosen', () => {
     const { unmount } = withServices([], { fixtures: LISTED, tz: TZ })
+    openFilters()
     expect(screen.queryByRole('button', { name: /On my services/ })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /My services/ })).toBeInTheDocument()
     unmount()
 
     withServices(['peacock', 'fubo'], { fixtures: LISTED, tz: TZ })
+    openFilters()
     expect(screen.getByRole('button', { name: /On my services \(2\)/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Edit services' })).toBeInTheDocument()
   })
@@ -718,6 +839,7 @@ describe('FixturesView watch filter', () => {
     const onEditServices = vi.fn()
     withServices(['peacock'], { fixtures: LISTED, tz: TZ, onToggleWatch, onEditServices })
 
+    openFilters()
     fireEvent.click(screen.getByRole('button', { name: /On my services/ }))
     expect(onToggleWatch).toHaveBeenCalled()
 

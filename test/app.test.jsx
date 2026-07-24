@@ -46,6 +46,11 @@ async function renderApp() {
   return result
 }
 
+// The followed / services / search controls live in the fixtures filter panel,
+// collapsed unless a filter is already active on load; open it before reaching
+// for anything inside.
+const openFilters = () => userEvent.click(screen.getByRole('button', { name: /⚙ Filters/ }))
+
 beforeEach(() => {
   fetchLive.mockReset()
   fetchLive.mockResolvedValue(new Map())
@@ -823,6 +828,7 @@ describe('App services', () => {
     const user = userEvent.setup()
     await renderWithServices()
 
+    await openFilters()
     await user.click(screen.getByRole('button', { name: /My services/ }))
     expect(screen.getByRole('dialog', { name: 'Choose your services' })).toBeInTheDocument()
 
@@ -836,6 +842,7 @@ describe('App services', () => {
     const user = userEvent.setup()
     await renderWithServices()
 
+    await openFilters()
     const chip = screen.getByRole('button', { name: /On my services/ })
     expect(chip).toHaveAttribute('aria-pressed', 'false')
 
@@ -867,6 +874,7 @@ describe('App services', () => {
       throw new DOMException('SecurityError')
     })
     await renderWithServices()
+    await openFilters()
     expect(screen.getByRole('button', { name: /My services/ })).toBeInTheDocument()
   })
 
@@ -875,6 +883,7 @@ describe('App services', () => {
     localStorage.setItem('pl:services', JSON.stringify(['peacock']))
     const user = userEvent.setup()
     await renderWithServices()
+    await openFilters()
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('QuotaExceededError')
     })

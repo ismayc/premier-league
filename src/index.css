@@ -292,6 +292,128 @@ select {
   flex-wrap: wrap;
 }
 
+/* ── Collapsible + sticky filter bar ────────────────────────────────────
+   Pins to the top of the viewport (above the sticky .month-jump) with a solid
+   background so the controls stay reachable as the fixtures scroll. Its measured
+   height is published as --filter-bar-h (see FixturesView) so .month-jump can
+   stick directly beneath it, not behind it. */
+.filter-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg);
+  padding: 8px 0;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.filter-controls {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Count of filters currently narrowing the fixtures. */
+.filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.chev {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.filter-clear {
+  color: var(--text-2);
+}
+.filter-clear:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filters-panel {
+  margin-top: 10px;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.search-field {
+  flex: 1 1 240px;
+}
+
+.search {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 12px;
+}
+
+.search::placeholder {
+  color: var(--muted);
+}
+
+.search-hints {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.hint-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.hint-chip {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px dashed var(--line);
+  background: var(--card);
+  color: var(--accent);
+  cursor: pointer;
+}
+.hint-chip:hover {
+  border-style: solid;
+  border-color: var(--accent);
+}
+
+.hint-note {
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: 4px;
+}
+
 .note {
   color: var(--text-2);
   background: var(--card);
@@ -377,6 +499,10 @@ select {
 
 .day {
   margin-bottom: 22px;
+  /* Land below BOTH sticky bars (filter bar + full-season month jump-bar) so a
+     "Today"/day jump doesn't scroll the day heading behind them. --month-jump-h
+     is 0 in the default view, where the jump-bar isn't rendered. */
+  scroll-margin-top: calc(var(--filter-bar-h, 0px) + var(--month-jump-h, 0px) + 12px);
 }
 
 .day-head {
@@ -419,7 +545,10 @@ select {
    sections, shown only when "Played" opens the whole season. */
 .month-jump {
   position: sticky;
-  top: 0;
+  /* Pins directly beneath the sticky .filter-bar (its live height, published by
+     FixturesView) rather than colliding with it at the very top. z-index stays
+     below the filter bar so, on the frame before the height updates, it wins. */
+  top: var(--filter-bar-h, 0px);
   z-index: 5;
   display: flex;
   flex-wrap: wrap;
@@ -450,6 +579,8 @@ select {
 
 .month {
   margin-bottom: 14px;
+  /* A month-chip jump scrolls a .month to the top; clear both sticky bars too. */
+  scroll-margin-top: calc(var(--filter-bar-h, 0px) + var(--month-jump-h, 0px) + 12px);
 }
 
 .month-head {
@@ -1426,6 +1557,17 @@ table {
 
 .modal {
   max-width: 460px;
+}
+
+/* On a desktop-sized viewport, widen the match-detail modal (only) so wide content
+   fits without horizontal scrolling. It stays full-width on phones, and the
+   calendar/services/team modals keep their own narrower widths. The base .modal
+   caps at 460px, so game-modal must raise max-width as well as set width. */
+@media (min-width: 760px) {
+  .modal.game-modal {
+    max-width: min(96vw, 900px);
+    width: min(96vw, 900px);
+  }
 }
 
 .drawer {

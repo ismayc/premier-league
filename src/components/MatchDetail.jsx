@@ -41,7 +41,7 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
   )
 
   return (
-    <Modal label={`${nameOf(home)} versus ${nameOf(away)}`} onClose={onClose}>
+    <Modal label={`${nameOf(home)} versus ${nameOf(away)}`} className="game-modal" onClose={onClose}>
 
         <div className="md-score">
           <button type="button" className="md-team" onClick={() => onPickTeam?.(home)}>
