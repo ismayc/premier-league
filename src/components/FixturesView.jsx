@@ -102,11 +102,20 @@ export default function FixturesView({
     return [...map.entries()]
   }, [allDays])
 
-  // Only the current month opens to start; the rest collapse the season to a
-  // row of headers.
-  const [expanded, setExpanded] = useState(() => new Set([thisMonth]))
+  // Where a "Today" jump (and the full-season landing) goes: today if it has
+  // fixtures, else the NEXT fixture-day, else (the whole season already past)
+  // the most recent one.
+  const nowKey = useMemo(() => {
+    const upcoming = allDays.find((d) => d.key >= todayKey)
+    return (upcoming || allDays[allDays.length - 1])?.key ?? null
+  }, [allDays, todayKey])
+  const nowMonth = nowKey ? nowKey.slice(0, 7) : thisMonth
+
+  // The month holding that landing day opens to start; the rest collapse the
+  // season to a row of headers.
+  const [expanded, setExpanded] = useState(() => new Set([nowMonth]))
   const monthRefs = useRef({})
-  const todayRef = useRef(null)
+  const dayRefs = useRef({})
   const [pendingScroll, setPendingScroll] = useState(null)
 
   const toggleMonth = (mk) =>
@@ -120,32 +129,30 @@ export default function FixturesView({
     setExpanded((prev) => new Set(prev).add(mk))
     setPendingScroll(mk)
   }
-  // "Today" jump: open the current month and scroll to today itself.
+  // "Today" jump: open the month holding the landing day and scroll to that day
+  // itself (today, or the next fixture-day when today is idle) — never just the
+  // month header.
   const jumpToToday = () => {
-    setExpanded((prev) => new Set(prev).add(thisMonth))
-    setPendingScroll('today')
+    setExpanded((prev) => new Set(prev).add(nowMonth))
+    setPendingScroll(nowKey)
   }
 
-  // Landing scroll (full season only): today within its open month, falling
-  // back to the month header when today has no fixture.
+  // Landing scroll (full season only): the "now" day (today / next fixture-day),
+  // which its open month renders.
   useEffect(() => {
     if (!showPast) return
-    const target = todayRef.current || monthRefs.current[thisMonth]
-    target?.scrollIntoView({ block: 'start' })
-  }, [showPast, thisMonth])
+    dayRefs.current[nowKey]?.scrollIntoView({ block: 'start' })
+  }, [showPast, nowKey])
 
-  // Jump-bar scroll: after a chip (or "Today") opens its month, scroll the
-  // target into view. Clearing pendingScroll re-runs this, but the guard makes
-  // the second pass a no-op.
+  // Jump-bar scroll: after a chip or "Today" expands its target, scroll it into
+  // view — a day key resolves via dayRefs, a month key via monthRefs. Clearing
+  // pendingScroll re-runs this, but the guard makes the second pass a no-op.
   useEffect(() => {
     if (pendingScroll == null) return
-    const el =
-      pendingScroll === 'today'
-        ? todayRef.current || monthRefs.current[thisMonth]
-        : monthRefs.current[pendingScroll]
+    const el = dayRefs.current[pendingScroll] || monthRefs.current[pendingScroll]
     el?.scrollIntoView({ block: 'start' })
     setPendingScroll(null)
-  }, [pendingScroll, thisMonth])
+  }, [pendingScroll])
 
   // Deliberately not memoised on [fixtures]. `now` is rebuilt every render, so
   // a memo keyed only on the fixture list would pin the banner to a kickoff
@@ -157,12 +164,12 @@ export default function FixturesView({
   const renderDay = (day) => (
     <section
       key={day.key}
-      className="day"
+      className={`day ${day.key === todayKey ? 'is-today' : ''}`}
       ref={(el) => {
-        if (day.key === todayKey) todayRef.current = el
+        dayRefs.current[day.key] = el
       }}
     >
-      <h3 className={`day-head ${day.key === todayKey ? 'is-today' : ''}`}>
+      <h3 className="day-head">
         {longDayOf(day.fixtures[0].ko, tz)}
         {day.key === todayKey && <span className="today-tag">Today</span>}
         <span className="day-count">{day.fixtures.length}</span>

@@ -391,7 +391,7 @@ select {
   margin-bottom: 8px;
 }
 
-.day-head.is-today {
+.day.is-today .day-head {
   color: var(--accent);
 }
 

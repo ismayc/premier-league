@@ -366,27 +366,28 @@ describe('FixturesView full season', () => {
     expect(spy.mock.calls.length).toBeGreaterThan(calledBefore)
   })
 
-  it('has a Today jump that scrolls to today and keeps its month open', () => {
+  it('Today jump scrolls to today’s own day (a day row, not the month header)', () => {
     const spy = Element.prototype.scrollIntoView
     const { container } = view() // includes a fixture dated today
-    const calledBefore = spy.mock.calls.length
     fireEvent.click(container.querySelector('.month-today'))
-    expect(spy.mock.calls.length).toBeGreaterThan(calledBefore)
-    expect(container.querySelector('.month-head.open')).toBeTruthy()
+    const last = spy.mock.contexts[spy.mock.contexts.length - 1]
+    expect(last).toHaveClass('day')
+    expect(last).toHaveClass('is-today')
   })
 
-  it('Today jump falls back to the current month header when today has no fixture', () => {
+  it('Today jump goes to the next fixture-day when today has no fixture', () => {
     const spy = Element.prototype.scrollIntoView
-    // A current-month fixture on a non-today day, plus August — no fixture is
-    // dated today, so the today ref is null and the jump lands on the section.
+    // No fixture dated today; a later fixture (October) is the next fixture-day.
+    // The jump must land on THAT day row, not on a month header.
     const noToday = [
-      fx('cur', LAST_WEEK, 'LIV', 'MNC', { score: [2, 2] }),
       fx('aug', AUG, 'ARS', 'CHE', { score: [1, 0] }),
+      fx('oct', OCT, 'NEW', 'AVL'),
     ]
     const { container } = view(noToday)
-    const calledBefore = spy.mock.calls.length
     fireEvent.click(container.querySelector('.month-today'))
-    expect(spy.mock.calls.length).toBeGreaterThan(calledBefore)
+    const last = spy.mock.contexts[spy.mock.contexts.length - 1]
+    expect(last).toHaveClass('day')
+    expect(last).not.toHaveClass('is-today') // today itself has no fixture
   })
 })
 
