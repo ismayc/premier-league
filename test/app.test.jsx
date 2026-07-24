@@ -26,8 +26,10 @@ vi.mock('../src/services/espn.js', async (importOriginal) => {
 })
 
 // App renders the full 380-fixture season on every interaction, which under
-// coverage instrumentation outruns the 5s default.
-vi.setConfig({ testTimeout: 30_000 })
+// coverage instrumentation outruns the 5s default. The filter panel adds an
+// extra open step before the in-panel controls, so a slow CI runner can push a
+// services/watch test past 30s — give it generous headroom (matching NBA).
+vi.setConfig({ testTimeout: 90_000 })
 
 const LIVE_REFRESH_MS = 30_000
 const IDLE_REFRESH_MS = 120_000
