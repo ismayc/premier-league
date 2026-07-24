@@ -415,6 +415,65 @@ describe('MatchDetail', () => {
     expect(screen.getByText('Full time')).toBeInTheDocument()
   })
 
+  it('reveals just this match’s score on demand in spoiler-free mode', async () => {
+    const user = userEvent.setup()
+    const earlier = fixture({ home: 'CHE', away: 'ARS', score: [1, 3], ko: at(-30 * DAY) })
+    const current = fixture({ home: 'ARS', away: 'CHE', score: [2, 1] })
+    const { container } = render(
+      <MatchDetail
+        fixture={current}
+        fixtures={[earlier, current]}
+        tz="Europe/London"
+        hideScores
+      />
+    )
+    // Masked to start: a "v" stands in for the scoreline and the head-to-head hides too.
+    expect(screen.getByText('v')).toBeInTheDocument()
+    expect(container.querySelector('.md-goals')).toBeNull()
+    expect(screen.getByText(/Chelsea · Arsenal/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Reveal score' }))
+    // This match's score now shows and the button flips to hide.
+    expect(container.querySelector('.md-goals').textContent).toBe('2–1')
+    // The rest of the match is unmasked too — the earlier meeting's result.
+    expect(screen.getByText(/Chelsea 1–3 Arsenal/)).toBeInTheDocument()
+
+    // And it re-masks on demand.
+    await user.click(screen.getByRole('button', { name: 'Hide score' }))
+    expect(container.querySelector('.md-goals')).toBeNull()
+    expect(screen.getByText(/Chelsea · Arsenal/)).toBeInTheDocument()
+  })
+
+  it('re-masks the score when a different match opens', async () => {
+    const user = userEvent.setup()
+    const first = fixture({ home: 'ARS', away: 'CHE', score: [2, 1] })
+    const { container, rerender } = render(
+      <MatchDetail fixture={first} fixtures={[]} tz="Europe/London" hideScores />
+    )
+    await user.click(screen.getByRole('button', { name: 'Reveal score' }))
+    expect(container.querySelector('.md-goals').textContent).toBe('2–1')
+
+    // Opening another match in the same popout starts masked again.
+    const second = fixture({ home: 'LIV', away: 'MCI', score: [0, 3] })
+    rerender(<MatchDetail fixture={second} fixtures={[]} tz="Europe/London" hideScores />)
+    expect(container.querySelector('.md-goals')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Reveal score' })).toBeInTheDocument()
+  })
+
+  it('offers no reveal when spoiler-free is off', () => {
+    render(
+      <MatchDetail fixture={fixture({ score: [2, 1] })} fixtures={[]} tz="Europe/London" />
+    )
+    expect(screen.queryByRole('button', { name: /reveal score|hide score/i })).toBeNull()
+  })
+
+  it('offers no reveal for an upcoming match even in spoiler-free mode', () => {
+    render(
+      <MatchDetail fixture={fixture({ ko: at(2 * DAY) })} fixtures={[]} tz="Europe/London" hideScores />
+    )
+    expect(screen.queryByRole('button', { name: /reveal score|hide score/i })).toBeNull()
+  })
+
   it('shows a live badge with the clock, and a generic one without', () => {
     const { unmount } = render(
       <MatchDetail

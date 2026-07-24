@@ -1488,6 +1488,20 @@ table {
   text-transform: uppercase;
 }
 
+/* Per-match score reveal in spoiler-free mode. */
+.md-reveal {
+  margin-top: 4px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--card);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 .md-facts {
   margin: 0;
   display: flex;

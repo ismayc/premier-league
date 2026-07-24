@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import TeamLogo from './TeamLogo.jsx'
 import Lineups from './Lineups.jsx'
 import { TEAM_BY_ABBR } from '../data/teams.js'
@@ -15,10 +16,20 @@ const nameOf = (abbr) => TEAM_BY_ABBR[abbr]?.name ?? abbr
  * lets someone check this app against a fixture list elsewhere.
  */
 export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose, onPickTeam }) {
+  // A per-match score reveal for spoiler-free mode: shows THIS match's result inside
+  // the popout without turning spoiler-free off everywhere else. Re-masks when a
+  // different match opens.
+  const [revealed, setRevealed] = useState(false)
+  useEffect(() => {
+    setRevealed(false)
+  }, [fixture?.id])
+
   if (!fixture) return null
 
   const { home, away, score, live, unplayed } = fixture
-  const showScore = score && !hideScores
+  // In spoiler-free mode `hide` stays true until the viewer reveals THIS match's score.
+  const hide = hideScores && !revealed
+  const showScore = score && !hide
   const upcoming = !score && !unplayed
 
   // Earlier meetings this season between the same two clubs, either way round.
@@ -49,6 +60,16 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
             {live && <span className="md-live">{fixture.clock || 'Live'}</span>}
             {unplayed && <span className="md-off">{unplayed}</span>}
             {score && !live && !unplayed && <span className="md-ft">Full time</span>}
+            {score && hideScores && (
+              <button
+                type="button"
+                className="md-reveal"
+                onClick={() => setRevealed((v) => !v)}
+                aria-pressed={revealed}
+              >
+                {revealed ? 'Hide score' : 'Reveal score'}
+              </button>
+            )}
           </div>
 
           <button type="button" className="md-team" onClick={() => onPickTeam?.(away)}>
@@ -95,7 +116,7 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
               <dd>
                 {h2h.map((f) => (
                   <div key={f.id}>
-                    {nameOf(f.home)} {hideScores ? '·' : `${f.score[0]}–${f.score[1]}`}{' '}
+                    {nameOf(f.home)} {hide ? '·' : `${f.score[0]}–${f.score[1]}`}{' '}
                     {nameOf(f.away)}
                   </div>
                 ))}
