@@ -1,8 +1,10 @@
 name: Refresh data
 
-# Twice daily during the season. The fetch scripts use Node built-ins only, so
-# this job needs no npm ci to produce the new data — the install happens later,
-# and only to run the tests against it.
+# Twice daily during the season. The fetch scripts use Node built-ins only, so this job
+# needs no npm ci to produce the new data — the install happens later, and only to run
+# the tests against it. On any change it tests, commits to main, and redeploys the site —
+# all in this one job; the test run is the gate, so a bad refresh fails here not on the
+# live site.
 on:
   schedule:
     - cron: '15 6 * * *'
@@ -10,17 +12,27 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: write # commit the refreshed data to main
+  pages: write # deploy the rebuilt site
+  id-token: write # OIDC for actions/deploy-pages
+
+# Share the Pages concurrency group with CI so a refresh deploy and a push deploy never
+# overlap — but never cancel a deploy midway.
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
+          cache: npm
 
       - name: Fetch fixtures, stats and history
         run: npm run fetch:all
@@ -34,26 +46,44 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      # Standings and stats are derived from the committed results, so a bad
-      # refresh shows up as a failing test rather than a wrong-looking table.
+      # The gate: standings and stats are derived from the committed results, so a bad
+      # refresh fails a test here rather than shipping a wrong-looking table.
       - name: Test against the refreshed data
         if: steps.diff.outputs.changed == 'true'
         run: |
           npm ci
           npm test
 
-      - name: Open a pull request
+      # Commit straight to main (the test above is the gate). This push is authored by
+      # GITHUB_TOKEN, so it does NOT trigger the CI deploy — this workflow deploys itself
+      # in the job below instead.
+      - name: Commit the refreshed data to main
         if: steps.diff.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v8
-        with:
-          branch: data/refresh
-          title: 'Refresh Premier League data'
-          commit-message: 'Refresh fixtures, stats and historical tables'
-          body: |
-            Automated refresh from the ESPN and openfootball feeds.
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- src/data public/logos
+          git commit -m "Refresh fixtures, stats and historical tables"
+          git push
 
-            The test suite ran against this data before the pull request was
-            opened, including the per-season table invariants.
-          add-paths: |
-            src/data
-            public/logos
+      - name: Build the site
+        if: steps.diff.outputs.changed == 'true'
+        run: npm run build
+
+      - name: Upload the Pages artifact
+        if: steps.diff.outputs.changed == 'true'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  # Publishes the artifact the refresh job built — only when there was a change.
+  deploy:
+    needs: refresh
+    if: needs.refresh.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5
