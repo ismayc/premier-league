@@ -31,6 +31,22 @@ jobs:
       # Coverage thresholds are set to 100% in vite.config.js, so this fails
       # the build if any line ships untested.
       - run: npm run test:coverage
+      # TEMP DIAGNOSTIC (diag/coverage-uncovered branch only): dump which
+      # functions/branches CI reports uncovered, since it can't be reproduced
+      # locally. Runs even when the coverage gate above fails.
+      - name: dump uncovered
+        if: always()
+        run: |
+          npx vitest run --coverage --coverage.reporter=json >/dev/null 2>&1 || true
+          node -e '
+            const c = require("./coverage/coverage-final.json");
+            for (const [f, d] of Object.entries(c)) {
+              const miss = Object.entries(d.f).filter(([k, v]) => v === 0)
+                .map(([k]) => { const m = d.fnMap[k]; return (m.name || "anon") + " @ " + (m.decl || m.loc).start.line; });
+              if (miss.length) console.log(f.split("/").pop() + " UNCOVERED FNS:", miss.join(" | "));
+            }
+            console.log("done");
+          '
       - run: npm run build
       - uses: actions/upload-pages-artifact@v5
         with:
