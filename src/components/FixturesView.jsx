@@ -1,6 +1,7 @@
 import { useMemo, useRef, useEffect, useState } from 'react'
 import MatchCard from './MatchCard.jsx'
 import { groupByDay, longDayOf, countdown, dateKey } from '../utils/time.js'
+import { assignMatchweeks, groupByMatchweek } from '../utils/matchweek.js'
 import { TEAM_BY_ABBR } from '../data/teams.js'
 import { useFollow } from '../context/follow.jsx'
 import { useServices } from '../context/services.jsx'
@@ -15,29 +16,17 @@ const OFFSEASON_TAIL_DAYS = 7
 // something that really appears in the committed fixture list.
 const SEARCH_EXAMPLES = ['team: Arsenal', 'city: London', 'venue: Anfield', 'tv: Peacock']
 
-// Month labels derived from a 'YYYY-MM' key itself (UTC so the month never
-// shifts across a zone boundary).
-const monthLabel = (mk) =>
-  new Date(`${mk}-01T12:00:00.000Z`).toLocaleDateString('en-GB', {
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  })
-const monthShort = (mk) =>
-  new Date(`${mk}-01T12:00:00.000Z`).toLocaleDateString('en-GB', {
-    month: 'short',
-    timeZone: 'UTC',
-  })
-
 /**
  * The season as a chronological list, grouped by day.
  *
  * The default (upcoming) view is a plain flat list — it is short by design, the
  * next fixture through the end of the season. "Played" (showPast) opens the
- * whole ~10-month season, which is a lot to scroll, so it is grouped into
- * collapsible month sections under a sticky jump-bar. An off-season with
- * nothing upcoming falls back to the last week of results instead of an empty
- * page.
+ * whole 38-matchweek season, which is a lot to scroll, so it is grouped into
+ * collapsible matchweek sections under a sticky jump-bar. (The `.month-*` class
+ * names and the --month-jump-h sticky var are the family's shared collapse
+ * styling, used here for matchweeks and by the sibling viewers for months.) An
+ * off-season with nothing upcoming falls back to the last week of results
+ * instead of an empty page.
  */
 export default function FixturesView({
   fixtures,
@@ -72,7 +61,6 @@ export default function FixturesView({
 
   const now = new Date()
   const todayKey = dateKey(now.toISOString(), tz)
-  const thisMonth = todayKey.slice(0, 7)
 
   // The followed, watch and search filters apply in every mode; the past cut is
   // layered on top for the default view only, so this base list can also feed
@@ -130,16 +118,12 @@ export default function FixturesView({
   // Export reads the fixtures actually on screen.
   const visible = useMemo(() => days.flatMap((d) => d.fixtures), [days])
 
-  // Full-season grouping: [ [monthKey, [day, ...]], ... ] in order.
-  const months = useMemo(() => {
-    const map = new Map()
-    for (const day of allDays) {
-      const mk = day.key.slice(0, 7)
-      if (!map.has(mk)) map.set(mk, [])
-      map.get(mk).push(day)
-    }
-    return [...map.entries()]
-  }, [allDays])
+  // Matchweek numbers keyed by fixture id, reconstructed from the FULL fixture
+  // list so the numbering is stable however the filters narrow the list below.
+  const mwById = useMemo(() => assignMatchweeks(fixtures), [fixtures])
+
+  // Full-season grouping: [ { mw, days:[day,...], count }, ... ] in matchweek order.
+  const weeks = useMemo(() => groupByMatchweek(allDays, mwById), [allDays, mwById])
 
   // Where a "Today" jump (and the full-season landing) goes: today if it has
   // fixtures, else the NEXT fixture-day, else (the whole season already past)
@@ -148,31 +132,35 @@ export default function FixturesView({
     const upcoming = allDays.find((d) => d.key >= todayKey)
     return (upcoming || allDays[allDays.length - 1])?.key ?? null
   }, [allDays, todayKey])
-  const nowMonth = nowKey ? nowKey.slice(0, 7) : thisMonth
 
-  // The month holding that landing day opens to start; the rest collapse the
+  // The matchweek holding the landing day (opens on load) and the one holding
+  // today (flagged in the jump-bar — null when today itself has no fixture).
+  const nowMw = weeks.find((w) => w.days.some((d) => d.key === nowKey))?.mw ?? null
+  const currentMw = weeks.find((w) => w.days.some((d) => d.key === todayKey))?.mw ?? null
+
+  // The matchweek holding that landing day opens to start; the rest collapse the
   // season to a row of headers.
-  const [expanded, setExpanded] = useState(() => new Set([nowMonth]))
-  const monthRefs = useRef({})
+  const [expanded, setExpanded] = useState(() => new Set([nowMw]))
+  const weekRefs = useRef({})
   const dayRefs = useRef({})
   const [pendingScroll, setPendingScroll] = useState(null)
 
-  const toggleMonth = (mk) =>
+  const toggleWeek = (mw) =>
     setExpanded((prev) => {
       const next = new Set(prev)
-      if (next.has(mk)) next.delete(mk)
-      else next.add(mk)
+      if (next.has(mw)) next.delete(mw)
+      else next.add(mw)
       return next
     })
-  const jumpToMonth = (mk) => {
-    setExpanded((prev) => new Set(prev).add(mk))
-    setPendingScroll(mk)
+  const jumpToWeek = (mw) => {
+    setExpanded((prev) => new Set(prev).add(mw))
+    setPendingScroll(mw)
   }
-  // "Today" jump: open the month holding the landing day and scroll to that day
-  // itself (today, or the next fixture-day when today is idle) — never just the
-  // month header.
+  // "Today" jump: open the matchweek holding the landing day and scroll to that
+  // day itself (today, or the next fixture-day when today is idle) — never just
+  // the matchweek header.
   const jumpToToday = () => {
-    setExpanded((prev) => new Set(prev).add(nowMonth))
+    setExpanded((prev) => new Set(prev).add(nowMw))
     setPendingScroll(nowKey)
   }
   // "Top" jump: back to the very top of the page — where the settings toolbar
@@ -187,11 +175,11 @@ export default function FixturesView({
   }, [showPast, nowKey])
 
   // Jump-bar scroll: after a chip or "Today" expands its target, scroll it into
-  // view — a day key resolves via dayRefs, a month key via monthRefs. Clearing
+  // view — a day key resolves via dayRefs, a matchweek key via weekRefs. Clearing
   // pendingScroll re-runs this, but the guard makes the second pass a no-op.
   useEffect(() => {
     if (pendingScroll == null) return
-    const el = dayRefs.current[pendingScroll] || monthRefs.current[pendingScroll]
+    const el = dayRefs.current[pendingScroll] || weekRefs.current[pendingScroll]
     el?.scrollIntoView({ block: 'start' })
     setPendingScroll(null)
   }, [pendingScroll])
@@ -212,10 +200,11 @@ export default function FixturesView({
     return () => window.removeEventListener('resize', publish)
   }, [filtersOpen, activeFilterCount, showPast, serviceCount])
 
-  // Publish the sticky month jump-bar's height as --month-jump-h so a day/month
-  // scrolled to `block: 'start'` clears BOTH sticky bars (filter bar + this one)
-  // instead of landing behind them. 0 in the default view, where the bar isn't
-  // rendered. Re-measured when the mode or month set changes and on resize.
+  // Publish the sticky matchweek jump-bar's height as --month-jump-h so a
+  // day/matchweek scrolled to `block: 'start'` clears BOTH sticky bars (filter
+  // bar + this one) instead of landing behind them. 0 in the default view, where
+  // the bar isn't rendered. Re-measured when the mode or matchweek set changes
+  // and on resize.
   useEffect(() => {
     const publish = () =>
       document.documentElement.style.setProperty(
@@ -225,7 +214,7 @@ export default function FixturesView({
     publish()
     window.addEventListener('resize', publish)
     return () => window.removeEventListener('resize', publish)
-  }, [showPast, months.length])
+  }, [showPast, weeks.length])
 
   // Deliberately not memoised on [fixtures]. `now` is rebuilt every render, so
   // a memo keyed only on the fixture list would pin the banner to a kickoff
@@ -386,15 +375,15 @@ export default function FixturesView({
 
       {days.length > 0 && showPast && (
         <>
-          <nav className="month-jump" aria-label="Jump to month" ref={monthJumpRef}>
-            {months.map(([mk]) => (
+          <nav className="month-jump" aria-label="Jump to matchweek" ref={monthJumpRef}>
+            {weeks.map(({ mw }) => (
               <button
-                key={mk}
+                key={mw}
                 type="button"
-                className={`chip month-chip ${mk === thisMonth ? 'is-current' : ''}`}
-                onClick={() => jumpToMonth(mk)}
+                className={`chip month-chip ${mw === currentMw ? 'is-current' : ''}`}
+                onClick={() => jumpToWeek(mw)}
               >
-                {monthShort(mk)}
+                MW{mw}
               </button>
             ))}
             <button
@@ -412,23 +401,22 @@ export default function FixturesView({
               Today
             </button>
           </nav>
-          {months.map(([mk, monthDays]) => {
-            const open = expanded.has(mk)
-            const count = monthDays.reduce((n, d) => n + d.fixtures.length, 0)
+          {weeks.map(({ mw, days: weekDays, count }) => {
+            const open = expanded.has(mw)
             return (
-              <div className="month" key={mk} ref={(el) => (monthRefs.current[mk] = el)}>
+              <div className="month" key={mw} ref={(el) => (weekRefs.current[mw] = el)}>
                 <button
                   type="button"
                   className={`month-head ${open ? 'open' : ''}`}
-                  onClick={() => toggleMonth(mk)}
+                  onClick={() => toggleWeek(mw)}
                   aria-expanded={open}
                 >
-                  <span aria-hidden="true">{open ? '▾' : '▸'}</span> <span>{monthLabel(mk)}</span>
+                  <span aria-hidden="true">{open ? '▾' : '▸'}</span> <span>Matchweek {mw}</span>
                   <span className="month-count">
                     {count} {count === 1 ? 'match' : 'matches'}
                   </span>
                 </button>
-                {open && <div className="month-days">{monthDays.map(renderDay)}</div>}
+                {open && <div className="month-days">{weekDays.map(renderDay)}</div>}
               </div>
             )
           })}

@@ -428,66 +428,79 @@ describe('FixturesView filter panel', () => {
   })
 })
 
-/* ── Full season: collapsible months + the sticky jump-bar ───────────────── */
+/* ── Full season: collapsible matchweeks + the sticky jump-bar ───────────── */
 
 describe('FixturesView full season', () => {
-  // Four distinct months relative to NOW (2026-09): August, the current month
-  // (with two days, one of them today), October and November.
-  const AUG = '2026-08-15T14:00:00.000Z'
-  const OCT = '2026-10-17T14:00:00.000Z'
-  const NOV = '2026-11-21T14:00:00.000Z'
+  // Four reconstructed matchweeks over four clubs (so each round is two games).
+  // ESPN carries no gameweek number, so the view rebuilds them from the fixture
+  // list: walking kickoffs in order, each match joins the earliest round where
+  // neither club has played and which still has room (a round is clubs/2 = 2).
+  //   MW1  Aug 15 + 16  (two days, played)
+  //   MW2  Sep 05       (one day,  played)
+  //   MW3  Sep 12 + 13  (two days, contains today) ← current
+  //   MW4  Sep 19       (one game — a trailing partial round, for the singular)
+  const M1A = '2026-08-15T14:00:00.000Z'
+  const M1B = '2026-08-16T14:00:00.000Z'
+  const T2 = '2026-09-13T14:00:00.000Z'
   const season = [
-    fx('aug', AUG, 'ARS', 'CHE', { score: [1, 0] }),
-    fx('cur', LAST_WEEK, 'LIV', 'MNC', { score: [2, 2] }),
-    fx('today', TODAY, 'TOT', 'EVE'),
-    fx('oct', OCT, 'NEW', 'AVL'),
-    fx('nov', NOV, 'BRE', 'BHA'),
+    fx('m1a', M1A, 'ARS', 'CHE', { score: [1, 0] }),
+    fx('m1b', M1B, 'LIV', 'MNC', { score: [2, 2] }),
+    fx('m2a', LAST_WEEK, 'ARS', 'LIV', { score: [0, 0] }),
+    fx('m2b', LAST_WEEK, 'CHE', 'MNC', { score: [3, 1] }),
+    fx('t1', TODAY, 'ARS', 'MNC'),
+    fx('t2', T2, 'CHE', 'LIV'),
+    fx('m4', NEXT_WEEK, 'ARS', 'CHE'),
   ]
   const view = (fixtures = season) =>
     render(<Fixtures fixtures={fixtures} tz={TZ} showPast />)
 
-  it('renders a jump chip per month and opens only the current month', () => {
+  it('renders a jump chip per matchweek and opens only the current one', () => {
     const { container } = view()
-    // Four months -> four jump chips (plus the Today button) and four sections.
+    // Four matchweeks -> four jump chips (plus Top/Today) and four sections.
     expect(
       container.querySelectorAll('.month-jump .month-chip:not(.month-today):not(.month-top)')
     ).toHaveLength(4)
+    expect([...container.querySelectorAll('.month-chip')].map((c) => c.textContent)).toContain('MW3')
     expect(container.querySelector('.month-today')).toBeTruthy()
     expect(container.querySelectorAll('.month')).toHaveLength(4)
-    // Only the current month is open, so only its two days render.
+    // Only the current matchweek (MW3) is open, so only its two days render.
     expect(container.querySelectorAll('.month-days')).toHaveLength(1)
     expect(container.querySelectorAll('.day')).toHaveLength(2)
-    // The current month's chip is flagged, and its header count is pluralised.
-    expect(container.querySelector('.month-chip.is-current')).toBeTruthy()
-    expect(container.querySelector('.month-head.open .month-count').textContent).toBe('2 matches')
+    // The current matchweek's chip is flagged; its header names the week and
+    // pluralises the count.
+    expect(container.querySelector('.month-chip.is-current').textContent).toBe('MW3')
+    const openHead = container.querySelector('.month-head.open')
+    expect(openHead.textContent).toContain('Matchweek 3')
+    expect(openHead.querySelector('.month-count').textContent).toBe('2 matches')
   })
 
-  it('expands a collapsed month on click, then collapses the current one', () => {
+  it('expands a collapsed matchweek on click, then collapses the current one', () => {
     const { container } = view()
     const currentHead = container.querySelector('.month-head.open')
-    const collapsed = [...container.querySelectorAll('.month-head')].find(
-      (h) => !h.classList.contains('open')
-    )
-    fireEvent.click(collapsed)
+    // MW4 is the trailing single-match round — its collapsed header pluralises
+    // to the singular when expanded.
+    const heads = [...container.querySelectorAll('.month-head')]
+    const mw4 = heads.find((h) => h.textContent.includes('Matchweek 4'))
+    fireEvent.click(mw4)
     expect(container.querySelectorAll('.month-days')).toHaveLength(2)
-    expect(collapsed.querySelector('.month-count').textContent).toBe('1 match') // singular
-    // Collapsing the current month hides its days again.
+    expect(mw4.querySelector('.month-count').textContent).toBe('1 match') // singular
+    // Collapsing the current matchweek hides its days again.
     fireEvent.click(currentHead)
     expect(container.querySelectorAll('.month-days')).toHaveLength(1)
   })
 
-  it('jumping to a month expands it and scrolls it into view', () => {
+  it('jumping to a matchweek expands it and scrolls it into view', () => {
     const spy = Element.prototype.scrollIntoView
     const { container } = view()
     const openedBefore = container.querySelectorAll('.month-days').length
     const calledBefore = spy.mock.calls.length
-    // The first chip is August, which starts collapsed.
+    // The first chip is MW1, which starts collapsed.
     fireEvent.click(container.querySelector('.month-jump .month-chip'))
     expect(container.querySelectorAll('.month-days').length).toBeGreaterThan(openedBefore)
     expect(spy.mock.calls.length).toBeGreaterThan(calledBefore)
   })
 
-  it('Today jump scrolls to today’s own day (a day row, not the month header)', () => {
+  it('Today jump scrolls to today’s own day (a day row, not the week header)', () => {
     const spy = Element.prototype.scrollIntoView
     const { container } = view() // includes a fixture dated today
     fireEvent.click(container.querySelector('.month-today'))
@@ -506,13 +519,16 @@ describe('FixturesView full season', () => {
 
   it('Today jump goes to the next fixture-day when today has no fixture', () => {
     const spy = Element.prototype.scrollIntoView
-    // No fixture dated today; a later fixture (October) is the next fixture-day.
-    // The jump must land on THAT day row, not on a month header.
+    // No fixture dated today; a later fixture (next week) is the next fixture-day.
+    // The jump must land on THAT day row, not on a matchweek header.
     const noToday = [
-      fx('aug', AUG, 'ARS', 'CHE', { score: [1, 0] }),
-      fx('oct', OCT, 'NEW', 'AVL'),
+      fx('m1a', M1A, 'ARS', 'CHE', { score: [1, 0] }),
+      fx('m1b', M1B, 'LIV', 'MNC', { score: [2, 2] }),
+      fx('later', NEXT_WEEK, 'NEW', 'AVL'),
     ]
     const { container } = view(noToday)
+    // Today has no fixture, so no chip is flagged current.
+    expect(container.querySelector('.month-chip.is-current')).toBeNull()
     fireEvent.click(container.querySelector('.month-today'))
     const last = spy.mock.contexts[spy.mock.contexts.length - 1]
     expect(last).toHaveClass('day')
