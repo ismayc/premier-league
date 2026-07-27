@@ -110,7 +110,12 @@ describe('urlState', () => {
     const s = readState('')
     expect(s.view).toBe('fixtures')
     expect(s.team).toBe(null)
-    expect(s.hide).toBe(false)
+    // Spoiler-free is the default, so an empty query hides scores.
+    expect(s.hide).toBe(true)
+  })
+
+  it('honours an explicit hide=0 from a sender who wanted scores shown', () => {
+    expect(readState('?hide=0').hide).toBe(false)
   })
 
   it('rejects an unknown view and an invalid timezone', () => {
@@ -145,10 +150,17 @@ describe('urlState', () => {
 
   it('omits defaults so a first-time URL stays clean', () => {
     writeState(
-      { view: 'fixtures', tz: 'UTC', team: null, hide: false, mine: false, past: false, season: null },
+      { view: 'fixtures', tz: 'UTC', team: null, hide: true, mine: false, past: false, season: null },
       'UTC'
     )
     expect(window.location.search).toBe('')
+  })
+
+  // Spoiler-free is on by default, so it's the opt-out that has to travel in a link.
+  it('writes hide=0 when the sender chose to see scores', () => {
+    writeState({ view: 'fixtures', tz: 'UTC', hide: false }, 'UTC')
+    expect(window.location.search).toBe('?hide=0')
+    expect(readState(window.location.search).hide).toBe(false)
   })
 })
 

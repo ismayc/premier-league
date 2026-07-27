@@ -14,7 +14,9 @@ export const VIEWS = ['fixtures', 'week', 'table', 'stats', 'history']
 const DEFAULTS = {
   view: 'fixtures',
   team: null,
-  hide: false, // hide scores (spoiler-free)
+  // Spoiler-free is on by default: most of the fixture list is already played, so
+  // the default landing state shouldn't spoil a match you haven't watched yet.
+  hide: true, // hide scores (spoiler-free)
   mine: false, // fixtures view: only followed clubs
   past: false, // fixtures view: include days already played
   season: null, // history/stats season override
@@ -36,7 +38,7 @@ export function readState(search = window.location.search) {
     // match's detail. Read-only — toSearch never emits it, so the first state
     // write returns the URL to plain shareable filter state.
     game: q.get('game') || '',
-    hide: q.get('hide') === '1',
+    hide: q.has('hide') ? q.get('hide') === '1' : DEFAULTS.hide,
     mine: q.get('mine') === '1',
     past: q.get('past') === '1',
     season: season && /^\d{4}$/.test(season) ? Number(season) : DEFAULTS.season,
@@ -48,7 +50,9 @@ export function writeState(state, detected = detectZone()) {
   if (state.view !== DEFAULTS.view) q.set('view', state.view)
   if (state.tz && state.tz !== detected) q.set('tz', state.tz)
   if (state.team) q.set('team', state.team)
-  if (state.hide) q.set('hide', '1')
+  // Spoiler-free defaults to on, so it's *turning it off* that has to travel in the
+  // link — otherwise a sender who chose to see scores would share a hidden board.
+  if (state.hide === false) q.set('hide', '0')
   if (state.mine) q.set('mine', '1')
   if (state.past) q.set('past', '1')
   if (state.season) q.set('season', String(state.season))

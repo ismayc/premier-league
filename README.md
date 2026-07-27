@@ -55,8 +55,9 @@ team sheets, and **every final table since the competition began in 1992-93**.
   kickoff.)
 - **Add to calendar** — per-match and whole-season `.ics` export, optionally
   filtered to the clubs you follow.
-- **Spoiler-free mode** — hide scores globally; a finished match reads as an
-  ordinary upcoming card until you open it.
+- **Spoiler-free mode** — **on by default**; scores are hidden globally, so a
+  finished match reads as an ordinary upcoming card until you open it. One
+  header toggle turns scores on, and that choice travels in a shared link.
 - **Light/dark theme** — follows your system preference, with no flash on load.
 - **Shareable URLs** — view, timezone, spoiler mode, club and season persist to
   the query string; links unfurl with a title/description/image preview in chat

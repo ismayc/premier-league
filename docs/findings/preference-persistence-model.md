@@ -13,12 +13,15 @@ Anything that should survive a reload **and** travel in a shared link:
 | `view` | which of the five views |
 | `tz` | timezone override |
 | `team` | club drawer |
-| `hide` | spoiler-free (scores hidden) |
+| `hide` | spoiler-free (scores hidden) — **defaults to on**, so the link carries `hide=0` when the sender opted out |
 | `mine` | only followed clubs |
 | `past` | include days already played |
 | `season` | history/stats season override |
 
 Only non-default values are written, so a first-time visitor's URL stays clean.
+Note that "non-default" is not the same as "on": `hide` defaults to *on*, so it
+is the opt-out (`hide=0`) that gets written — a sender who turned scores on must
+not share a hidden board.
 
 ## localStorage — everything under a `pl:` prefix
 

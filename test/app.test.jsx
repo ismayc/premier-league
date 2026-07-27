@@ -188,20 +188,28 @@ describe('App shell controls', () => {
     expect(values[0]).toBe('Europe/London')
   })
 
-  it('toggles spoiler-free mode and records it in the URL', async () => {
+  it('toggles spoiler-free mode and records the opt-out in the URL', async () => {
     stubZone('Europe/London')
     const user = userEvent.setup()
     await renderApp()
 
-    await user.click(screen.getByRole('button', { name: /Scores shown/ }))
+    // Spoiler-free is the default, so the shell opens with scores hidden and the
+    // URL clean — it's turning scores on that has to be recorded.
     expect(screen.getByRole('button', { name: /Scores hidden/ })).toHaveAttribute(
       'aria-pressed',
       'true'
     )
-    expect(window.location.search).toBe('?view=table&hide=1')
+    expect(window.location.search).toBe('?view=table')
 
     await user.click(screen.getByRole('button', { name: /Scores hidden/ }))
-    expect(screen.getByRole('button', { name: /Scores shown/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Scores shown/ })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    )
+    expect(window.location.search).toBe('?view=table&hide=0')
+
+    await user.click(screen.getByRole('button', { name: /Scores shown/ }))
+    expect(screen.getByRole('button', { name: /Scores hidden/ })).toBeInTheDocument()
     expect(window.location.search).toBe('?view=table')
   })
 
