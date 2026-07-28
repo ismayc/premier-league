@@ -27,17 +27,36 @@ const arg = (flag, fallback) => {
   return i > -1 ? process.argv[i + 1] : fallback
 }
 
-async function getJson(url, tries = 3) {
-  for (let i = 0; i < tries; i++) {
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+
+// 1s, 2s, 4s, 8s, plus up to 500ms of jitter so parallel callers don't all retry in
+// lockstep and re-create the burst that caused the failure.
+const backoffMs = (attempt) => 2 ** attempt * 1000 + Math.random() * 500
+
+// ESPN 500s at random under load. A refresh makes ~90 calls, so with the old
+// 3-try/1.5s policy a single blip failed the whole run — which it did about once a week
+// (nba 2026-07-28, wnba 2026-07-25, both a lone `HTTP 500` on one team's schedule).
+//
+// Retry only what's worth retrying: a 5xx, a 429, or a network-level error. A 404 or a
+// 400 is a real answer and fails immediately rather than sleeping 15 seconds first.
+async function getJson(url, tries = 5) {
+  let lastErr
+  for (let attempt = 0; attempt < tries; attempt++) {
+    if (attempt) await sleep(backoffMs(attempt - 1))
+
+    let res
     try {
-      const res = await fetch(url)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      return await res.json()
+      res = await fetch(url)
     } catch (err) {
-      if (i === tries - 1) throw new Error(`${url}\n  ${err.message}`)
-      await new Promise((r) => setTimeout(r, 500 * (i + 1)))
+      lastErr = err // DNS, connection reset, timeout — always worth another go
+      continue
     }
+
+    if (res.ok) return await res.json()
+    if (res.status < 500 && res.status !== 429) throw new Error(`${url}\n  HTTP ${res.status}`)
+    lastErr = new Error(`HTTP ${res.status}`)
   }
+  throw new Error(`${url}\n  ${lastErr.message} — still failing after ${tries} attempts`)
 }
 
 const ymd = (d) => d.toISOString().slice(0, 10).replace(/-/g, '')
