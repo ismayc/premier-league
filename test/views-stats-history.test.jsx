@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import StatsView from '../src/components/StatsView.jsx'
 import HistoryView from '../src/components/HistoryView.jsx'
+import { HISTORY } from '../src/data/history.js'
 import { clearAthleteCache, fetchAthlete } from '../src/services/athlete.js'
 
 /**
@@ -726,11 +727,17 @@ describe('HistoryView by club', () => {
     await userEvent.click(screen.getByRole('button', { name: 'By club' }))
   }
 
+  // Both clubs asserted on below are still in the League, so their season
+  // counts grow with every completed campaign — derive them from the data
+  // rather than freezing a number the next refresh will outdate.
+  const seasonCount = (club) =>
+    HISTORY.filter((s) => s.table.some((r) => r.team === club)).length
+
   it('opens on the first club alphabetically', async () => {
     await openByClub()
 
     expect(screen.getByRole('combobox')).toHaveValue('AFC Bournemouth')
-    expect(screen.getByText(/9 seasons/)).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(`${seasonCount('AFC Bournemouth')} seasons`))).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'AFC Bournemouth finishing position by season' }))
       .toBeInTheDocument()
   })
@@ -747,7 +754,7 @@ describe('HistoryView by club', () => {
     await openByClub()
     await userEvent.selectOptions(screen.getByRole('combobox'), 'Leicester City')
 
-    expect(screen.getByText(/18 seasons/)).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(`${seasonCount('Leicester City')} seasons`))).toBeInTheDocument()
     expect(screen.getByText(/best 1st · worst 21st/)).toBeInTheDocument()
 
     const bar = (label) => screen.getByText(label).closest('.club-row').querySelector('.club-bar')

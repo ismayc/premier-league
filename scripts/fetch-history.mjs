@@ -119,8 +119,13 @@ function parseMatches(text) {
  * present since 1992, showed 33 seasons in the all-time table instead of 34,
  * with a phantom one-season "Tottenham" alongside it. The consistency check
  * in `verifyClubNames` guards against a future refresh reintroducing this.
+ *
+ * The variant can also drop a leading word: the 2025-26 file switched to
+ * "Bournemouth FC", which strips to a bare "Bournemouth" rather than the
+ * "AFC Bournemouth" every earlier season uses.
  */
 const CANONICAL = {
+  Bournemouth: 'AFC Bournemouth',
   Bradford: 'Bradford City',
   Coventry: 'Coventry City',
   Derby: 'Derby County',
@@ -159,8 +164,10 @@ function verifyClubNames(seasons) {
   for (const a of names) {
     for (const b of names) {
       if (a === b) continue
-      // A short name that prefixes a much more common longer name.
-      if (b.startsWith(`${a} `) && counts.get(a) <= 2 && counts.get(b) > counts.get(a)) {
+      // A short name that prefixes or suffixes a much more common longer name
+      // ("Tottenham" / "Tottenham Hotspur", "Bournemouth" / "AFC Bournemouth").
+      const isVariant = b.startsWith(`${a} `) || b.endsWith(` ${a}`)
+      if (isVariant && counts.get(a) <= 2 && counts.get(b) > counts.get(a)) {
         suspects.push(`"${a}" (${counts.get(a)}) may be "${b}" (${counts.get(b)})`)
       }
     }
