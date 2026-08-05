@@ -771,6 +771,27 @@ describe('App live alerts', () => {
     expect(screen.queryByText('Kick-off')).not.toBeInTheDocument()
   })
 
+  it('stacks a second moment on top of a toast already showing', async () => {
+    stubZone('Europe/London')
+    localStorage.setItem('pl:alerts', '1')
+    // The first poll kicks the match off, which flips liveCount and re-runs the
+    // poll effect straight away. Holding that second poll until the kick-off
+    // toast is up puts the goal on screen inside the 9s retire window — the only
+    // time the already-seen key set is built from a non-empty stack.
+    let release
+    fetchLive.mockResolvedValueOnce(goLive())
+    fetchLive.mockReturnValue(new Promise((res) => { release = res }))
+    await renderApp()
+    await act(async () => {})
+    expect(screen.getByText('Kick-off')).toBeInTheDocument()
+
+    await act(async () => {
+      release(goLive({ score: [1, 0] }))
+    })
+    expect(screen.getByText('Goal')).toBeInTheDocument()
+    expect(screen.getByText('Kick-off')).toBeInTheDocument()
+  })
+
   it('retires a toast on its own after a while', async () => {
     vi.useFakeTimers()
     try {

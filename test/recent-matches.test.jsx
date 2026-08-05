@@ -499,6 +499,23 @@ describe('<RecentMatches>', () => {
     expect(row).not.toHaveTextContent('conceded')
   })
 
+  it('says nothing of a keeper who made no save, kept no sheet and conceded none', async () => {
+    // A substitute keeper on for the closing minutes: the feed still sends the
+    // keeper column set, but every one of them is zero, so none of the three
+    // phrases earns its place on the row.
+    global.fetch = respondWith(
+      overview({
+        labels: KEEPER,
+        events: [{ eventId: 'a', stats: statLine({ SV: 0, CS: 0, GA: 0 }, KEEPER) }],
+        meta: { a: meta() },
+      })
+    )
+    const [row] = await showRows()
+    expect(row).not.toHaveTextContent('save')
+    expect(row).not.toHaveTextContent('clean sheet')
+    expect(row).not.toHaveTextContent('conceded')
+  })
+
   it('gives a keeper credit for a goal or an assist', async () => {
     global.fetch = respondWith(
       overview({

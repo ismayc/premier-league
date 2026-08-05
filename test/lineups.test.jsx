@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor, within, fireEvent } from '@testing-library/react'
+import { act, render, screen, waitFor, within, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import Lineups from '../src/components/Lineups.jsx'
@@ -195,6 +195,19 @@ describe('groupByLine', () => {
       'Forwards',
     ])
     expect(grouped[1].players).toHaveLength(1)
+  })
+
+  it('gathers a whole back four into the one Defenders line', () => {
+    const grouped = groupByLine([
+      { pos: 'G', name: 'keeper' },
+      { pos: 'LB', name: 'a' },
+      { pos: 'CD-L', name: 'b' },
+      { pos: 'CD-R', name: 'c' },
+      { pos: 'RB', name: 'd' },
+    ])
+    expect(grouped.map((g) => g.line)).toEqual(['Goalkeepers', 'Defenders'])
+    // One bucket created, then appended to three times — not four buckets.
+    expect(grouped[1].players.map((p) => p.name)).toEqual(['a', 'b', 'c', 'd'])
   })
 
   it('returns nothing for an empty squad', () => {
@@ -574,6 +587,38 @@ describe('<Lineups>', () => {
     fireEvent.error(flag)
     expect(flag.style.display).toBe('none')
     expect(bioPanel.getByText(`5' 11"`)).toBeInTheDocument()
+  })
+
+  it('drops a biography that arrives after the panel is gone', async () => {
+    const user = userEvent.setup()
+    // Hold the biography request open, close the panel by unmounting, then let it
+    // answer. The cancelled flag has to swallow it — the shared cache means the
+    // request itself is never aborted, so a late answer always comes back.
+    let release
+    const held = new Promise((res) => { release = res })
+    global.fetch = vi.fn((url) =>
+      String(url).includes('/athletes/')
+        ? held
+        : Promise.resolve({ ok: true, json: () => Promise.resolve(payload({ keyEvents: [] })) })
+    )
+    const { unmount } = render(<Lineups fixture={fixture} />)
+
+    const row = (await screen.findAllByRole('button', { name: /Keeper/ }))[0]
+    await user.click(row)
+    // The panel is open and the biography is in flight (it renders nothing until
+    // the answer lands, which is the whole point of the flag).
+    await waitFor(() =>
+      expect(global.fetch.mock.calls.some(([u]) => String(u).includes('/athletes/'))).toBe(true)
+    )
+
+    unmount()
+    await act(async () => {
+      release({
+        ok: true,
+        json: () => Promise.resolve({ athlete: { id: '1', position: { displayName: 'Forward' } } }),
+      })
+    })
+    expect(screen.queryByText('Forward')).not.toBeInTheDocument()
   })
 
   it('shows the match figures even when the biography fails', async () => {

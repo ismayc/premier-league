@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within, fireEvent } from '@testing-library/react'
+import { act, render, screen, waitFor, within, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -257,6 +257,30 @@ describe('StatsView leaders', () => {
 
     await userEvent.click(row)
     expect(screen.queryByText(/20 goals in 2025-26/)).not.toBeInTheDocument()
+  })
+
+  it('drops a biography that arrives after the panel is closed again', async () => {
+    // Hold the biography open, collapse the row, then let it answer. The shared
+    // cache means the request is never aborted, so the flag is the only thing
+    // stopping a stale answer from repopulating a panel nobody is looking at.
+    let release
+    global.fetch = vi.fn(() => new Promise((res) => { release = res }))
+    renderStats()
+
+    const row = screen.getByRole('button', { name: /Erling Haaland/ })
+    await userEvent.click(row)
+    expect(row).toHaveAttribute('aria-expanded', 'true')
+
+    await userEvent.click(row) // collapse — PlayerBio unmounts, cancelling
+    expect(row).toHaveAttribute('aria-expanded', 'false')
+
+    await act(async () => {
+      release({
+        ok: true,
+        json: () => Promise.resolve({ athlete: { id: '1', position: { displayName: 'Forward' } } }),
+      })
+    })
+    expect(screen.queryByText('Forward')).not.toBeInTheDocument()
   })
 
   it('shows the tally even when no biography can be fetched', async () => {

@@ -25,6 +25,7 @@ function fold(line) {
     parts.push(` ${rest.slice(0, 74)}`)
     rest = rest.slice(74)
   }
+  /* v8 ignore next -- the empty-`rest` arm is unreachable: `rest` starts as line.slice(75) on a line already known to be longer than 75, and the loop only ever leaves 1..74 characters behind, so it is never '' here */
   if (rest) parts.push(` ${rest}`)
   return parts.join('\r\n')
 }

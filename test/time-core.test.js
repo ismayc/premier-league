@@ -57,9 +57,11 @@ describe('locale-driven formatting', () => {
   })
 
   it('falls back to an empty zone name if the part is ever missing', () => {
-    const spy = vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => ({
-      formatToParts: () => [],
-    }))
+    // The formatter is built with `new`, so the mock implementation must be a real
+    // function (not an arrow) — Vitest 4 refuses to construct arrow mocks.
+    const spy = vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(function () {
+      return { formatToParts: () => [] }
+    })
     expect(us.formatZoneAbbr(KO, 'America/New_York')).toBe('')
     spy.mockRestore()
   })

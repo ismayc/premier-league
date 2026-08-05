@@ -35,6 +35,15 @@ describe('seasonTotals', () => {
     expect(t.thrashings[0].home).toBe('LIV')
   })
 
+  it('orders several thrashings by margin, heaviest first', () => {
+    const t = seasonTotals([
+      match('ARS', 'CHE', 4, 0), // margin 4
+      match('LIV', 'MCI', 7, 0), // margin 7
+      match('TOT', 'EVE', 5, 0), // margin 5
+    ])
+    expect(t.thrashings.map((f) => f.margin)).toEqual([7, 5, 4])
+  })
+
   it('reports zeroes rather than dividing by zero before any match', () => {
     const t = seasonTotals([])
     expect(t.played).toBe(0)
