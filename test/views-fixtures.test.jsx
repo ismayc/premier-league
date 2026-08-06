@@ -39,6 +39,12 @@ vi.mock('../src/data/teams.js', async (importOriginal) => {
 const NOW = new Date('2026-09-12T09:00:00.000Z')
 const TZ = 'Europe/London'
 
+// The next/live banner names clubs too, so "is Arsenal on screen" is ambiguous
+// now. These scope to the fixture LIST — the day sections — which is what every
+// filtering assertion here actually means.
+const dayList = () => [...document.querySelectorAll('.day')]
+const listHas = (name) => dayList().some((d) => within(d).queryByText(name) !== null)
+
 const fx = (id, ko, home, away, extra = {}) => ({
   id,
   ko,
@@ -101,7 +107,7 @@ describe('FixturesView', () => {
     )
 
     // The played match is filtered out until "Played" is switched on.
-    expect(screen.queryByText('Arsenal')).not.toBeInTheDocument()
+    expect(listHas('Arsenal')).toBe(false)
 
     const today = screen.getByRole('heading', { name: /Saturday, 12 September 2026/ })
     expect(within(today).getByText('Today')).toBeInTheDocument()
@@ -130,7 +136,7 @@ describe('FixturesView', () => {
     await user.click(played)
 
     expect(played).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByText('Arsenal')).toBeInTheDocument()
+    expect(listHas('Arsenal')).toBe(true)
   })
 
   it('keeps a live match visible even though its kickoff has passed', () => {
@@ -142,7 +148,7 @@ describe('FixturesView', () => {
         tz={TZ}
       />
     )
-    expect(screen.getByText('Arsenal')).toBeInTheDocument()
+    expect(listHas('Arsenal')).toBe(true)
   })
 
   it('disables the followed filter until a club is followed', () => {
@@ -176,8 +182,8 @@ describe('FixturesView', () => {
     await user.click(chip)
 
     expect(chip).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByText('Liverpool')).toBeInTheDocument()
-    expect(screen.queryByText('Spurs')).not.toBeInTheDocument()
+    expect(listHas('Liverpool')).toBe(true)
+    expect(listHas('Spurs')).toBe(false)
   })
 
   it('explains an empty list caused by the followed filter', async () => {
@@ -202,7 +208,7 @@ describe('FixturesView', () => {
     render(
       <Fixtures fixtures={[fx('a', LAST_WEEK, 'ARS', 'CHE', { score: [2, 1] })]} tz={TZ} />
     )
-    expect(screen.getByText('Arsenal')).toBeInTheDocument()
+    expect(listHas('Arsenal')).toBe(true)
     expect(screen.queryByText(/Turn on/)).not.toBeInTheDocument()
   })
 
@@ -222,14 +228,16 @@ describe('FixturesView', () => {
       />
     )
 
-    expect(screen.getByText('Next kickoff')).toBeInTheDocument()
-    expect(screen.getByText('Spurs v Everton')).toBeInTheDocument()
-    expect(screen.getByText('7d 5h')).toBeInTheDocument()
+    const banner = document.querySelector('.nextmatch')
+    expect(within(banner).getByText('⏱ Next match')).toBeInTheDocument()
+    expect(within(banner).getByText('Spurs')).toBeInTheDocument()
+    expect(within(banner).getByText('Everton')).toBeInTheDocument()
+    expect(within(banner).getByText('7d 5h')).toBeInTheDocument()
   })
 
-  it('has no next-kickoff banner when nothing is left to play', () => {
-    // Played, postponed, and a past fixture the feed never scored: none of
-    // them is a kickoff still to come.
+  it('says the season is done when nothing is left to play', () => {
+    // Played, postponed, and a past fixture the feed never scored: none of them
+    // is a kickoff still to come, and none is close enough to kickoff to be live.
     render(
       <Fixtures
         fixtures={[
@@ -240,19 +248,22 @@ describe('FixturesView', () => {
         tz={TZ}
       />
     )
-    expect(screen.queryByText('Next kickoff')).not.toBeInTheDocument()
+    expect(document.querySelector('.nextmatch.done')).toBeInTheDocument()
+    expect(screen.getByText(/No fixtures left/)).toBeInTheDocument()
   })
 
   it('falls back to the raw abbreviation for an unknown club in the banner', () => {
     render(<Fixtures fixtures={[fx('c', NEXT_WEEK, 'ZZZ', 'CHE')]} tz={TZ} />)
-    expect(screen.getByText('Next kickoff').closest('.next-up')).toHaveTextContent(/v Chelsea/)
+    const banner = document.querySelector('.nextmatch')
+    expect(within(banner).getByText('ZZZ')).toBeInTheDocument()
+    expect(within(banner).getByText('Chelsea')).toBeInTheDocument()
   })
 
-  it('advances the banner to the following fixture once a kickoff passes', () => {
-    // `next` must be recomputed with the same `now` the countdown uses. When
-    // it was memoised on the fixture list alone it pinned to a kickoff that
-    // had already passed, and the banner sat on an expired countdown until
-    // the fixture list itself changed.
+  it('shows a kicked-off match as live rather than advancing past it', () => {
+    // The old one-line strip only knew "next kickoff", so the moment a match
+    // started it jumped to the following fixture — or vanished. A match that has
+    // just kicked off is the single thing most worth showing, so it now holds the
+    // banner until it is genuinely over.
     render(
       <Fixtures
         fixtures={[
@@ -262,29 +273,41 @@ describe('FixturesView', () => {
         tz={TZ}
       />
     )
-    expect(screen.getByText('Next kickoff').closest('.next-up')).toHaveTextContent(
-      /Spurs v Everton/
-    )
-    expect(screen.getByText('1m')).toBeInTheDocument()
+    const banner = () => document.querySelector('.nextmatch')
+    expect(within(banner()).getByText('⏱ Next match')).toBeInTheDocument()
+    expect(within(banner()).getByText('Spurs')).toBeInTheDocument()
+    expect(within(banner()).getByText('1m')).toBeInTheDocument()
 
     // Kickoff passes, then any re-render — here, toggling a filter.
     vi.setSystemTime(new Date('2026-09-12T09:05:00.000Z'))
     fireEvent.click(screen.getByRole('button', { name: 'Played' }))
 
-    expect(screen.getByText('Next kickoff').closest('.next-up')).toHaveTextContent(
-      /Arsenal v Chelsea/
-    )
-    expect(screen.getByText('1h 55m')).toBeInTheDocument()
+    expect(within(banner()).getByText('🔴 Live now')).toBeInTheDocument()
+    expect(within(banner()).getByText('Spurs')).toBeInTheDocument()
+    expect(within(banner()).queryByText('Arsenal')).toBeNull()
   })
 
-  it('drops the banner entirely when no fixture is still to come', () => {
-    render(<Fixtures fixtures={[fx('c', '2026-09-12T09:01:00.000Z', 'TOT', 'EVE')]} tz={TZ} />)
-    expect(screen.getByText('Next kickoff')).toBeInTheDocument()
+  it('advances to the next fixture once the live window closes', () => {
+    render(
+      <Fixtures
+        fixtures={[
+          fx('c', '2026-09-12T09:01:00.000Z', 'TOT', 'EVE'),
+          fx('d', '2026-09-12T14:00:00.000Z', 'ARS', 'CHE'),
+        ]}
+        tz={TZ}
+      />
+    )
+    const banner = () => document.querySelector('.nextmatch')
+    expect(within(banner()).getByText('Spurs')).toBeInTheDocument()
 
-    vi.setSystemTime(new Date('2026-09-12T09:05:00.000Z'))
+    // Well past the 2h15m match window: Spurs v Everton is over, so the banner
+    // moves on rather than sitting on a finished match.
+    vi.setSystemTime(new Date('2026-09-12T12:00:00.000Z'))
     fireEvent.click(screen.getByRole('button', { name: 'Played' }))
 
-    expect(screen.queryByText('Next kickoff')).not.toBeInTheDocument()
+    expect(within(banner()).getByText('⏱ Next match')).toBeInTheDocument()
+    expect(within(banner()).getByText('Arsenal')).toBeInTheDocument()
+    expect(within(banner()).getByText('2h 0m')).toBeInTheDocument()
   })
 
   it('exports exactly the fixtures currently visible', async () => {
@@ -313,7 +336,7 @@ describe('FixturesView', () => {
 
     await user.click(screen.getByRole('button', { name: 'Export' }))
 
-    expect(screen.getByText('Liverpool')).toBeInTheDocument()
+    expect(listHas('Liverpool')).toBe(true)
   })
 })
 
@@ -350,8 +373,8 @@ describe('FixturesView filter panel', () => {
     fireEvent.click(toggle())
     await user.type(screen.getByLabelText('Search fixtures'), 'team: Liverpool')
 
-    expect(screen.getByText('Liverpool')).toBeInTheDocument()
-    expect(screen.queryByText('Spurs')).not.toBeInTheDocument()
+    expect(listHas('Liverpool')).toBe(true)
+    expect(listHas('Spurs')).toBe(false)
   })
 
   it('badges an active search and clears it with Clear all', async () => {
@@ -819,22 +842,22 @@ describe('FixturesView watch filter', () => {
   it('narrows to matches the chosen services carry', () => {
     withServices(['peacock'], { fixtures: LISTED, tz: TZ, watchOnly: true })
 
-    expect(screen.getByText('Liverpool')).toBeInTheDocument()
+    expect(listHas('Liverpool')).toBe(true)
     // CNBC is not on Peacock, so that one goes.
-    expect(screen.queryByText('Arsenal')).not.toBeInTheDocument()
+    expect(listHas('Arsenal')).toBe(false)
   })
 
   it('keeps a match whose broadcaster has not been announced', () => {
     // Listings land only weeks ahead. Treating "unknown" as "cannot watch"
     // would empty most of the season.
     withServices(['peacock'], { fixtures: LISTED, tz: TZ, watchOnly: true })
-    expect(screen.getByText('Spurs')).toBeInTheDocument()
+    expect(listHas('Spurs')).toBe(true)
   })
 
   it('is a no-op until services are chosen, so nothing vanishes', () => {
     withServices([], { fixtures: LISTED, tz: TZ, watchOnly: true })
-    expect(screen.getByText('Liverpool')).toBeInTheDocument()
-    expect(screen.getByText('Arsenal')).toBeInTheDocument()
+    expect(listHas('Liverpool')).toBe(true)
+    expect(listHas('Arsenal')).toBe(true)
   })
 
   it('shows the filter chip only once services are chosen', () => {

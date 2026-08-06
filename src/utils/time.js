@@ -105,3 +105,23 @@ export const COMMON_ZONES = [
   'Asia/Tokyo',
   'Australia/Sydney',
 ]
+
+// A match runs 90 minutes plus a half-time break and stoppage; treat that as the
+// window in which a kicked-off fixture with no live feed is still probably running.
+const MATCH_MS = 2.25 * 60 * 60 * 1000
+
+/**
+ * Which bucket the "When" quick-filter puts a fixture in. Reads the same three
+ * fields MatchCard renders from — `live`, `score`, `unplayed` — so the chip can
+ * never disagree with the badge on the card. A kicked-off fixture the feed hasn't
+ * started ticking still counts as live, because that is what the card shows.
+ * `unplayed` (postponed/abandoned) is its own bucket rather than a fake result.
+ */
+export function whenBucket(fixture, now = Date.now()) {
+  if (fixture.unplayed) return 'void'
+  if (fixture.live) return 'live'
+  if (fixture.score) return 'final'
+  const start = new Date(fixture.ko).getTime()
+  if (now < start) return 'upcoming'
+  return now < start + MATCH_MS ? 'live' : 'final'
+}

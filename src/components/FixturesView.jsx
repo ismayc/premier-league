@@ -1,8 +1,8 @@
 import { useMemo, useRef, useEffect, useState } from 'react'
 import MatchCard from './MatchCard.jsx'
-import { groupByDay, longDayOf, countdown, dateKey } from '../utils/time.js'
+import NextMatch from './NextMatch.jsx'
+import { groupByDay, longDayOf, dateKey, whenBucket } from '../utils/time.js'
 import { assignMatchweeks, groupByMatchweek } from '../utils/matchweek.js'
-import { TEAM_BY_ABBR } from '../data/teams.js'
 import { useFollow } from '../context/follow.jsx'
 import { useServices } from '../context/services.jsx'
 import { watchableServices } from '../utils/watch.js'
@@ -15,6 +15,14 @@ const OFFSEASON_TAIL_DAYS = 7
 // One-click examples that demonstrate the scoped-search syntax, each matched to
 // something that really appears in the committed fixture list.
 const SEARCH_EXAMPLES = ['team: Arsenal', 'city: London', 'venue: Anfield', 'tv: Peacock']
+
+// The "When" quick filter. Exclusive — a fixture is in exactly one of these at a
+// time — so clicking the active chip clears it rather than stacking a second bucket.
+const WHEN_FILTERS = [
+  { id: 'live', label: '🔴 Live' },
+  { id: 'upcoming', label: '⏱ Upcoming' },
+  { id: 'final', label: '✓ Finished' },
+]
 
 /**
  * The season as a chronological list, grouped by day.
@@ -56,6 +64,8 @@ export default function FixturesView({
   // already applies "followed", or the device remembers a watch-only filter — so
   // an active filter is never hidden behind a closed panel. (Search starts empty.)
   const [filtersOpen, setFiltersOpen] = useState(() => Boolean(onlyFollowed) || Boolean(watchOnly))
+  // The "When" quick filter — exclusive, so clicking the active chip clears it.
+  const [when, setWhen] = useState('')
   const filterBarRef = useRef(null)
   const monthJumpRef = useRef(null)
 
@@ -76,9 +86,11 @@ export default function FixturesView({
     if (watchOnly && serviceCount) {
       list = list.filter((f) => !f.tv?.length || watchableServices(f.tv, services).length > 0)
     }
+    // Empty = any time; otherwise live / upcoming / finished as the card reads now.
+    if (when) list = list.filter((f) => whenBucket(f) === when)
     // An empty query matches everything, so this is a no-op until something is typed.
     return list.filter((f) => matchesSearch(f, parsedSearch))
-  }, [fixtures, onlyFollowed, followed, watchOnly, services, serviceCount, parsedSearch])
+  }, [fixtures, onlyFollowed, followed, watchOnly, services, serviceCount, when, parsedSearch])
 
   // How many filters are actively narrowing the list — drives the toggle badge
   // and the auto-open. A followed/service toggle only counts once there are
@@ -88,13 +100,15 @@ export default function FixturesView({
     if (search.trim()) n++
     if (onlyFollowed && followed.size) n++
     if (watchOnly && serviceCount) n++
+    if (when) n++
     return n
-  }, [search, onlyFollowed, followed, watchOnly, serviceCount])
+  }, [search, onlyFollowed, followed, watchOnly, serviceCount, when])
 
   // Clears everything the badge counts. The followed/watch toggles are the
   // shell's, so flip them off only when they're on (they're plain toggles).
   const clearAllFilters = () => {
     setSearch('')
+    setWhen('')
     if (onlyFollowed) onToggleFollowed()
     if (watchOnly) onToggleWatch()
   }
@@ -144,6 +158,23 @@ export default function FixturesView({
   const weekRefs = useRef({})
   const dayRefs = useRef({})
   const [pendingScroll, setPendingScroll] = useState(null)
+  // Per-day folding and per-day spoiler overrides. Component-local like the search
+  // box above: a folded day is a reading position, not a shareable preference.
+  const [foldedDays, setFoldedDays] = useState(() => new Set())
+  const [dayOverrides, setDayOverrides] = useState({})
+
+  const toggleDay = (key) =>
+    setFoldedDays((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  // An override is sticky per day and beats the global spoiler toggle, so a result
+  // can be revealed without leaving spoiler-free mode for the rest of the page.
+  const scoresHidden = (key) => (key in dayOverrides ? dayOverrides[key] : hideScores)
+  const toggleReveal = (key) =>
+    setDayOverrides((prev) => ({ ...prev, [key]: !scoresHidden(key) }))
 
   const toggleWeek = (mw) =>
     setExpanded((prev) => {
@@ -216,40 +247,59 @@ export default function FixturesView({
     return () => window.removeEventListener('resize', publish)
   }, [showPast, weeks.length])
 
-  // Deliberately not memoised on [fixtures]. `now` is rebuilt every render, so
-  // a memo keyed only on the fixture list would pin the banner to a kickoff
-  // that has since passed: countdown() then returns null and the banner reads
-  // a bare "now" forever, only correcting when the fixture list itself
-  // changes. A find over one season is far cheaper than that bug.
-  const next = fixtures.find((f) => !f.score && !f.unplayed && new Date(f.ko) > now)
-
-  const renderDay = (day) => (
-    <section
-      key={day.key}
-      className={`day ${day.key === todayKey ? 'is-today' : ''}`}
-      ref={(el) => {
-        dayRefs.current[day.key] = el
-      }}
-    >
-      <h3 className="day-head">
-        {longDayOf(day.fixtures[0].ko, tz)}
-        {day.key === todayKey && <span className="today-tag">Today</span>}
-        <span className="day-count">{day.fixtures.length}</span>
-      </h3>
-      <div className="day-list">
-        {day.fixtures.map((f) => (
-          <MatchCard
-            key={f.id}
-            fixture={f}
-            tz={tz}
-            hideScores={hideScores}
-            onOpen={onOpen}
-            onPickTeam={onPickTeam}
-          />
-        ))}
-      </div>
-    </section>
-  )
+  const renderDay = (day) => {
+    const folded = foldedDays.has(day.key)
+    const hidden = scoresHidden(day.key)
+    return (
+      <section
+        key={day.key}
+        className={`day ${day.key === todayKey ? 'is-today' : ''}`}
+        ref={(el) => {
+          dayRefs.current[day.key] = el
+        }}
+      >
+        <h3 className="day-head">
+          <button
+            type="button"
+            className="day-fold"
+            onClick={() => toggleDay(day.key)}
+            aria-expanded={!folded}
+            aria-label={`${folded ? 'Show' : 'Hide'} fixtures on ${longDayOf(day.fixtures[0].ko, tz)}`}
+          >
+            <span className="day-caret" aria-hidden="true">
+              {folded ? '▸' : '▾'}
+            </span>
+            <span className="day-name">{longDayOf(day.fixtures[0].ko, tz)}</span>
+          </button>
+          {day.key === todayKey && <span className="today-tag">Today</span>}
+          <span className="day-count">{day.fixtures.length}</span>
+          <button
+            type="button"
+            className="day-eye"
+            onClick={() => toggleReveal(day.key)}
+            aria-pressed={hidden}
+            title={hidden ? 'Show scores for this day' : 'Hide scores for this day'}
+          >
+            {hidden ? '🙈' : '👁'}
+          </button>
+        </h3>
+        {!folded && (
+          <div className="day-list">
+            {day.fixtures.map((f) => (
+              <MatchCard
+                key={f.id}
+                fixture={f}
+                tz={tz}
+                hideScores={hidden}
+                onOpen={onOpen}
+                onPickTeam={onPickTeam}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    )
+  }
 
   return (
     <main className="view">
@@ -347,21 +397,25 @@ export default function FixturesView({
               ))}
               <span className="hint-note">fields: team · city · venue · tv</span>
             </div>
+            <div className="when-chips">
+              <span className="hint-label">When:</span>
+              {WHEN_FILTERS.map((w) => (
+                <button
+                  key={w.id}
+                  type="button"
+                  className={`hint-chip${when === w.id ? ' active' : ''}`}
+                  onClick={() => setWhen((cur) => (cur === w.id ? '' : w.id))}
+                  aria-pressed={when === w.id}
+                >
+                  {w.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
-      {next && (
-        <div className="next-up">
-          <span className="next-label">Next kickoff</span>
-          <strong>
-            {TEAM_BY_ABBR[next.home]?.name} v {TEAM_BY_ABBR[next.away]?.name}
-          </strong>
-          {/* No null fallback needed: `next` is selected with the same `now`
-              the countdown uses, so its kickoff is always still ahead. */}
-          <span className="next-when">{countdown(next.ko, now)}</span>
-        </div>
-      )}
+      <NextMatch fixtures={baseList} tz={tz} onJump={(key) => setPendingScroll(key)} />
 
       {!days.length && (
         <p className="empty">
