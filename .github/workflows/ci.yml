@@ -47,27 +47,10 @@ jobs:
       - id: deploy
         uses: actions/deploy-pages@v5
 
-  netlify:
-    needs: test
-    # Declared at job level deliberately: a step's own `env:` block is not in
-    # scope for that step's `if:`, so gating there would skip the deploy
-    # forever — green, and silently doing nothing.
-    env:
-      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - name: Deploy to Netlify
-        if: env.NETLIFY_AUTH_TOKEN != '' && env.NETLIFY_SITE_ID != ''
-        run: npx netlify-cli@17 deploy --prod --dir dist
+  # Netlify deploys via its own GitHub integration (it builds the site on every push
+  # using netlify.toml), so there is no Netlify job here — a CI-driven deploy would be a
+  # redundant second path to the same site, and it would miss the refresh bot's commits
+  # entirely: those are authored by GITHUB_TOKEN, which cannot trigger this workflow.
 
   # The refresh workflow runs the fetch scripts without installing anything, so
   # they must not import from node_modules. This guards that property.
