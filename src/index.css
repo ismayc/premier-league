@@ -47,6 +47,11 @@
 
   --radius: 10px;
   --shadow: 0 6px 24px rgb(0 0 0 / 0.35);
+
+  /* Condensed view strip: one fixed-height row (plus the notch inset on phones),
+     declared as a token so the sticky filter bar / month jump-bar can offset
+     beneath it and scroll-margins can clear it without any JS measuring. */
+  --view-strip-h: calc(44px + env(safe-area-inset-top, 0px));
 }
 
 :root[data-theme='light'] {
@@ -272,6 +277,66 @@ select {
   font-weight: 600;
 }
 
+/* ── Condensed view strip ───────────────────────────────────────────────
+   Appears (position: fixed, so nothing reflows mid-scroll) once the in-flow
+   .views nav leaves the viewport. Fixed height --view-strip-h; the expanded
+   tab set overlays as a dropdown so the strip itself never grows. While it's
+   up, .nav-away pushes the sticky filter bar and month jump-bar down by the
+   same token, and the .day/.month scroll-margins always reserve for it. */
+.view-strip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--view-strip-h);
+  padding-top: env(safe-area-inset-top, 0px);
+  z-index: 30;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.view-strip-inner {
+  position: relative;
+  max-width: 1000px;
+  height: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.view-strip-toggle {
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: none;
+  border: none;
+  padding: 4px 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.view-strip-toggle:hover { color: var(--accent); }
+.view-strip-toggle .chev {
+  font-size: 0.7em;
+  color: var(--text-2);
+}
+
+.view-strip-tabs {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 16px 10px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
 .view-head {
   display: flex;
   align-items: center;
@@ -305,6 +370,10 @@ select {
   padding: 8px 0;
   margin-bottom: 14px;
   border-bottom: 1px solid var(--line);
+}
+/* While the condensed view strip is up, pin beneath it instead of behind it. */
+.nav-away .filter-bar {
+  top: var(--view-strip-h);
 }
 
 .filter-controls {
@@ -594,10 +663,15 @@ select {
 
 .day {
   margin-bottom: 22px;
-  /* Land below BOTH sticky bars (filter bar + full-season month jump-bar) so a
-     "Today"/day jump doesn't scroll the day heading behind them. --month-jump-h
-     is 0 in the default view, where the jump-bar isn't rendered. */
-  scroll-margin-top: calc(var(--filter-bar-h, 0px) + var(--month-jump-h, 0px) + 12px);
+  /* Land below ALL the pinned bars (condensed view strip + filter bar +
+     full-season month jump-bar) so a "Today"/day jump doesn't scroll the day
+     heading behind them. --month-jump-h is 0 in the default view, where the
+     jump-bar isn't rendered; the strip allowance is reserved even before the
+     strip appears, because a landing/jump scroll is exactly what summons it a
+     frame later. */
+  scroll-margin-top: calc(
+    var(--view-strip-h) + var(--filter-bar-h, 0px) + var(--month-jump-h, 0px) + 12px
+  );
 }
 
 .day-head {
@@ -653,6 +727,10 @@ select {
   background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
+/* Same strip offset as the filter bar while the condensed view strip is up. */
+.nav-away .month-jump {
+  top: calc(var(--view-strip-h) + var(--filter-bar-h, 0px));
+}
 
 .month-chip.is-current {
   background: color-mix(in srgb, var(--accent) 15%, transparent);
@@ -674,8 +752,10 @@ select {
 
 .month {
   margin-bottom: 14px;
-  /* A month-chip jump scrolls a .month to the top; clear both sticky bars too. */
-  scroll-margin-top: calc(var(--filter-bar-h, 0px) + var(--month-jump-h, 0px) + 12px);
+  /* A month-chip jump scrolls a .month to the top; clear all the pinned bars too. */
+  scroll-margin-top: calc(
+    var(--view-strip-h) + var(--filter-bar-h, 0px) + var(--month-jump-h, 0px) + 12px
+  );
 }
 
 .month-head {
