@@ -662,6 +662,18 @@ describe('HistoryView by season', () => {
     expect(screen.getByRole('combobox')).toHaveValue('2025')
   })
 
+  it('stripes FOUR relegation places in 1994-95, when the League cut to 20 clubs', () => {
+    render(<HistoryView season={1994} />)
+    const table = screen.getByRole('table', { name: /Final Premier League table/ })
+    const row = (club) => within(table).getByText(club).closest('tr')
+
+    // Villa (18th of 22) survived; Palace (19th) went down with the bottom three.
+    expect(row('Aston Villa')).not.toHaveClass('zone-relegation')
+    expect(row('Crystal Palace')).toHaveClass('zone-relegation')
+    expect(row('Norwich City')).toHaveClass('zone-relegation')
+    expect(row('Ipswich Town')).toHaveClass('zone-relegation')
+  })
+
   it('marks the champions and the bottom three, and signs goal difference', () => {
     render(<HistoryView season={2025} />)
 

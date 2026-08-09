@@ -140,6 +140,12 @@ export function leaderboard(rows, { limit = 10 } = {}) {
 }
 
 /** Every club's all-time record across the committed historical tables. */
+// Three clubs go down in a normal season. The exception is 1994-95, when four were
+// relegated against two promoted to cut the League from 22 clubs to 20. Every surface
+// that draws a relegation zone must use this, or the 1994-95 stripe shows Crystal
+// Palace (19th of 22) as safe.
+export const relegatedCount = (year) => (year === 1994 ? 4 : 3)
+
 export function allTimeRecord(history) {
   const clubs = new Map()
 
@@ -174,11 +180,7 @@ export function allTimeRecord(history) {
       c.points += r.points
       if (r.pos === 1) c.titles++
       if (r.pos <= 4) c.top4++
-      // Three clubs go down in a normal season. The exception is 1994-95,
-      // when four were relegated against two promoted to cut the League from
-      // 22 clubs to 20.
-      const goingDown = season.year === 1994 ? 4 : 3
-      if (r.pos > season.teams - goingDown) c.relegations++
+      if (r.pos > season.teams - relegatedCount(season.year)) c.relegations++
       c.best = Math.min(c.best, r.pos)
       c.worst = Math.max(c.worst, r.pos)
     }

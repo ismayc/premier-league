@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { HISTORY, HISTORY_BY_YEAR } from '../data/history.js'
-import { allTimeRecord, clubHistory } from '../utils/stats.js'
+import { allTimeRecord, clubHistory, relegatedCount } from '../utils/stats.js'
 
 /**
  * Every final Premier League table since 1992-93.
@@ -58,7 +58,8 @@ function SeasonTable({ season, onSeason }) {
   const years = HISTORY.map((s) => s.year).sort((a, b) => b - a)
   const year = HISTORY_BY_YEAR[season] ? season : years[0]
   const data = HISTORY_BY_YEAR[year]
-  const relegationFrom = data.teams - 2 // bottom three go down
+  // First position inside the relegation zone (four went down in 1994-95, else three).
+  const relegationFrom = data.teams - relegatedCount(year) + 1
 
   return (
     <>
@@ -255,7 +256,7 @@ function ByClub() {
               style={{ '--w': `${((s.teams - s.pos + 1) / s.teams) * 100}%` }}
             >
               <span
-                className={`club-bar ${s.pos === 1 ? 'is-champ' : s.pos > s.teams - 3 ? 'is-down' : ''}`}
+                className={`club-bar ${s.pos === 1 ? 'is-champ' : s.pos > s.teams - relegatedCount(s.year) ? 'is-down' : ''}`}
                 aria-hidden="true"
               />
               <span className="club-pos">{ordinal(s.pos)}</span>

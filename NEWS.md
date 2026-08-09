@@ -20,6 +20,15 @@ data/source updates, deployment). Newest day on top.
   existing `maxPoints`. Completes the family-wide Finish rollout (all eight
   race-bearing viewers).
 
+## 2026-08-09
+
+- **1994-95 shows all FOUR relegated clubs.** The season-table stripe and the
+  club-chart bars hardcoded a bottom-three zone, so Crystal Palace (19th of
+  22, relegated when the League cut to 20 clubs) rendered as safe. The
+  all-time counter already knew the exception; the rule now lives in one
+  exported `relegatedCount(year)` used by every surface, with a 1994-95
+  regression test.
+
 ## 2026-08-08
 
 - **Condensed view strip.** Once the tab nav scrolls out of view, a slim fixed
