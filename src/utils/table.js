@@ -141,4 +141,39 @@ export function relegationSafe(table, totalMatches = 38, places = 3) {
   return safe
 }
 
+/**
+ * The window of final league positions still arithmetically open to each club —
+ * the Finish column. Points bounds: floor = current points (the club takes
+ * nothing more), ceiling = maxPoints (it wins out). A rival is guaranteed
+ * ahead only when its floor beats the club's ceiling, and still a threat when
+ * its ceiling reaches the club's floor. A points tie is charged against the
+ * club — goal difference can swing any way while either side still plays — so
+ * the range is conservative, never wrong. The one exact case: when BOTH clubs
+ * have finished, the full ordering key (goal difference, then goals scored) is
+ * settled and decides; clubs level on all three genuinely share a position,
+ * exactly as buildTable assigns one. best === worst means the position is
+ * locked.
+ */
+export function positionRanges(table, totalMatches = 38) {
+  const done = (r) => r.played >= totalMatches
+  // Settled strictly ahead on the full key — meaningful only once both clubs
+  // have nothing left to play.
+  const keyAhead = (o, r) => o.gd > r.gd || (o.gd === r.gd && o.gf > r.gf)
+  const out = {}
+  for (const r of table) {
+    const ceiling = maxPoints(r, totalMatches)
+    let ahead = 0
+    let threats = 0
+    for (const o of table) {
+      if (o.abbr === r.abbr) continue
+      const bothDone = done(o) && done(r)
+      if (o.points > ceiling || (o.points === ceiling && bothDone && keyAhead(o, r))) ahead++
+      const oCeiling = maxPoints(o, totalMatches)
+      if (oCeiling > r.points || (oCeiling === r.points && (!bothDone || keyAhead(o, r)))) threats++
+    }
+    out[r.abbr] = { best: 1 + ahead, worst: 1 + threats }
+  }
+  return out
+}
+
 export const tableByAbbr = (table) => Object.fromEntries(table.map((r) => [r.abbr, r]))

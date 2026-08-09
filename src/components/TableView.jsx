@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import TeamLogo from './TeamLogo.jsx'
 import { TEAM_BY_ABBR, ALL_ABBRS } from '../data/teams.js'
-import { buildTable } from '../utils/table.js'
+import { buildTable, positionRanges } from '../utils/table.js'
 
 /**
  * The league table.
@@ -29,11 +29,28 @@ const SPLITS = [
   { key: 'away', label: 'Away' },
 ]
 
+// "4–9" while outcomes remain open; collapses to a single bold number once the
+// position is locked. Bounds come from positionRanges — points arithmetic,
+// with the final GD/goals key applied only once both clubs are done.
+function FinishRange({ range }) {
+  if (range.best === range.worst) {
+    return <span className="finish finish-locked">{range.best}</span>
+  }
+  return (
+    <span className="finish">
+      {range.best}–{range.worst}
+    </span>
+  )
+}
+
 export default function TableView({ fixtures, onPickTeam }) {
   const [split, setSplit] = useState('all')
 
   const table = useMemo(() => buildTable(fixtures, ALL_ABBRS), [fixtures])
   const anyPlayed = table.some((r) => r.played)
+  // Finish bounds always come from the overall table — a split position is not
+  // a league finish, so the column (like Form) belongs to the overall view.
+  const finish = useMemo(() => positionRanges(table), [table])
 
   // The split view re-sorts on the split's own points, but keeps the overall
   // position visible so the two readings can be compared rather than confused.
@@ -112,6 +129,15 @@ export default function TableView({ fixtures, onPickTeam }) {
               {split === 'all' && (
                 <th className="hide-sm col-form" scope="col">Form</th>
               )}
+              {split === 'all' && (
+                <th
+                  className="col-finish"
+                  scope="col"
+                  title="Final league positions still arithmetically possible — a single bold number means the position is locked"
+                >
+                  Finish
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -156,6 +182,13 @@ export default function TableView({ fixtures, onPickTeam }) {
                     )}
                   </td>
                 )}
+                {split === 'all' && (
+                  <td className="col-finish">
+                    {/* Withheld pre-season for the same reason positions are:
+                        twenty identical 1–20 ranges separate nobody. */}
+                    {anyPlayed ? <FinishRange range={finish[r.abbr]} /> : <span className="muted">—</span>}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -176,7 +209,9 @@ export default function TableView({ fixtures, onPickTeam }) {
       <p className="note small">
         Clubs level on points are separated by goal difference, then goals scored — the Premier
         League does not use head-to-head. Conference League qualification is usually decided by
-        domestic cup results, so the sixth-place band is indicative only.
+        domestic cup results, so the sixth-place band is indicative only. In the overall table,
+        Finish shows the final positions still arithmetically possible — a single bold number
+        means the position is locked.
       </p>
     </main>
   )

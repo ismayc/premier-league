@@ -1185,6 +1185,19 @@ table {
   font-weight: 700;
 }
 
+/* Finish column — the final positions still arithmetically open. Text tones
+   only, no data-mark colour: a settled position reads as a single bold number,
+   and the validated mark palette stays untouched. */
+.finish {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.finish-locked {
+  color: var(--text);
+  font-weight: 700;
+}
+
 .club-btn {
   display: inline-flex;
   align-items: center;

@@ -4,6 +4,22 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-08-09
+
+- **Finish column in the table.** The overall table now ends with a Finish
+  column — the final league positions still arithmetically possible for each
+  club (e.g. `4–9`), collapsing to a single bold number once the position is
+  locked. Bounds are pure points arithmetic (floor = take nothing more,
+  ceiling = win out; a points tie is charged against the club while games
+  remain), with one exact refinement: once both clubs are done, the real
+  ordering key — goal difference, then goals scored — decides, so a settled
+  season locks every position and clubs level on all three share one, exactly
+  as the table itself does. Withheld pre-season alongside positions, and
+  absent from the home/away splits like Form — a split position is not a
+  league finish. New `positionRanges` export in `table.js`, built on the
+  existing `maxPoints`. Completes the family-wide Finish rollout (all eight
+  race-bearing viewers).
+
 ## 2026-08-08
 
 - **Condensed view strip.** Once the tab nav scrolls out of view, a slim fixed

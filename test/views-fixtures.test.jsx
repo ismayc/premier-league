@@ -7,6 +7,7 @@ import WeekView from '../src/components/WeekView.jsx'
 import TableView from '../src/components/TableView.jsx'
 import { FollowProvider } from '../src/context/follow.jsx'
 import { ServicesProvider } from '../src/context/services.jsx'
+import { ALL_ABBRS } from '../src/data/teams.js'
 
 // The league roster is normally fixed, but TableView is written to survive an
 // abbreviation it has no club record for. The only way to exercise that is to
@@ -716,7 +717,8 @@ describe('TableView', () => {
     expect(container.querySelectorAll('[class^="zone-"]')).toHaveLength(0)
     expect(screen.queryByText('Champions League')).not.toBeInTheDocument()
     // No results means no form; the dash keeps the column from collapsing.
-    expect(within(rows[0]).getByText('—', { selector: '.muted' })).toBeInTheDocument()
+    // (Scoped to the Form cell — the withheld Finish cell shows one too.)
+    expect(within(rows[0]).getByText('—', { selector: '.col-form .muted' })).toBeInTheDocument()
     // Goal difference of zero is printed bare, with no sign and no colour.
     expect(within(rows[0]).getByText('0', { selector: 'td[class=""]' })).toBeInTheDocument()
   })
@@ -750,7 +752,7 @@ describe('TableView', () => {
     // Form appears only for clubs with a result behind them.
     expect(within(rows[0]).getByTitle('Won')).toHaveTextContent('W')
     expect(within(rows[19]).getByTitle('Lost')).toHaveTextContent('L')
-    expect(within(rows[6]).getByText('—', { selector: '.muted' })).toBeInTheDocument()
+    expect(within(rows[6]).getByText('—', { selector: '.col-form .muted' })).toBeInTheDocument()
 
     expect(container.querySelectorAll('.zone-key li')).toHaveLength(4)
     expect(screen.getByText('Relegation')).toBeInTheDocument()
@@ -818,6 +820,51 @@ describe('TableView', () => {
     render(<TableView fixtures={RESULTS} />)
     await user.click(screen.getByRole('button', { name: 'Arsenal' }))
     expect(onPickTeam).toHaveBeenCalledTimes(1)
+  })
+
+  it('withholds Finish before kickoff, exactly like positions', () => {
+    const { container } = render(<TableView fixtures={[]} />)
+    expect(screen.getByRole('columnheader', { name: 'Finish' })).toBeInTheDocument()
+    // Twenty em dashes, no ranges — 1–20 twenty times over separates nobody.
+    expect(container.querySelectorAll('.col-finish .muted')).toHaveLength(20)
+    expect(container.querySelectorAll('.finish')).toHaveLength(0)
+  })
+
+  it('shows a wide-open range for every club after one round', () => {
+    const { container } = render(<TableView fixtures={RESULTS} />)
+    const cells = [...container.querySelectorAll('td.col-finish .finish')]
+    expect(cells).toHaveLength(20)
+    // One result each out of 38: nothing is arithmetically settled.
+    expect(cells.every((c) => c.textContent === '1–20')).toBe(true)
+    expect(container.querySelector('.finish-locked')).toBeNull()
+  })
+
+  it('belongs to the overall reading only, like Form', async () => {
+    const user = setup()
+    render(<TableView fixtures={RESULTS} />)
+    await user.click(screen.getByRole('button', { name: 'Home' }))
+    expect(screen.queryByRole('columnheader', { name: 'Finish' })).not.toBeInTheDocument()
+  })
+
+  it('locks every position once the season is decided', () => {
+    // A full double round-robin where the lower roster index always wins:
+    // distinct points for all twenty clubs, nothing left to play.
+    const abbrs = [...ALL_ABBRS]
+    const games = []
+    let n = 0
+    for (const home of abbrs) {
+      for (const away of abbrs) {
+        if (home === away) continue
+        const homeWins = abbrs.indexOf(home) < abbrs.indexOf(away)
+        games.push(fx(`d${n++}`, LAST_WEEK, home, away, { score: homeWins ? [2, 0] : [0, 2] }))
+      }
+    }
+    const { container } = render(<TableView fixtures={games} />)
+    const locked = [...container.querySelectorAll('td.col-finish .finish-locked')]
+    expect(locked).toHaveLength(20)
+    expect(locked.map((c) => c.textContent)).toEqual(
+      Array.from({ length: 20 }, (_, i) => String(i + 1))
+    )
   })
 })
 

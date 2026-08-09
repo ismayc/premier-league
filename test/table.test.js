@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildTable, maxPoints, relegationSafe, zoneFor } from '../src/utils/table.js'
+import { buildTable, maxPoints, positionRanges, relegationSafe, zoneFor } from '../src/utils/table.js'
 
 /**
  * The table is the piece of logic most worth testing: every other view leans
@@ -156,5 +156,63 @@ describe('relegationSafe', () => {
   it('respects a different number of relegation places', () => {
     const table = twenty.map((abbr, i) => ({ abbr, played: 38, points: 100 - i * 3 }))
     expect(relegationSafe(table, 38, 1).size).toBe(19)
+  })
+})
+
+describe('positionRanges', () => {
+  it('leaves every position open before a ball is kicked', () => {
+    const ranges = positionRanges(buildTable([], ['ARS', 'CHE', 'LIV', 'MCI']))
+    for (const abbr of ['ARS', 'CHE', 'LIV', 'MCI']) {
+      expect(ranges[abbr]).toEqual({ best: 1, worst: 4 })
+    }
+  })
+
+  it('charges a points tie both ways while games remain', () => {
+    // One round of a two-match season: nothing is settled — the winners can
+    // be caught and the losers can catch — so every range spans the table.
+    const table = buildTable([match('ARS', 'CHE', 2, 0), match('LIV', 'MCI', 1, 0)], [])
+    const ranges = positionRanges(table, 2)
+    for (const abbr of ['ARS', 'CHE', 'LIV', 'MCI']) {
+      expect(ranges[abbr]).toEqual({ best: 1, worst: 4 })
+    }
+  })
+
+  it('locks a title early when no rival ceiling can reach the leader', () => {
+    // ARS on 6 after two; everyone else on ≤1 with one match left (max 4).
+    const table = buildTable(
+      [
+        match('ARS', 'CHE', 2, 0),
+        match('ARS', 'MCI', 2, 0, '2026-08-28T19:00:00.000Z'),
+        match('LIV', 'MCI', 1, 1),
+        match('LIV', 'CHE', 0, 0, '2026-08-28T19:00:00.000Z'),
+      ],
+      []
+    )
+    const ranges = positionRanges(table, 3)
+    expect(ranges.ARS).toEqual({ best: 1, worst: 1 })
+    // The chasing pack is level on 2 points and fully open below the leader.
+    expect(ranges.LIV).toEqual({ best: 2, worst: 4 })
+  })
+
+  it('applies goal difference and goals only once both clubs are done', () => {
+    // A completed one-match season: ARS and LIV both on 3, split by GD — the
+    // full ordering key is final, so both positions lock, distinctly.
+    const table = buildTable([match('ARS', 'CHE', 2, 0), match('LIV', 'MCI', 1, 0)], [])
+    const ranges = positionRanges(table, 1)
+    expect(ranges.ARS).toEqual({ best: 1, worst: 1 })
+    expect(ranges.LIV).toEqual({ best: 2, worst: 2 })
+    expect(ranges.MCI).toEqual({ best: 3, worst: 3 }) // lost by one, CHE by two
+    expect(ranges.CHE).toEqual({ best: 4, worst: 4 })
+  })
+
+  it('lets clubs level on points, GD and goals share a locked position, as the table does', () => {
+    // LIV and MCI drew 1–1: identical on all three criteria, so they share
+    // 2nd — best === worst === 2 for both, and CHE drops straight to 4th.
+    const table = buildTable([match('ARS', 'CHE', 2, 0), match('LIV', 'MCI', 1, 1)], [])
+    const ranges = positionRanges(table, 1)
+    expect(ranges.LIV).toEqual({ best: 2, worst: 2 })
+    expect(ranges.MCI).toEqual({ best: 2, worst: 2 })
+    expect(ranges.CHE).toEqual({ best: 4, worst: 4 })
+    expect(buildTable([match('ARS', 'CHE', 2, 0), match('LIV', 'MCI', 1, 1)], []).find((r) => r.abbr === 'MCI').pos).toBe(2)
   })
 })
