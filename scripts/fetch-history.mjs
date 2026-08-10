@@ -25,6 +25,7 @@
 import { writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { getText } from './lib/fetch.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const RAW = 'https://raw.githubusercontent.com/openfootball/england/master'
@@ -45,19 +46,6 @@ function seasonPath(year) {
 /** 1992 -> "1992-93"; 1999 -> "1999-00" */
 function seasonLabel(year) {
   return `${year}-${String((year + 1) % 100).padStart(2, '0')}`
-}
-
-async function getText(url, tries = 3) {
-  for (let i = 0; i < tries; i++) {
-    try {
-      const res = await fetch(url)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      return await res.text()
-    } catch (err) {
-      if (i === tries - 1) throw new Error(`${url}\n  ${err.message}`)
-      await new Promise((r) => setTimeout(r, 500 * (i + 1)))
-    }
-  }
 }
 
 /**
