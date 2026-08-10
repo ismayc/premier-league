@@ -116,6 +116,20 @@ async function fetchSeason(season) {
   const out = {}
   let resolved = 0
 
+  // Appearance counts live ONLY in the goalsLeaders/assistsLeaders categories'
+  // displayValue ("Matches: 38, Goals: 29"); every bare category's displayValue is
+  // just the number, so parsing those yielded null for every committed row. Harvest
+  // the counts once per season, keyed by athlete id, and attach them wherever that
+  // athlete appears on any board.
+  const matchesById = new Map()
+  for (const name of ['goalsLeaders', 'assistsLeaders']) {
+    for (const l of byKey.get(name)?.leaders || []) {
+      const n = matchesFrom(l.displayValue)
+      const id = /athletes\/(\d+)/.exec(l.athlete?.$ref || '')?.[1]
+      if (n != null && id) matchesById.set(id, n)
+    }
+  }
+
   for (const cat of CATEGORIES) {
     const raw = byKey.get(cat.key)
     if (!raw?.leaders?.length) continue
@@ -149,7 +163,7 @@ async function fetchSeason(season) {
           teamName: team?.shortDisplayName ?? team?.displayName ?? null,
           teamSlug: team?.slug ?? null,
           value: l.value,
-          matches: matchesFrom(l.displayValue),
+          matches: matchesById.get(String(athlete.id)) ?? matchesFrom(l.displayValue),
         }
       })
     )

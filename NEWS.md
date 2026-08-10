@@ -22,6 +22,13 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-08-09
 
+- **Player pop-outs show appearance counts.** Every committed leaderboard row
+  had `matches: null` — the stats fetch parsed "Matches: N" out of a
+  displayValue that, for the bare categories it reads, is just the number.
+  The counts live only in the `goalsLeaders`/`assistsLeaders` categories, so
+  the fetch now harvests them per athlete from there (Salah's 2017-18 shows
+  36 matches, Vardy's 2019-20 shows 35 — both verified). 964 of 2000 rows
+  now carry a count; players on none of those two boards have no source.
 - **1994-95 shows all FOUR relegated clubs.** The season-table stripe and the
   club-chart bars hardcoded a bottom-three zone, so Crystal Palace (19th of
   22, relegated when the League cut to 20 clubs) rendered as safe. The

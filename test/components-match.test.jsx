@@ -868,8 +868,10 @@ describe('TeamPanel', () => {
     const players = [...document.querySelectorAll('.tp-players li')]
     expect(players.length).toBeGreaterThan(0)
     expect(players.length).toBeLessThanOrEqual(5)
-    // Real rows carry no appearance count, so only the goal total is shown.
-    expect(players[0]).toHaveTextContent(/^.+\d+ goals$/)
+    // Rows harvested from the goalsLeaders board carry an appearance count — for
+    // years the committed data had matches:null everywhere (the bare categories'
+    // displayValue is just the number), and this test locked that gap in.
+    expect(players[0]).toHaveTextContent(/^.+\d+ goals in \d+$/)
   })
 
   it('skips seasons with no data for the club and reports appearances when known', () => {
@@ -882,6 +884,10 @@ describe('TeamPanel', () => {
         goals: [
           { id: 'p1', name: 'A Striker', team: 'ARS', value: 1, matches: 12 },
           { id: 'p2', name: 'B Striker', team: 'CHE', value: 9, matches: null },
+          // The appearance harvest only reaches players on the goals/assists
+          // boards, so a row can still carry no count — the goal total then
+          // stands alone.
+          { id: 'p3', name: 'C Striker', team: 'ARS', value: 3, matches: null },
         ],
       },
     }
@@ -889,8 +895,10 @@ describe('TeamPanel', () => {
 
     expect(screen.getByText(/Leading scorers/)).toHaveTextContent('2025-26')
     const players = [...document.querySelectorAll('.tp-players li')]
-    expect(players).toHaveLength(1)
+    expect(players).toHaveLength(2)
     expect(players[0]).toHaveTextContent('A Striker1 goal in 12')
+    expect(players[1]).toHaveTextContent('C Striker3 goals')
+    expect(players[1]).not.toHaveTextContent(' in ')
   })
 
   it('omits leading scorers for a club with none in any season', () => {
