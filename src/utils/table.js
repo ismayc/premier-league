@@ -13,7 +13,14 @@
  * staged only for the title or relegation, which has never been needed.
  */
 
-/** Clubs finishing here qualify for Europe / go down. Used for row striping. */
+/** Clubs finishing here qualify for Europe / go down. Used for row striping.
+ *
+ * CL is the GUARANTEED four. England has also earned UEFA's extra European
+ * Performance Spot in every recent cycle (five CL entrants in 24-25, 25-26 and
+ * 26-27 — verified against UEFA 2026-08-09), but that fifth spot depends on the
+ * coefficient race decided each spring, so an in-progress table stripes only
+ * what is certain. If England repeats, 5th is CL rather than Europa — a
+ * season-end fact, not a mid-season one. */
 export const ZONES = {
   champions: [1, 4], // Champions League
   europa: [5, 5], // Europa League
