@@ -19,6 +19,7 @@ import { existsSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { fetchRetry, getJson } from './lib/fetch.mjs'
+import { SEASON as COMMITTED_SEASON } from '../src/data/teams.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const CORE = 'https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1'
@@ -181,9 +182,10 @@ async function mirrorMissingCrests() {
 }
 
 async function main() {
-  const now = new Date()
-  // ESPN labels a season by the calendar year it starts in: 2025 is 2025-26.
-  const current = now.getUTCMonth() >= 5 ? now.getUTCFullYear() : now.getUTCFullYear() - 1
+  // ESPN labels a season by the calendar year it starts in: 2025 is 2025-26. The
+  // current season is the one the app is COMMITTED to (teams.js), not a calendar
+  // guess — same wrong-season class as fetch-fixtures' old June-1 heuristic.
+  const current = COMMITTED_SEASON
   const count = arg('--seasons', 10)
   const first = current - count + 1
 

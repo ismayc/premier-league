@@ -6,6 +6,13 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-08-14
 
+- **The stats and fixtures fetch scripts now default to the committed season.**
+  Both derived "the current season" from the calendar (roll forward June 1);
+  between that flip and the actual rollover commit the refresh bot would target
+  a different season than the site shows — the class that bit the NBA viewer
+  the morning after its rollover. The default is now `SEASON` from
+  `src/data/teams.js`, which the fixtures fetch itself rewrites on a rollover.
+
 - **The default Fixtures view now folds the far future behind "Later fixtures".**
   With the 2026-27 season not yet under way nothing is in the past, so the
   default view was rendering all 380 fixtures on load — heavy on a phone. It now

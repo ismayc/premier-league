@@ -19,6 +19,7 @@ import { writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { fetchRetry, getJson } from './lib/fetch.mjs'
+import { SEASON as COMMITTED_SEASON } from '../src/data/teams.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const SITE = 'https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1'
@@ -143,7 +144,14 @@ async function mirrorLogos(teams) {
 }
 
 async function main() {
-  const season = Number(arg('--season', new Date().getUTCMonth() >= 5 ? new Date().getUTCFullYear() : new Date().getUTCFullYear() - 1))
+  // Default to the season the app is COMMITTED to (teams.js — which this script
+  // itself rewrites on a rollover), so the unattended refresh always refreshes the
+  // season the site is showing. The old calendar heuristic (roll forward June 1)
+  // is the class that bit the NBA viewer the morning after its 2026-08-13 rollover:
+  // between the flip date and the rollover commit the bot targets a DIFFERENT
+  // season than the site — here it would fetch the next, largely unpublished
+  // season over a finished one every June.
+  const season = Number(arg('--season', COMMITTED_SEASON))
 
   console.log(`Fetching Premier League ${season} season\n`)
 
