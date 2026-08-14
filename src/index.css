@@ -710,6 +710,22 @@ select {
   gap: 6px;
 }
 
+/* The "Later fixtures" expander at the foot of the default fixture list. */
+.later-toggle {
+  display: block;
+  margin: 14px auto 4px;
+}
+
+/* Count of what's hidden behind a toggle. */
+.chip-count {
+  background: var(--card-2);
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Full-season navigation: a sticky month jump-bar over collapsible month
    sections, shown only when "Played" opens the whole season. */
 .month-jump {

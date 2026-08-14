@@ -6,6 +6,14 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-08-14
 
+- **The default Fixtures view now folds the far future behind "Later fixtures".**
+  With the 2026-27 season not yet under way nothing is in the past, so the
+  default view was rendering all 380 fixtures on load — heavy on a phone. It now
+  shows the next fortnight of match-days, with the rest of the upcoming season
+  behind a "Later fixtures" toggle (count badge included). Counted in match-days,
+  so a pre-season landing shows the fortnight around opening weekend rather than
+  an empty window. The off-season last-week fallback is unchanged (ported from
+  nba-schedule).
 - **A PR branch can no longer cancel main's CI or deploy.** The whole CI
   workflow (pull-request runs included) and the refresh workflow shared one
   static `pages` concurrency group; GitHub keeps one running + one pending run

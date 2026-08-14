@@ -12,6 +12,13 @@ import { parseQuery, matchesSearch } from '../utils/search.js'
 // come — an off-season page shows the last week of results rather than blank.
 const OFFSEASON_TAIL_DAYS = 7
 
+// How many upcoming match-DAYS the default view shows before folding the rest
+// behind the "Later fixtures" toggle. Counted in match-days (not calendar days)
+// so a pre-season landing still shows the fortnight around opening weekend
+// rather than an empty window. Without this cap a fresh rollover renders the
+// entire 380-fixture season on load — heavy on a phone.
+export const UPCOMING_LOOKAHEAD_DAYS = 14
+
 // One-click examples that demonstrate the scoped-search syntax, each matched to
 // something that really appears in the committed fixture list.
 const SEARCH_EXAMPLES = ['team: Arsenal', 'city: London', 'venue: Anfield', 'tv: Peacock']
@@ -28,7 +35,8 @@ const WHEN_FILTERS = [
  * The season as a chronological list, grouped by day.
  *
  * The default (upcoming) view is a plain flat list — it is short by design, the
- * next fixture through the end of the season. "Played" (showPast) opens the
+ * next fortnight of match-days, with the rest of the upcoming season folded
+ * behind a "Later fixtures" toggle. "Played" (showPast) opens the
  * whole 38-matchweek season, which is a lot to scroll, so it is grouped into
  * collapsible matchweek sections under a sticky jump-bar. (The `.month-*` class
  * names and the --month-jump-h sticky var are the family's shared collapse
@@ -124,10 +132,27 @@ export default function FixturesView({
     return groupByDay(list, tz)
   }, [baseList, tz, todayKey])
 
-  // Off-season fallback: nothing upcoming -> the last week of the season.
-  const defaultDays = upcomingDays.length ? upcomingDays : allDays.slice(-OFFSEASON_TAIL_DAYS)
+  // The "Later fixtures" collapse is deliberately component-local, like the
+  // search box: it is never written to the URL or localStorage, so it can't add
+  // a persisted key (which would break the family's deep-link tests).
+  const [showLater, setShowLater] = useState(false)
 
-  const days = showPast ? allDays : defaultDays
+  // Default = the next fortnight of match-days, with the rest of the upcoming
+  // season behind "Later fixtures"; off-season falls back to the last week of
+  // results instead of an empty page; "Played" shows everything, grouped into
+  // collapsible matchweeks.
+  const { days, laterCount } = useMemo(() => {
+    if (showPast) return { days: allDays, laterCount: 0 }
+    if (!upcomingDays.length) {
+      return { days: allDays.slice(-OFFSEASON_TAIL_DAYS), laterCount: 0 }
+    }
+    // Only days from today onward count toward the fortnight; a past day kept
+    // alive by a live fixture stays on screen regardless.
+    const future = upcomingDays.filter((d) => d.key >= todayKey)
+    const hidden = showLater ? [] : future.slice(UPCOMING_LOOKAHEAD_DAYS)
+    const shown = hidden.length ? upcomingDays.slice(0, upcomingDays.length - hidden.length) : upcomingDays
+    return { days: shown, laterCount: hidden.reduce((n, d) => n + d.fixtures.length, 0) }
+  }, [allDays, upcomingDays, showPast, showLater, todayKey])
 
   // Export reads the fixtures actually on screen.
   const visible = useMemo(() => days.flatMap((d) => d.fixtures), [days])
@@ -426,6 +451,28 @@ export default function FixturesView({
       )}
 
       {days.length > 0 && !showPast && days.map(renderDay)}
+
+      {!showPast && laterCount > 0 && (
+        <button
+          type="button"
+          className="chip later-toggle"
+          onClick={() => setShowLater(true)}
+          title="Show the rest of the upcoming season"
+        >
+          <span aria-hidden="true">▸</span> Later fixtures
+          <span className="chip-count">{laterCount}</span>
+        </button>
+      )}
+      {!showPast && showLater && (
+        <button
+          type="button"
+          className="chip later-toggle"
+          onClick={() => setShowLater(false)}
+          title="Collapse back to the next two weeks"
+        >
+          <span aria-hidden="true">▾</span> Later fixtures
+        </button>
+      )}
 
       {days.length > 0 && showPast && (
         <>

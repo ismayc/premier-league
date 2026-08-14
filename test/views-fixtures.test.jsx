@@ -218,6 +218,29 @@ describe('FixturesView', () => {
     expect(screen.getByText(/Turn on/)).toBeInTheDocument()
   })
 
+  it('caps the default view at a fortnight of match-days behind a Later toggle', () => {
+    // 20 future match-days, two fixtures each — the default view must show the
+    // first 14 days and fold the remaining 6 (12 fixtures) behind "Later
+    // fixtures". Without the cap a fresh rollover renders the whole 380-fixture
+    // season on load.
+    const list = []
+    for (let d = 1; d <= 20; d++) {
+      const ko = new Date(NOW.getTime() + d * 24 * 60 * 60 * 1000).toISOString()
+      list.push(fx(`f${d}a`, ko, 'LIV', 'MNC'), fx(`f${d}b`, ko, 'TOT', 'EVE'))
+    }
+    render(<Fixtures fixtures={list} tz={TZ} />)
+    expect(dayList()).toHaveLength(14)
+
+    const later = screen.getByRole('button', { name: /Later fixtures/ })
+    expect(within(later).getByText('12')).toBeInTheDocument()
+    fireEvent.click(later)
+    expect(dayList()).toHaveLength(20)
+
+    // The toggle flips to a collapse control and folds the tail back away.
+    fireEvent.click(screen.getByRole('button', { name: /Later fixtures/ }))
+    expect(dayList()).toHaveLength(14)
+  })
+
   it('banners the next kickoff with a countdown', () => {
     render(
       <Fixtures
