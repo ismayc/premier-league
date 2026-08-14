@@ -6,6 +6,15 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-08-14
 
+- **A New season watch now guards the rollover.** Ported from nba-schedule
+  after its 2026-27 release: a daily workflow asks ESPN whether the NEXT
+  season (committed season + 1) has been published; the day it lands it files
+  a one-time issue and drafts the mechanical half of the rollover as a draft
+  PR. The detector was re-derived for this league and verified against the
+  live scoreboard (the current season detects as complete; the next reports
+  not-yet). The season-<label> branch it creates must never be deleted — its
+  existence is the once-per-season guard.
+
 - **The stats and fixtures fetch scripts now default to the committed season.**
   Both derived "the current season" from the calendar (roll forward June 1);
   between that flip and the actual rollover commit the refresh bot would target
