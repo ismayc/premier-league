@@ -22,7 +22,12 @@ import { fetchRetry, getJson } from './lib/fetch.mjs'
 import { SEASON as COMMITTED_SEASON } from '../src/data/teams.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-const SITE = 'https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1'
+// site.web.api, NOT site.api. ESPN's edge applies a datacenter-egress block to
+// site.api only: from a GitHub runner (or any cloud IP) every site.api call answers
+// 403, while site.web.api serves the same apis/site/v2 routes with the same payloads
+// and answers 200. Diagnosed 2026-08-16 during a family-wide refresh outage.
+// Do NOT "restore" the site.api host.
+const SITE = 'https://site.web.api.espn.com/apis/site/v2/sports/soccer/eng.1'
 
 const arg = (flag, fallback) => {
   const i = process.argv.indexOf(flag)
