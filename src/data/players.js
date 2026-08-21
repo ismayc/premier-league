@@ -1368,7 +1368,7 @@ export const PLAYER_STATS = {
       {"id":"104943","name":"Andy Robertson","short":"A. Robertson","pos":"D","team":"LIV","teamName":"Liverpool","teamSlug":"eng.liverpool","value":1,"matches":29},
       {"id":"246771","name":"Pascal Struijk","short":"P. Struijk","pos":"D","team":"LEE","teamName":"Leeds","teamSlug":"eng.leeds","value":1,"matches":null},
       {"id":"269844","name":"Gabriel Martinelli","short":"G. Martinelli","pos":"F","team":"ARS","teamName":"Arsenal","teamSlug":"eng.arsenal","value":1,"matches":null},
-      {"id":"147131","name":"Ben Gibson","short":"B. Gibson","pos":"F","team":"NOR","teamName":"Norwich City","teamSlug":"eng.norwich","value":1,"matches":null},
+      {"id":"147131","name":"Ben Gibson","short":"B. Gibson","pos":"D","team":"NOR","teamName":"Norwich City","teamSlug":"eng.norwich","value":1,"matches":null},
       {"id":"191209","name":"Vladimír Coufal","short":"V. Coufal","pos":"D","team":"WHU","teamName":"West Ham","teamSlug":"eng.west_ham","value":1,"matches":null},
       {"id":"143883","name":"Allan","short":"Allan","pos":"M","team":"EVE","teamName":"Everton","teamSlug":"eng.everton","value":1,"matches":null},
       {"id":"149981","name":"Granit Xhaka","short":"G. Xhaka","pos":"M","team":"ARS","teamName":"Arsenal","teamSlug":"eng.arsenal","value":1,"matches":null},
