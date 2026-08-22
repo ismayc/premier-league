@@ -47,10 +47,15 @@ export default function TeamPanel({ abbr, fixtures, tz, hideScores, onClose, onO
     return []
   }, [team])
 
+  // Once a new season kicks off, the goals board is padded with every player who
+  // has appeared, on zero goals, so a club that has not scored yet still fills
+  // five rows and a club that has scored once pads the rest. Only a player who
+  // actually scored belongs under "Leading scorers", and a club with none falls
+  // back to the most recent season in which someone did.
   const topPlayers = useMemo(() => {
     for (const season of STAT_SEASONS) {
-      const goals = PLAYER_STATS[season]?.goals?.filter((p) => p.team === abbr) ?? []
-      if (goals.length) return { season, players: goals.slice(0, 5) }
+      const scored = PLAYER_STATS[season]?.goals?.filter((p) => p.team === abbr && p.value > 0) ?? []
+      if (scored.length) return { season, players: scored.slice(0, 5) }
     }
     return null
   }, [abbr])

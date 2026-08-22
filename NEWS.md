@@ -4,6 +4,25 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-08-22
+
+- **A club's "Leading scorers" no longer lists players who have not scored.** Once
+  2026-27 kicked off, ESPN's goals board started carrying every player who had
+  appeared, on zero goals, alongside the three who had actually scored. The panel
+  took any row for the club as a scorer, so newly promoted Coventry were billed
+  with five leading scorers on nil goals apiece, and Arsenal's three real scorers
+  were padded out to five. The panel now counts only players with a goal to their
+  name, and a club with none falls back, as before, to the most recent season in
+  which it had one.
+- **Two panel tests no longer pin themselves to a passing season.** One asserted
+  the literal label `2025-26`, and the other relied on Coventry having never had a
+  Premier League scorer, which promotion ended. Both now run against a decided
+  snapshot, so a new season cannot break them. The guard they carried, that every
+  committed scorer row keeps its appearance count, is kept as its own check that
+  names no season.
+- The daily data refresh had been failing on those two tests since the new season
+  began, which also blocked it from publishing fresh fixtures and stats.
+
 ## 2026-08-16
 
 - **The data scripts now fetch from `site.web.api.espn.com`.** ESPN's edge started

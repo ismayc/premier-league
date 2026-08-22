@@ -13,6 +13,9 @@ import MatchDetail from '../src/components/MatchDetail.jsx'
 import TeamPanel from '../src/components/TeamPanel.jsx'
 import CalendarModal from '../src/components/CalendarModal.jsx'
 import { FollowProvider, useFollow } from '../src/context/follow.jsx'
+// The mock below defaults each getter to the real module, so these read the
+// committed data whenever no double is set.
+import { PLAYER_STATS, STAT_SEASONS } from '../src/data/players.js'
 
 /**
  * The fixture views. These are the components a visitor actually reads a
@@ -862,16 +865,57 @@ describe('TeamPanel', () => {
   })
 
   it('shows the most recent season in which the club had a scorer', () => {
+    // Driven from a decided snapshot. The committed boards move with every
+    // refresh, so a hardcoded season label goes stale the day a new season
+    // kicks off.
+    doubles.seasons = [2026, 2025, 2024]
+    doubles.stats = {
+      2026: { goals: [{ id: 'p1', name: 'A Striker', team: 'CHE', value: 3, matches: 2 }] },
+      2025: {
+        goals: [
+          { id: 'p2', name: 'B Striker', team: 'ARS', value: 12, matches: 30 },
+          { id: 'p3', name: 'C Striker', team: 'ARS', value: 4, matches: 18 },
+        ],
+      },
+      2024: { goals: [{ id: 'p4', name: 'D Striker', team: 'ARS', value: 20, matches: 35 }] },
+    }
     render(<TeamPanel abbr="ARS" fixtures={[]} tz="Europe/London" />)
 
+    // 2026 has no Arsenal scorer, and 2024 is older, so 2025-26 is the one.
     expect(screen.getByText(/Leading scorers/)).toHaveTextContent('2025-26')
+    const players = [...document.querySelectorAll('.tp-players li')].map((li) => li.textContent)
+    expect(players).toEqual(['B Striker12 goals in 30', 'C Striker4 goals in 18'])
+  })
+
+  it('lists at most five scorers, the highest scoring first', () => {
+    doubles.seasons = [2025]
+    doubles.stats = {
+      2025: {
+        goals: Array.from({ length: 7 }, (_, i) => ({
+          id: `p${i}`,
+          name: `Striker ${i}`,
+          team: 'ARS',
+          value: 10 - i,
+          matches: 20,
+        })),
+      },
+    }
+    render(<TeamPanel abbr="ARS" fixtures={[]} tz="Europe/London" />)
+
     const players = [...document.querySelectorAll('.tp-players li')]
-    expect(players.length).toBeGreaterThan(0)
-    expect(players.length).toBeLessThanOrEqual(5)
-    // Rows harvested from the goalsLeaders board carry an appearance count — for
-    // years the committed data had matches:null everywhere (the bare categories'
-    // displayValue is just the number), and this test locked that gap in.
-    expect(players[0]).toHaveTextContent(/^.+\d+ goals in \d+$/)
+    expect(players).toHaveLength(5)
+    expect(players[0]).toHaveTextContent('Striker 010 goals in 20')
+    expect(players[4]).toHaveTextContent('Striker 46 goals in 20')
+  })
+
+  it('keeps an appearance count on every committed scorer row', () => {
+    // The harvest once left matches:null on every row (the bare categories'
+    // displayValue is just the number), and the panel then printed a goal
+    // total with no appearances behind it. This guards the real committed
+    // data, but names no season: the newest one changes with every refresh.
+    const rows = STAT_SEASONS.flatMap((s) => PLAYER_STATS[s]?.goals ?? [])
+    expect(rows.length).toBeGreaterThan(0)
+    expect(rows.filter((p) => !Number.isInteger(p.matches))).toEqual([])
   })
 
   it('skips seasons with no data for the club and reports appearances when known', () => {
@@ -902,8 +946,40 @@ describe('TeamPanel', () => {
   })
 
   it('omits leading scorers for a club with none in any season', () => {
-    render(<TeamPanel abbr="COV" fixtures={[]} tz="Europe/London" />)
+    // Also from a decided snapshot, rather than whichever real club has never
+    // had a Premier League scorer: promotion hands that club a scoring season.
+    doubles.seasons = [2026, 2025]
+    doubles.stats = {
+      2026: { goals: [{ id: 'p1', name: 'A Striker', team: 'CHE', value: 3, matches: 2 }] },
+      2025: { goals: [{ id: 'p2', name: 'B Striker', team: 'CHE', value: 9, matches: 30 }] },
+    }
+    render(<TeamPanel abbr="ARS" fixtures={[]} tz="Europe/London" />)
+
+    // The panel itself rendered, so the absent section is a real omission and
+    // not a drawer that never opened.
+    expect(screen.getByRole('dialog', { name: 'Arsenal' })).toBeInTheDocument()
     expect(screen.queryByText(/Leading scorers/)).toBeNull()
+  })
+
+  it('ignores the zero-goal rows a new season pads the goals board with', () => {
+    // A fresh season's board lists every player who has appeared, on zero
+    // goals. Counting those as scorers billed a club that had not scored yet
+    // with five "leading scorers", and buried the season it last had one.
+    doubles.seasons = [2026, 2025]
+    doubles.stats = {
+      2026: {
+        goals: [
+          { id: 'p1', name: 'A Keeper', team: 'ARS', value: 0, matches: 1 },
+          { id: 'p2', name: 'B Defender', team: 'ARS', value: 0, matches: 1 },
+        ],
+      },
+      2025: { goals: [{ id: 'p3', name: 'C Striker', team: 'ARS', value: 9, matches: 30 }] },
+    }
+    render(<TeamPanel abbr="ARS" fixtures={[]} tz="Europe/London" />)
+
+    expect(screen.getByText(/Leading scorers/)).toHaveTextContent('2025-26')
+    const players = [...document.querySelectorAll('.tp-players li')].map((li) => li.textContent)
+    expect(players).toEqual(['C Striker9 goals in 30'])
   })
 
   it('follows and unfollows the club from the drawer', async () => {
