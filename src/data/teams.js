@@ -18,7 +18,7 @@ export const TEAMS = [
   {"id":"357","abbr":"LEE","slug":"eng.leeds","name":"Leeds","displayName":"Leeds United","color":"ffffff","altColor":"FFCD00"},
   {"id":"364","abbr":"LIV","slug":"eng.liverpool","name":"Liverpool","displayName":"Liverpool","color":"d11317","altColor":"FFFFFF"},
   {"id":"382","abbr":"MNC","slug":"eng.man_city","name":"Man City","displayName":"Manchester City","color":"99c5ea","altColor":"000000"},
-  {"id":"360","abbr":"MAN","slug":"eng.man_utd","name":"Man United","displayName":"Manchester United","color":"da020e","altColor":"FFFFFF"},
+  {"id":"360","abbr":"MAN","slug":"eng.man_utd","name":"Man United","displayName":"Manchester United","color":"da020e","altColor":"4169E1"},
   {"id":"361","abbr":"NEW","slug":"eng.newcastle","name":"Newcastle","displayName":"Newcastle United","color":"000000","altColor":"0B1B3D"},
   {"id":"393","abbr":"NFO","slug":"eng.nottm_forest","name":"Nottm Forest","displayName":"Nottingham Forest","color":"c8102e","altColor":"1B3624"},
   {"id":"367","abbr":"TOT","slug":"eng.tottenham","name":"Spurs","displayName":"Tottenham Hotspur","color":"ffffff","altColor":"0B1426"},

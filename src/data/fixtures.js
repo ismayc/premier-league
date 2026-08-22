@@ -4,12 +4,12 @@
 export const SEASON = 2026
 
 export const FIXTURES = [
-  {"id":"401879301","ko":"2026-08-21T19:00:00.000Z","home":"ARS","away":"COV","venue":"Emirates Stadium","city":"London","tv":["USA Net","Universo"]},
-  {"id":"401879322","ko":"2026-08-22T11:30:00.000Z","home":"HUL","away":"MAN","venue":"The MKM Stadium","city":"Hull","tv":["USA Net","Universo"]},
-  {"id":"401879298","ko":"2026-08-22T14:00:00.000Z","home":"NFO","away":"LEE","venue":"The City Ground","city":"Nottingham","tv":["NBCSN","Peacock"]},
-  {"id":"401879299","ko":"2026-08-22T14:00:00.000Z","home":"IPS","away":"SUN","venue":"Portman Road","city":"Ipswich","tv":["Peacock"]},
-  {"id":"401879300","ko":"2026-08-22T14:00:00.000Z","home":"EVE","away":"CRY","venue":"Hill Dickinson Stadium","city":"Liverpool","tv":["USA Net","Universo"]},
-  {"id":"401879321","ko":"2026-08-22T16:30:00.000Z","home":"BRE","away":"TOT","venue":"Gtech Community Stadium","city":"Brentford","tv":["NBC","Peacock"]},
+  {"id":"401879301","ko":"2026-08-21T19:00:00.000Z","home":"ARS","away":"COV","venue":"Emirates Stadium","city":"London","score":[3,0],"tv":["USA Net","Universo"]},
+  {"id":"401879322","ko":"2026-08-22T11:30:00.000Z","home":"HUL","away":"MAN","venue":"The MKM Stadium","city":"Hull","score":[2,0],"tv":["USA Net","Universo"]},
+  {"id":"401879298","ko":"2026-08-22T14:00:00.000Z","home":"NFO","away":"LEE","venue":"The City Ground","city":"Nottingham","score":[0,1],"tv":["NBCSN","Peacock"]},
+  {"id":"401879299","ko":"2026-08-22T14:00:00.000Z","home":"IPS","away":"SUN","venue":"Portman Road","city":"Ipswich","score":[2,1],"tv":["Peacock"]},
+  {"id":"401879300","ko":"2026-08-22T14:00:00.000Z","home":"EVE","away":"CRY","venue":"Hill Dickinson Stadium","city":"Liverpool","score":[2,0],"tv":["USA Net","Universo"]},
+  {"id":"401879321","ko":"2026-08-22T16:30:00.000Z","home":"BRE","away":"TOT","venue":"Gtech Community Stadium","city":"Brentford","score":[3,0],"tv":["NBC","Peacock"]},
   {"id":"401879297","ko":"2026-08-23T13:00:00.000Z","home":"BHA","away":"AVL","venue":"American Express Stadium","city":"Falmer","tv":["Peacock"]},
   {"id":"401879320","ko":"2026-08-23T13:00:00.000Z","home":"MNC","away":"BOU","venue":"Etihad Stadium","city":"Manchester","tv":["USA Net","Tele"]},
   {"id":"401879319","ko":"2026-08-23T15:30:00.000Z","home":"NEW","away":"LIV","venue":"St. James' Park","city":"Newcastle-upon-Tyne","tv":["USA Net","Tele"]},
