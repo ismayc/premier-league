@@ -8,6 +8,7 @@ import { FollowProvider, useFollow } from '../src/context/follow.jsx'
 import { ServicesProvider } from '../src/context/services.jsx'
 import { useModalA11y } from '../src/hooks/useModalA11y.js'
 import { FIXTURES } from '../src/data/fixtures.js'
+import { TEAMS } from '../src/data/teams.js'
 
 /**
  * The shell, the one context, and the shared modal behaviour.
@@ -279,15 +280,21 @@ describe('App overlays', () => {
     const user = userEvent.setup()
     await renderApp()
 
-    await user.click(screen.getAllByRole('button', { name: /versus .*, details$/ })[0])
+    const card = screen.getAllByRole('button', { name: /versus .*, details$/ })[0]
+    // Which match leads the list moves with the calendar and with every data
+    // refresh, so take the club to pick out of the card's own label rather
+    // than naming one here.
+    const homeName = card.getAttribute('aria-label').split(' versus ')[0]
+    const home = TEAMS.find((t) => t.name === homeName)
+    await user.click(card)
     const detail = screen.getByRole('dialog')
 
-    await user.click(within(detail).getAllByRole('button', { name: /Arsenal/ })[0])
+    await user.click(within(detail).getAllByRole('button', { name: homeName })[0])
 
     const drawers = screen.getAllByRole('dialog')
     expect(drawers).toHaveLength(1)
-    expect(within(drawers[0]).getByRole('heading', { level: 2 })).toHaveTextContent('Arsenal')
-    expect(window.location.search).toBe('?team=ARS')
+    expect(within(drawers[0]).getByRole('heading', { level: 2 })).toHaveTextContent(home.displayName)
+    expect(window.location.search).toBe(`?team=${home.abbr}`)
 
     await user.click(within(drawers[0]).getByRole('button', { name: 'Close' }))
     expect(screen.queryByRole('dialog')).toBeNull()
@@ -296,13 +303,16 @@ describe('App overlays', () => {
 
   it('opens a fixture from inside the club drawer', async () => {
     stubZone('Europe/London')
-    setSearch('?team=ARS')
+    // Any club in the committed season will do. Which of its matches the
+    // drawer lists — and whether they sit under "Recent results" or "Next up",
+    // which decides how the row reads — moves as the season is played, so take
+    // the first fixture row rather than a named opponent.
+    setSearch(`?team=${FIXTURES[0].home}`)
     const user = userEvent.setup()
     await renderApp()
 
     const drawer = screen.getByRole('dialog')
-    // Arsenal's opening fixture, listed under "Next fixtures" in the drawer.
-    await user.click(within(drawer).getAllByRole('button', { name: /^H\s*Coventry/ })[0])
+    await user.click(drawer.querySelector('.tp-fixture'))
 
     // The drawer closed and the detail took its place.
     const dialogs = screen.getAllByRole('dialog')
