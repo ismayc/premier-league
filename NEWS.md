@@ -22,6 +22,16 @@ data/source updates, deployment). Newest day on top.
   names no season.
 - The daily data refresh had been failing on those two tests since the new season
   began, which also blocked it from publishing fresh fixtures and stats.
+- **The Stats leaderboards drop the same padding.** The 2026-27 goals board is 25
+  rows, of which only three are goals, so the table was showing 22 non-scorers tied
+  beneath the leaders. A statistic where a higher number is the better one now
+  counts only players with something on the board: Goals shows 3 rows instead of
+  25, Assists 2, Saves 2. A season made up entirely of padding is no longer offered
+  in the season picker, and a statistic nobody has registered yet no longer gets a
+  pill, so neither can open an empty table.
+- The three disciplinary tallies (fouls committed, yellow and red cards) are left
+  whole. They are captioned as a count rather than a ranking, and a player on no
+  cards is a real reading of the season rather than padding.
 
 ## 2026-08-16
 

@@ -89,10 +89,30 @@ function SeasonTotals({ totals }) {
 
 /* ── Player leaderboards ───────────────────────────────────────────────── */
 
+/**
+ * The rows on a board that record something a player actually did.
+ *
+ * Days into a season, ESPN pads every category with each player who has
+ * appeared, on zero, beside the few carrying a real number: 22 of the 25 rows
+ * on the 2026-27 goals board were zeros, where every completed season has
+ * none. A player with no goals is not among the goal scorers, so those rows
+ * are dropped before a board is ranked, offered as a season, or offered as a
+ * statistic at all.
+ *
+ * The tallies where a low number is the good one keep every row. Their board
+ * is captioned as a count rather than a ranking, and nobody is padding it:
+ * a defender on no red cards is a real reading of the season.
+ */
+function counting(rows, key) {
+  if (!rows?.length) return []
+  const meta = STAT_CATEGORIES.find((c) => c.key === key)
+  return meta?.lowerIsBetter ? rows : rows.filter((p) => p.value > 0)
+}
+
 function Leaders({ onPickTeam }) {
   const [category, setCategory] = useState('goals')
   const available = useMemo(
-    () => STAT_SEASONS.filter((s) => PLAYER_STATS[s]?.[category]?.length),
+    () => STAT_SEASONS.filter((s) => counting(PLAYER_STATS[s]?.[category], category).length),
     [category]
   )
   const [season, setSeason] = useState(available[0])
@@ -100,7 +120,7 @@ function Leaders({ onPickTeam }) {
   // Switching to a category the chosen season lacks would blank the panel;
   // fall back to the newest season that has it instead.
   const active = available.includes(season) ? season : available[0]
-  const rows = PLAYER_STATS[active]?.[category] ?? []
+  const rows = useMemo(() => counting(PLAYER_STATS[active]?.[category], category), [active, category])
   const ranked = useMemo(() => leaderboard(rows, { limit: 10 }), [rows])
   const meta = STAT_CATEGORIES.find((c) => c.key === category)
 
@@ -125,7 +145,7 @@ function Leaders({ onPickTeam }) {
       </div>
 
       <div className="pills" role="group" aria-label="Statistic">
-        {STAT_CATEGORIES.filter((c) => PLAYER_STATS[active]?.[c.key]?.length).map((c) => (
+        {STAT_CATEGORIES.filter((c) => counting(PLAYER_STATS[active]?.[c.key], c.key).length).map((c) => (
           <button
             key={c.key}
             type="button"

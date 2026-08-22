@@ -383,6 +383,68 @@ describe('StatsView leaders', () => {
     expect(screen.getByText('Cole Palmer')).toBeInTheDocument()
   })
 
+  it('drops the zero rows a new season pads a board with', () => {
+    // Days into a season, ESPN lists every player who has appeared, on zero,
+    // beside the few who have actually scored. Ranking those padded rows put
+    // 22 non-scorers on the goals board, all tied below the real leaders.
+    players.STAT_SEASONS.splice(0, players.STAT_SEASONS.length, 2026, 2025, 2024)
+    players.PLAYER_STATS[2026] = {
+      goals: [
+        { id: 'n1', name: 'Kai Havertz', pos: 'F', team: 'ARS', value: 1 },
+        { id: 'n2', name: 'Idle Keeper', pos: 'G', team: 'ARS', value: 0 },
+        { id: 'n3', name: 'Idle Defender', pos: 'D', team: 'COV', value: 0 },
+      ],
+    }
+    renderStats()
+
+    const table = screen.getByRole('table', { name: /Goals leaders, 2026-27/ })
+    const rows = within(table).getAllByRole('row').slice(1)
+    expect(rows).toHaveLength(1)
+    expect(within(rows[0]).getByText('Kai Havertz')).toBeInTheDocument()
+    expect(screen.queryByText('Idle Keeper')).not.toBeInTheDocument()
+  })
+
+  it('skips a season whose board is nothing but padding', () => {
+    // Before anyone has scored, the newest season is all zeros. Offering it
+    // would open the panel on an empty table.
+    players.STAT_SEASONS.splice(0, players.STAT_SEASONS.length, 2026, 2025, 2024)
+    players.PLAYER_STATS[2026] = {
+      goals: [{ id: 'n2', name: 'Idle Keeper', pos: 'G', team: 'ARS', value: 0 }],
+    }
+    renderStats()
+
+    const leaders = screen.getByRole('group', { name: 'Statistic' }).closest('.card')
+    expect(within(leaders).getByRole('combobox')).toHaveValue('2025')
+    expect(within(leaders).queryByRole('option', { name: '2026-27' })).not.toBeInTheDocument()
+    expect(screen.getByText('Erling Haaland')).toBeInTheDocument()
+  })
+
+  it('offers no pill for a statistic that is nothing but padding', () => {
+    players.PLAYER_STATS[2025].assists = [
+      { id: 'z1', name: 'Idle Winger', pos: 'M', team: 'ARS', value: 0 },
+    ]
+    renderStats()
+
+    const leaders = screen.getByRole('group', { name: 'Statistic' })
+    expect(within(leaders).getByRole('button', { name: 'Goals' })).toBeInTheDocument()
+    expect(within(leaders).queryByRole('button', { name: 'Assists' })).not.toBeInTheDocument()
+  })
+
+  it('keeps the zero rows on a tally where a low number is the good one', async () => {
+    // "Most red cards" is captioned as a count rather than a ranking, and
+    // nobody is padding it: a defender on none is a real reading of the season,
+    // so this board is left whole.
+    renderStats()
+
+    const leaders = screen.getByRole('group', { name: 'Statistic' }).closest('.card')
+    await userEvent.click(within(leaders).getByRole('button', { name: 'Red cards' }))
+
+    const table = screen.getByRole('table', { name: /Red cards leaders, 2025-26/ })
+    const rows = within(table).getAllByRole('row').slice(1)
+    expect(rows).toHaveLength(1)
+    expect(within(rows[0]).getByText('Clean Defender')).toBeInTheDocument()
+  })
+
   it('falls back to a generic heading for a category with no metadata', () => {
     // The panel opens on "goals" whether or not that key is described in
     // STAT_CATEGORIES, so the label lookup has to tolerate a miss.
