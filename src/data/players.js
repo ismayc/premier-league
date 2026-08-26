@@ -605,7 +605,7 @@ export const PLAYER_STATS = {
       {"id":"243396","name":"Morgan Gibbs-White","short":"M. Gibbs-White","pos":"M","team":"NFO","teamName":"Nottm Forest","teamSlug":"eng.nottm_forest","value":8,"matches":34},
       {"id":"251400","name":"Eberechi Eze","short":"E. Eze","pos":"M","team":"CRY","teamName":"C Palace","teamSlug":"eng.crystal_palace","value":8,"matches":34},
       {"id":"203669","name":"Martin Ødegaard","short":"M. Ødegaard","pos":"M","team":"ARS","teamName":"Arsenal","teamSlug":"eng.arsenal","value":8,"matches":30},
-      {"id":"304470","name":"Savio","short":"Savio","pos":"F","team":"MNC","teamName":"Man City","teamSlug":"eng.man_city","value":8,"matches":29},
+      {"id":"304470","name":"Sávio","short":"Sávio","pos":"F","team":"MNC","teamName":"Man City","teamSlug":"eng.man_city","value":8,"matches":29},
       {"id":"271170","name":"Bryan Mbeumo","short":"B. Mbeumo","pos":"F","team":"BRE","teamName":"Brentford","teamSlug":"eng.brentford","value":7,"matches":38},
       {"id":"174980","name":"Leandro Trossard","short":"L. Trossard","pos":"F","team":"ARS","teamName":"Arsenal","teamSlug":"eng.arsenal","value":7,"matches":38},
       {"id":"272512","name":"Rayan Aït-Nouri","short":"R. Aït-Nouri","pos":"D","team":"WOL","teamName":"Wolves","teamSlug":"eng.wolverhampton","value":7,"matches":37},
