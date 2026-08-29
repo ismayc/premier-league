@@ -18,6 +18,13 @@ export default defineConfig({
     // about a minute serialised, which is a fair price for a report that is
     // actually produced.
     fileParallelism: false,
+    // Pin the suite's timezone so any test asserting a day heading, or what counts
+    // as "today", is runner-independent. UTC is what these tests were already
+    // written against: CI's runners sit in UTC, so this changes nothing there. What
+    // it fixes is the LOCAL run, which until now needed an explicit `TZ=UTC` prefix
+    // and failed in a confusing way without one. test/guards.test.js asserts the pin
+    // so it cannot be dropped unnoticed on an already-UTC runner.
+    env: { TZ: 'UTC' },
     coverage: {
       provider: 'v8',
       all: true,
