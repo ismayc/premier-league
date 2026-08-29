@@ -14,7 +14,7 @@ export const FIXTURES = [
   {"id":"401879320","ko":"2026-08-23T13:00:00.000Z","home":"MNC","away":"BOU","venue":"Etihad Stadium","city":"Manchester","score":[2,1],"tv":["USA Net","Tele"]},
   {"id":"401879319","ko":"2026-08-23T15:30:00.000Z","home":"NEW","away":"LIV","venue":"St. James' Park","city":"Newcastle-upon-Tyne","score":[2,2],"tv":["USA Net","Tele"]},
   {"id":"401879318","ko":"2026-08-24T19:00:00.000Z","home":"FUL","away":"CHE","venue":"Craven Cottage","city":"London","score":[2,3],"tv":["USA Net","Universo"]},
-  {"id":"401879294","ko":"2026-08-28T19:00:00.000Z","home":"CRY","away":"MNC","venue":"Selhurst Park","city":"London","tv":["USA Net"]},
+  {"id":"401879294","ko":"2026-08-28T19:00:00.000Z","home":"CRY","away":"MNC","venue":"Selhurst Park","city":"London","score":[1,4],"tv":["USA Net"]},
   {"id":"401879314","ko":"2026-08-29T11:30:00.000Z","home":"LIV","away":"NFO","venue":"Anfield","city":"Liverpool","tv":["USA Net","Universo"]},
   {"id":"401879296","ko":"2026-08-29T14:00:00.000Z","home":"BOU","away":"EVE","venue":"Vitality Stadium","city":"Bournemouth","tv":["Peacock"]},
   {"id":"401879316","ko":"2026-08-29T14:00:00.000Z","home":"COV","away":"HUL","venue":"Coventry Building Society Arena","city":"Coventry","tv":["USA Net","Universo"]},
