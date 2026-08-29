@@ -4,6 +4,21 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-08-29
+
+- **Repo-level guards now run in the test suite.** New `test/guards.test.js`, ported from
+  the FIBA viewer, which was the only repo that had one. It pins the invariants that have
+  already broken a viewer in this family. The ESPN host must be `site.web.api` everywhere it
+  appears: `site.api` serves the same routes but 403s on a browser User-Agent with no CORS
+  headers, so it reads as healthy from curl while every deployed page loses live scores. The
+  data scripts must import only Node built-ins and in-repo source, because they run in CI
+  with no `npm install` of the app dependencies. Every localStorage key must carry this
+  app's `pl:` prefix and never a sibling's, because the hub and all eleven viewers are
+  served from one origin and therefore share localStorage. Finally, the generated data files
+  must keep their do-not-edit banner, since a hand edit to one is silently reverted by the
+  next refresh run. Each guard was checked by reintroducing the bug it describes and
+  confirming it fails.
+
 ## 2026-08-22
 
 - **A club's "Leading scorers" no longer lists players who have not scored.** Once
