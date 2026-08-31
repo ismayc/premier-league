@@ -23,7 +23,7 @@ export const FIXTURES = [
   {"id":"401879315","ko":"2026-08-30T13:00:00.000Z","home":"LEE","away":"BRE","venue":"Elland Road","city":"Leeds","score":[1,1],"tv":["USA Net","Tele"]},
   {"id":"401879317","ko":"2026-08-30T13:00:00.000Z","home":"CHE","away":"BHA","venue":"Stamford Bridge","city":"London","score":[4,3],"tv":["Peacock"]},
   {"id":"401879293","ko":"2026-08-30T15:30:00.000Z","home":"MAN","away":"IPS","venue":"Old Trafford","city":"Manchester","score":[5,2],"tv":["USA Net","Tele"]},
-  {"id":"401879295","ko":"2026-08-31T19:00:00.000Z","home":"AVL","away":"ARS","venue":"Villa Park","city":"Birmingham","tv":["USA Net","Universo"]},
+  {"id":"401879295","ko":"2026-08-31T19:00:00.000Z","home":"AVL","away":"ARS","venue":"Villa Park","city":"Birmingham","score":[0,1],"tv":["USA Net","Universo"]},
   {"id":"401879288","ko":"2026-09-04T19:00:00.000Z","home":"IPS","away":"LIV","venue":"Portman Road","city":"Ipswich","tv":["USA Net"]},
   {"id":"401879286","ko":"2026-09-05T11:30:00.000Z","home":"NEW","away":"BOU","venue":"St. James' Park","city":"Newcastle-upon-Tyne","tv":["USA Net","Universo"]},
   {"id":"401878780","ko":"2026-09-05T14:00:00.000Z","home":"NFO","away":"TOT","venue":"The City Ground","city":"Nottingham","tv":["Peacock"]},
