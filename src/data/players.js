@@ -807,7 +807,7 @@ export const PLAYER_STATS = {
     redCards: [
       {"id":"124091","name":"Bruno Fernandes","short":"B. Fernandes","pos":"M","team":"MAN","teamName":"Man United","teamSlug":"eng.man_utd","value":2,"matches":36},
       {"id":"352758","name":"Myles Lewis-Skelly","short":"M. Lewis-Skelly","pos":"D","team":"ARS","teamName":"Arsenal","teamSlug":"eng.arsenal","value":2,"matches":null},
-      {"id":"152475","name":"Jack Stephens","short":"J. Stephens","pos":"D","team":"SOU","teamName":"Southampton","teamSlug":"eng.southampton","value":2,"matches":null},
+      {"id":"152475","name":"Jack Stephens","short":"J. Stephens","pos":"G","team":"SOU","teamName":"Southampton","teamSlug":"eng.southampton","value":2,"matches":null},
       {"id":"174980","name":"Leandro Trossard","short":"L. Trossard","pos":"F","team":"ARS","teamName":"Arsenal","teamSlug":"eng.arsenal","value":1,"matches":38},
       {"id":"158626","name":"Emiliano Martínez","short":"E. Martínez","pos":"G","team":"AVL","teamName":"Aston Villa","teamSlug":"eng.aston_villa","value":1,"matches":null},
       {"id":"274632","name":"Ryan Gravenberch","short":"R. Gravenberch","pos":"M","team":"LIV","teamName":"Liverpool","teamSlug":"eng.liverpool","value":1,"matches":null},
@@ -1913,7 +1913,7 @@ export const PLAYER_STATS = {
       {"id":"196876","name":"Alisson Becker","short":"A. Becker","pos":"G","team":"LIV","teamName":"Liverpool","teamSlug":"eng.liverpool","value":1,"matches":null},
       {"id":"43187","name":"Steve Cook","short":"S. Cook","pos":"D","team":"BOU","teamName":"Bournemouth","teamSlug":"eng.bournemouth","value":1,"matches":null},
       {"id":"192031","name":"Isaac Hayden","short":"I. Hayden","pos":"M","team":"NEW","teamName":"Newcastle","teamSlug":"eng.newcastle","value":1,"matches":null},
-      {"id":"152475","name":"Jack Stephens","short":"J. Stephens","pos":"D","team":"SOU","teamName":"Southampton","teamSlug":"eng.southampton","value":1,"matches":null},
+      {"id":"152475","name":"Jack Stephens","short":"J. Stephens","pos":"G","team":"SOU","teamName":"Southampton","teamSlug":"eng.southampton","value":1,"matches":null},
       {"id":"131639","name":"Seamus Coleman","short":"S. Coleman","pos":"D","team":"EVE","teamName":"Everton","teamSlug":"eng.everton","value":1,"matches":null},
       {"id":"43617","name":"Billy Sharp","short":"B. Sharp","pos":"F","team":"SHU","teamName":"Sheffield Utd","teamSlug":"eng.sheff_utd","value":1,"matches":null},
       {"id":"106957","name":"Christian Benteke","short":"C. Benteke","pos":"F","team":"CRY","teamName":"C Palace","teamSlug":"eng.crystal_palace","value":1,"matches":null},
