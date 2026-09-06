@@ -4,6 +4,33 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-09-06
+
+- **Finished the design pass: the fixture list is now a results board.** A day is a
+  block, not a stack of floating cards: a band naming the day over a rule, then its
+  fixtures as ruled rows sharing one left edge, each led by an 88px scoreboard rail
+  holding the kickoff time. Kickoffs, scores, points and stat tiles are set in the
+  display voice (Archivo pushed to 118% width and weight 800), and every figure in a
+  column is tabular. The app also takes the family's cool neutral ground in place of
+  its tinted near-black, and the last rounded corners and drop shadows are gone;
+  shadows now belong only to things that genuinely float, like a modal.
+- **The data-mark palette is validated for the first time, by a script rather than by
+  eye.** The stylesheet header has always promised that the `--viz-*` / `--zone-*`
+  colors were checked for contrast and color-vision separation. The separation half was
+  true. The contrast half was not: measured against the surfaces they actually sit on,
+  16 checks failed, most of them in light mode, where Conference amber sat at 1.96:1 and
+  the white letter on a form pill reached only 2.82:1. `scripts/validate-palette.mjs`
+  now checks every mark against every surface at the bar its real role earns, checks the
+  letter on each form pill, and checks that the zones, the form outcomes and the
+  diverging chart stay separable under normal vision and all three dichromacies. The
+  palette was re-derived to pass all of it while staying as close to the previous colors
+  as the constraints allow, so Champions blue is still blue and relegation red still red.
+- **Form pills no longer hardcode a white letter.** The marks are bright on the dark
+  theme and deep on the light one, so the letter is now `--mark-ink` and flips with them.
+- Fixed in passing: a tab left with `border-radius: 2px 6px 0 0` by the previous squaring
+  pass, and diverging chart bars that were rounded at the data end while their own
+  comment said the baseline end must stay square.
+
 ## 2026-09-05 (later)
 
 - **Adopted the family's typeface and squared chrome.** The app is now set in Archivo,

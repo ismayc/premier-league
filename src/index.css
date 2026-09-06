@@ -1,13 +1,35 @@
 /*
- * One stylesheet, organised as: tokens, reset, shell, then a block per view.
+ * One stylesheet, organized as: tokens, reset, shell, then a block per view.
+ *
+ * The design is a RESULTS BOARD, not a page of cards. A matchweek is a block:
+ * a band naming the day over a rule, then its fixtures as ruled rows sharing
+ * one left edge, each led by a scoreboard rail holding the kickoff time. The
+ * numbers are the content here, so they are set in the display voice and they
+ * line up. This is the family system; what is specific to this app is below.
  *
  * Two token families are kept deliberately separate:
- *   - UI chrome (--bg, --card, --accent…) styles controls and surfaces
+ *   - UI chrome (--bg, --card, --accent) styles controls and surfaces
  *   - Data marks (--viz-*, --zone-*) encode values
- * The accent never encodes data, so a coloured mark is never mistaken for a
- * control. The data-mark colours are not hand-picked: they come from a
- * validated palette and were checked for colour-vision separation and
- * contrast against both surfaces. Changing one means re-validating the set.
+ * The accent never encodes data, so a colored mark is never mistaken for a
+ * control. That is also why this app keeps its own purple accent and does NOT
+ * borrow the family's structural blue for day bands: blue is already spent
+ * here on the Champions League zone, and a day band in the same hue would read
+ * as a data mark.
+ *
+ * The data marks are not hand-picked. Run:
+ *
+ *     node scripts/validate-palette.mjs
+ *
+ * which checks every mark against every surface it can sit on, in both themes,
+ * at the bar its actual role earns (text 4.5:1, graphical object 3:1, the white
+ * or dark letter on a form pill 4.5:1), and checks that the table zones, the
+ * form outcomes and the diverging chart stay separable under normal vision and
+ * all three dichromacies. Changing one mark means re-running it.
+ *
+ * Worth knowing before you tune a color: green and red collapse onto one hue
+ * axis under deuteranopia and protanopia, so what separates a win from a loss
+ * there is LIGHTNESS, not hue. A palette tuned only for contrast tends to put
+ * every mark at the same lightness and silently fails that check.
  */
 
 /* ── Tokens ───────────────────────────────────────────────────────────── */
@@ -16,37 +38,48 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #12121a;
-  --page: #0d0d13;
-  --card: #1b1b26;
-  --card-2: #23232f;
-  --line: #2e2e3c;
-  --text: #f2f2f7;
-  --text-2: #a9a9bb;
-  --muted: #7d7d92;
-  --accent: #8b7bf0;
-  --accent-ink: #12121a;
+  /* Ground and surface are the family's cool neutral pair. Deliberately not a
+     tinted near-black: color in this app encodes league position, form and
+     goal difference, and the background is not allowed to spend any. */
+  --bg: #15171b;
+  --page: #15171b;
+  --card: #1b1e23;
+  --card-2: #23262d;
+  --line: #2f333b;
+  --rule: #3a3f49;
+  --text: #f0f1f3;
+  --text-2: #a7adb8;
+  --muted: #767d89;
+  --accent: #8d7ef2;
+  --accent-ink: #15171b;
+  /* The letter inside a form pill. On this theme the marks are bright and the
+     ink is dark; the light theme inverts both together. */
+  --mark-ink: #15171b;
 
-  /* Data marks — validated as a set against this surface. */
-  --viz-bar: #3987e5;
-  --viz-pos: #3987e5;
-  --viz-neg: #e66767;
-  --viz-zero: #383835;
+  /* Data marks. Validated as a set by scripts/validate-palette.mjs against
+     every surface they can sit on, in both themes. */
+  --viz-bar: #308df8;
+  --viz-pos: #308df8;
+  --viz-neg: #f6515c;
+  --viz-zero: #4a505b;
 
-  /* Table zones, in legend order. Ordering is the colour-vision safety
-     mechanism, not cosmetic — re-validate if you reorder or restyle. */
-  --zone-champions: #3987e5;
-  --zone-europa: #199e70;
-  --zone-conference: #c98500;
-  --zone-relegation: #d03b3b;
+  /* Table zones, in legend order. Ordering is the color-vision safety
+     mechanism, not cosmetic. Re-validate if you reorder or restyle. */
+  --zone-champions: #308df8;
+  --zone-europa: #1d9f70;
+  --zone-conference: #e59010;
+  --zone-relegation: #f6515c;
 
-  --win: #199e70;
-  --draw: #7d7d92;
-  --loss: #d03b3b;
-  --live: #e66767;
+  --win: #1d9f70;
+  --draw: #848d9f;
+  --loss: #f6515c;
+  --live: #f6515c;
 
-  --radius: 10px;
-  --shadow: 0 6px 24px rgb(0 0 0 / 0.35);
+  /* Square corners and no shadow: structure comes from rules and the grid.
+     The float shadow stays for a surface that genuinely floats, like a modal. */
+  --radius: 2px;
+  --shadow: none;
+  --shadow-float: 0 18px 40px rgb(0 0 0 / 0.5);
 
   /* Condensed view strip: one fixed-height row (plus the notch inset on phones),
      declared as a token so the sticky filter bar / month jump-bar can offset
@@ -57,33 +90,37 @@
 :root[data-theme='light'] {
   color-scheme: light;
 
-  --bg: #f7f7f4;
-  --page: #eeeeea;
+  --bg: #e7e8ea;
+  --page: #e7e8ea;
   --card: #ffffff;
-  --card-2: #f4f4f0;
-  --line: #dcdcd4;
-  --text: #16161a;
-  --text-2: #52514e;
-  --muted: #78776f;
+  --card-2: #f4f5f6;
+  --line: #ccced3;
+  --rule: #b9bcc3;
+  --text: #101317;
+  --text-2: #4a515c;
+  --muted: #767d89;
   --accent: #5b46d6;
   --accent-ink: #ffffff;
+  /* Inverted from the dark theme: deep marks, white ink. */
+  --mark-ink: #ffffff;
 
-  --viz-bar: #2a78d6;
-  --viz-pos: #2a78d6;
-  --viz-neg: #e34948;
-  --viz-zero: #c3c2b7;
+  --viz-bar: #0b65cb;
+  --viz-pos: #0b65cb;
+  --viz-neg: #ca212c;
+  --viz-zero: #b9bcc3;
 
-  --zone-champions: #2a78d6;
-  --zone-europa: #1baf7a;
-  --zone-conference: #eda100;
-  --zone-relegation: #d03b3b;
+  --zone-champions: #0b65cb;
+  --zone-europa: #12814a;
+  --zone-conference: #c37f18;
+  --zone-relegation: #ca212c;
 
-  --win: #1baf7a;
-  --draw: #78776f;
-  --loss: #d03b3b;
-  --live: #d03b3b;
+  --win: #12814a;
+  --draw: #707070;
+  --loss: #ca212c;
+  --live: #ca212c;
 
-  --shadow: 0 6px 24px rgb(0 0 0 / 0.12);
+  --shadow: none;
+  --shadow-float: 0 18px 40px rgb(16 19 23 / 0.18);
 }
 
 /* ── Reset ────────────────────────────────────────────────────────────── */
@@ -106,6 +143,31 @@ h2,
 h3 {
   margin: 0;
   line-height: 1.25;
+}
+
+/* Every figure in this app is data in a column: a kickoff time, a score, a
+   points total, a goal difference. They line up or they are useless. */
+:where(table, .mc, .nextmatch, .week-cell, .tile, .leaders, .margin-row) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The display voice: the SAME family, pushed wide and heavy. One typeface used
+   at two extremes reads as two, without the mismatch of an actual second face.
+   Reserved for numerals and for headings that name a thing. */
+.brand h1,
+.day-head .day-fold,
+.month-head,
+.mc-ko,
+.mc-score,
+.nm-countdown,
+.md-score,
+.week-time,
+.col-pts,
+.col-val,
+.tile-value {
+  font-stretch: 118%;
+  font-weight: 800;
+  letter-spacing: -0.015em;
 }
 
 button {
@@ -133,7 +195,7 @@ a {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 2px;
 }
 
 .muted {
@@ -264,7 +326,7 @@ select {
   border-bottom: 2px solid transparent;
   padding: 8px 14px;
   color: var(--text-2);
-  border-radius: 2px 6px 0 0;
+  border-radius: 2px 2px 0 0;
   white-space: nowrap;
 }
 
@@ -335,7 +397,7 @@ select {
   padding: 8px 16px 10px;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-float);
 }
 
 .view-head {
@@ -675,16 +737,20 @@ select {
   );
 }
 
+/* A day is a BLOCK, not a stack of floating cards: one band naming the day,
+   then its fixtures as ruled rows sharing a single left edge. A matchweek then
+   reads as three or four blocks rather than as ten identical boxes. The rule is
+   neutral rather than the family's structural blue, because blue already means
+   "Champions League place" in this app. */
 .day-head {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-2);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 8px;
+  font-size: 15px;
+  color: var(--text);
+  padding-bottom: 6px;
+  margin-bottom: 0;
+  border-bottom: 2px solid var(--rule);
 }
 
 .day.is-today .day-head {
@@ -705,10 +771,11 @@ select {
   font-weight: 400;
 }
 
+/* No gap: the rows meet on a shared rule, the way a results table does. */
 .day-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
 }
 
 /* The "Later fixtures" expander at the foot of the default fixture list. */
@@ -813,31 +880,35 @@ select {
   padding: 16px 2px 4px;
 }
 
-/* A narrow "when" column, the two clubs stacked, and a faint meta line — the
-   shape of the WNBA schedule's card, adapted to football. */
+/* A row, not a card. The left rail is the scoreboard column: the kickoff time
+   in the viewer's own zone, set big and tabular, with the competition round
+   beneath it. The vertical rule between rail and fixture runs the full height
+   and is what makes ten rows read as one board. */
 .mc {
   position: relative;
   display: grid;
-  grid-template-columns: 66px 1fr;
-  gap: 12px;
-  align-items: center;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 11px 14px;
-  transition: background 0.15s, border-color 0.15s;
+  grid-template-columns: 88px 1fr;
+  gap: 18px;
+  align-items: stretch;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 13px 4px 13px 0;
+  transition: background 0.12s;
 }
 
-.mc:hover {
-  border-color: var(--accent);
+/* A followed club's fixture, then a live one. Live is declared second so it
+   wins the leading edge when a followed club is the one playing. */
+.mc.is-tracked {
+  box-shadow: inset 3px 0 0 var(--accent);
+  padding-left: 12px;
 }
 
 .mc.is-live {
-  border-color: color-mix(in srgb, var(--live) 60%, var(--line));
-}
-
-.mc.is-tracked {
-  border-left: 3px solid var(--accent);
+  box-shadow: inset 3px 0 0 var(--live);
+  padding-left: 12px;
+  background: var(--card);
 }
 
 .mc.is-off {
@@ -871,16 +942,23 @@ select {
   min-width: 0;
 }
 
+/* The scoreboard rail. */
 .mc-when {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  justify-content: flex-start;
+  align-items: flex-end;
+  text-align: right;
+  gap: 1px;
+  padding-right: 16px;
+  border-right: 1px solid var(--rule);
   font-variant-numeric: tabular-nums;
 }
 
 .mc-ko {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 19px;
+  line-height: 1.05;
+  white-space: nowrap;
 }
 
 .mc-zone {
@@ -951,7 +1029,7 @@ select {
   background: none;
   border: 0;
   padding: 1px 3px;
-  border-radius: 5px;
+  border-radius: 2px;
   color: var(--muted);
   font-size: 14px;
   line-height: 1;
@@ -1032,16 +1110,28 @@ select {
 
 @media (max-width: 520px) {
   /* The kickoff time drops onto one horizontal line above the clubs, freeing
-     the full width for names — the same idea as the WNBA card on a phone. */
+     the full width for names. There is no column left to divide at this width,
+     so the rail loses its rule and becomes a caption line. */
   .mc {
     grid-template-columns: 1fr;
     gap: 6px;
-    padding: 10px 12px;
+    padding: 11px 4px 11px 0;
+  }
+  .mc.is-tracked,
+  .mc.is-live {
+    padding-left: 10px;
   }
   .mc-when {
     flex-direction: row;
     align-items: baseline;
-    gap: 6px;
+    justify-content: flex-start;
+    text-align: left;
+    gap: 8px;
+    padding-right: 0;
+    border-right: 0;
+  }
+  .mc-ko {
+    font-size: 16px;
   }
 }
 
@@ -1290,7 +1380,7 @@ table {
 .zone-swatch {
   width: 10px;
   height: 10px;
-  border-radius: 3px;
+  border-radius: 2px;
   flex: none;
 }
 
@@ -1319,11 +1409,14 @@ table {
   justify-content: center;
   width: 18px;
   height: 18px;
-  border-radius: 4px;
+  border-radius: 2px;
   font-size: 10.5px;
   font-weight: 700;
   font-style: normal;
-  color: #fff;
+  /* Not a hardcoded white: the marks are bright on the dark theme and deep on
+     the light one, so the letter flips with them. validate-palette.mjs checks
+     this pairing clears 4.5:1 in both. */
+  color: var(--mark-ink);
 }
 
 .form-W {
@@ -1466,9 +1559,9 @@ table {
   width: var(--w);
   min-width: 2px;
   background: var(--viz-bar);
-  /* Rounded only at the data end; the baseline end stays square so the bar
-     reads as anchored to zero. */
-  border-radius: 0 4px 4px 0;
+  /* Square at both ends. The baseline end must stay square so the bar reads as
+     anchored to zero, and under the squared system the data end matches it. */
+  border-radius: 0;
 }
 
 .lead-player {
@@ -1627,13 +1720,13 @@ table {
 .margin-bar.pos {
   left: 50%;
   background: var(--viz-pos);
-  border-radius: 0 4px 4px 0;
+  border-radius: 0;
 }
 
 .margin-bar.neg {
   right: 50%;
   background: var(--viz-neg);
-  border-radius: 4px 0 0 4px;
+  border-radius: 0;
 }
 
 .margin-label {
@@ -1697,7 +1790,7 @@ table {
   position: relative;
   height: 20px;
   background: var(--card-2);
-  border-radius: 4px;
+  border-radius: 2px;
 }
 
 .club-bar {
@@ -1707,7 +1800,7 @@ table {
   bottom: 0;
   width: var(--w);
   background: var(--viz-bar);
-  border-radius: 4px;
+  border-radius: 2px;
 }
 
 .club-bar.is-champ {
@@ -1753,7 +1846,7 @@ table {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 2px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-float);
   padding: 22px;
   width: 100%;
   max-height: 88vh;
@@ -2016,7 +2109,7 @@ table {
   background: none;
   border: 0;
   padding: 2px 4px;
-  border-radius: 5px;
+  border-radius: 2px;
   text-align: left;
   font-size: inherit;
 }
@@ -2090,7 +2183,7 @@ table {
   align-items: baseline;
   gap: 4px;
   background: var(--card);
-  border-radius: 5px;
+  border-radius: 2px;
   padding: 3px 7px;
 }
 
@@ -2141,7 +2234,7 @@ table {
 .rm-season {
   margin-left: 6px;
   padding: 1px 5px;
-  border-radius: 4px;
+  border-radius: 2px;
   background: var(--card);
   color: var(--text-2);
   font-size: 9.5px;
@@ -2525,7 +2618,7 @@ table {
   border: 1px solid var(--line);
   border-left: 3px solid var(--accent);
   border-radius: 2px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-float);
   overflow: hidden;
 }
 
