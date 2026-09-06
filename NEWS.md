@@ -6,6 +6,20 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-09-06
 
+- **A red refresh now says which of three things it means.** Fourteen days of Refresh
+  data failures across the family sorted into a fetch that did not land (ESPN 5xx, or a
+  guard correctly refusing bad data; the site is fine), a red gate (a test asserted a
+  season state the data moved past; the site is stale), and a push race. All three used
+  to send the same email. The fetch now retries the whole run three times, five then ten
+  minutes apart, and a fetch that still fails is a warning on a green job rather than a
+  failure, unless no data has landed for 72 hours, in which case one issue opens. A red
+  gate stays red but files one deduped issue naming the failing tests. Both issues close
+  themselves on the next successful commit. Proven on the NFL viewer first.
+- **Two rehearsals now run in CI on every push.** `Gate against the next refresh` fetches
+  what the next refresh would fetch and runs the coverage gate against it, at the keyboard
+  instead of on the cron. `Rehearse the clock` runs the suite at seven future instants
+  with the data untouched, using the meta repo's tool. Both go red on the run and neither
+  blocks the deploy, so a calendar rollover cannot hold a hotfix hostage.
 - **Finished the design pass: the fixture list is now a results board.** A day is a
   block, not a stack of floating cards: a band naming the day over a rule, then its
   fixtures as ruled rows sharing one left edge, each led by an 88px scoreboard rail
