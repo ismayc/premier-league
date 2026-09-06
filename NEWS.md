@@ -4,6 +4,14 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-09-05 (later)
+
+- **Adopted the family's typeface and squared chrome.** The app is now set in Archivo,
+  loaded as a variable font on both axes, matching every other viewer in the family, and
+  the grab-bag of corner radii collapsed to one. The color system here is deliberately
+  untouched: the data-mark palette is a validated set (see the stylesheet header), and
+  re-pointing it at another app's tokens would mean re-validating the whole thing.
+
 ## 2026-08-30
 
 - **Production is now checked after every deploy.** Nothing in this repo ever fetched an

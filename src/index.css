@@ -96,7 +96,8 @@ body {
   margin: 0;
   background: var(--page);
   color: var(--text);
-  font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font: 15px/1.5 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-synthesis: none;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -188,7 +189,7 @@ a {
   align-items: center;
   gap: 6px;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: 2px;
   background: color-mix(in srgb, var(--live) 18%, transparent);
   color: var(--live);
   font-size: 12px;
@@ -207,7 +208,7 @@ select {
   color: var(--text);
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 6px 8px;
   max-width: 190px;
 }
@@ -216,7 +217,7 @@ select {
 .pill {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 2px;
   padding: 6px 12px;
   font-size: 13px;
   color: var(--text-2);
@@ -263,7 +264,7 @@ select {
   border-bottom: 2px solid transparent;
   padding: 8px 14px;
   color: var(--text-2);
-  border-radius: 6px 6px 0 0;
+  border-radius: 2px 6px 0 0;
   white-space: nowrap;
 }
 
@@ -397,7 +398,7 @@ select {
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: 999px;
+  border-radius: 2px;
   background: var(--accent);
   color: var(--accent-ink);
   font-size: 11px;
@@ -440,7 +441,7 @@ select {
   color: var(--text);
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 2px;
   padding: 7px 12px;
 }
 
@@ -466,7 +467,7 @@ select {
   font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 12px;
   padding: 3px 9px;
-  border-radius: 6px;
+  border-radius: 2px;
   border: 1px dashed var(--line);
   background: var(--card);
   color: var(--accent);
@@ -591,7 +592,7 @@ select {
   font-weight: 700;
   background: var(--card-2);
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: 2px;
   padding: 3px 8px;
 }
 .nm-countdown.live { color: var(--live); background: none; border: none; padding: 0; }
@@ -604,7 +605,7 @@ select {
   width: 100%;
   background: var(--card-2);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 2px;
   padding: 8px 12px;
   cursor: pointer;
   color: inherit;
@@ -620,7 +621,7 @@ select {
   color: var(--accent-ink);
   border: none;
   padding: 7px 13px;
-  border-radius: 9px;
+  border-radius: 2px;
   font-weight: 600;
   font-size: 12.5px;
   cursor: pointer;
@@ -693,7 +694,7 @@ select {
 .today-tag {
   background: var(--accent);
   color: var(--accent-ink);
-  border-radius: 999px;
+  border-radius: 2px;
   padding: 1px 8px;
   font-size: 11px;
 }
@@ -719,7 +720,7 @@ select {
 /* Count of what's hidden behind a toggle. */
 .chip-count {
   background: var(--card-2);
-  border-radius: 999px;
+  border-radius: 2px;
   padding: 0 6px;
   font-size: 11px;
   color: var(--muted);
@@ -974,7 +975,7 @@ select {
   background: none;
   border: 0;
   padding: 2px 4px;
-  border-radius: 6px;
+  border-radius: 2px;
   text-align: left;
 }
 
@@ -1096,7 +1097,7 @@ select {
   gap: 2px;
   background: var(--card-2);
   border: 0;
-  border-radius: 6px;
+  border-radius: 2px;
   padding: 5px;
   font-size: 11.5px;
   text-align: left;
@@ -1221,7 +1222,7 @@ table {
   background: none;
   border: 0;
   padding: 2px 4px;
-  border-radius: 6px;
+  border-radius: 2px;
   max-width: 100%;
 }
 
@@ -1417,7 +1418,7 @@ table {
   flex-direction: column;
   gap: 2px;
   background: var(--card-2);
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 10px 12px;
 }
 
@@ -1478,7 +1479,7 @@ table {
   background: none;
   border: 0;
   padding: 2px 4px;
-  border-radius: 6px;
+  border-radius: 2px;
   text-align: left;
   font-size: inherit;
 }
@@ -1515,7 +1516,7 @@ table {
   align-items: center;
   gap: 12px;
   background: var(--card-2);
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 10px 12px;
 }
 
@@ -1751,7 +1752,7 @@ table {
   position: relative;
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 2px;
   box-shadow: var(--shadow);
   padding: 22px;
   width: 100%;
@@ -1778,7 +1779,7 @@ table {
   max-width: 420px;
   margin-left: auto;
   max-height: 100vh;
-  border-radius: 14px 0 0 14px;
+  border-radius: 2px 0 0 14px;
 }
 
 .modal-x {
@@ -1799,7 +1800,7 @@ table {
 /* ── Calendar subscription rows ─────────────────────────────────────── */
 .cal-sub {
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 2px;
   padding: 12px 14px;
   margin: 4px 0 18px;
   background: var(--card-2);
@@ -1835,7 +1836,7 @@ table {
   color: var(--accent-ink);
   text-decoration: none;
   padding: 5px 11px;
-  border-radius: 8px;
+  border-radius: 2px;
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -1844,7 +1845,7 @@ table {
   border: 1px solid var(--line);
   color: var(--text-2);
   padding: 5px 11px;
-  border-radius: 8px;
+  border-radius: 2px;
   font-size: 0.78rem;
   cursor: pointer;
   text-decoration: none;
@@ -1871,7 +1872,7 @@ table {
   border: 0;
   font-size: 13px;
   text-align: center;
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 6px;
 }
 
@@ -1917,7 +1918,7 @@ table {
   color: var(--accent);
   background: var(--card);
   border: 1px solid var(--accent);
-  border-radius: 999px;
+  border-radius: 2px;
   padding: 3px 10px;
   cursor: pointer;
   white-space: nowrap;
@@ -2036,7 +2037,7 @@ table {
   margin: 4px 0 8px 22px;
   padding: 8px 10px;
   background: var(--card-2);
-  border-radius: 7px;
+  border-radius: 2px;
 }
 
 .lu-bio {
@@ -2332,7 +2333,7 @@ table {
   gap: 6px;
   font-size: 12px;
   background: var(--card-2);
-  border-radius: 6px;
+  border-radius: 2px;
   padding: 4px 8px;
 }
 
@@ -2426,7 +2427,7 @@ table {
   width: 100%;
   background: var(--card-2);
   border: 0;
-  border-radius: 7px;
+  border-radius: 2px;
   padding: 7px 9px;
   font-size: 12.5px;
   text-align: left;
@@ -2480,7 +2481,7 @@ table {
   background: var(--accent);
   color: var(--accent-ink);
   border: 0;
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 11px;
   font-weight: 600;
 }
@@ -2493,7 +2494,7 @@ table {
 @media (max-width: 520px) {
   .drawer {
     max-width: none;
-    border-radius: 14px;
+    border-radius: 2px;
   }
   .md-facts > div {
     grid-template-columns: 1fr;
@@ -2523,7 +2524,7 @@ table {
   background: var(--card);
   border: 1px solid var(--line);
   border-left: 3px solid var(--accent);
-  border-radius: 10px;
+  border-radius: 2px;
   box-shadow: var(--shadow);
   overflow: hidden;
 }
