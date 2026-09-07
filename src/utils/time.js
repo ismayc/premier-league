@@ -14,13 +14,18 @@
  * app's public API stable on top.
  */
 import { createTimeUtils } from './timeCore.js'
+import { LEAGUE } from '../config/league.js'
 
 export const UK = 'Europe/London'
 
 // The league facts — matches adapters/epl.js in sports-viewer-meta. en-GB
 // renders 24-hour with the leading zero ("09:05"); the football week starts
 // Monday.
-const T = createTimeUtils({ locale: 'en-GB', weekStart: 1 })
+const T = createTimeUtils({
+  locale: LEAGUE.locale,
+  weekStart: LEAGUE.weekStart,
+  gameLengthMs: LEAGUE.gameLengthMs,
+})
 
 export function detectZone() {
   try {
@@ -106,9 +111,10 @@ export const COMMON_ZONES = [
   'Australia/Sydney',
 ]
 
-// A match runs 90 minutes plus a half-time break and stoppage; treat that as the
-// window in which a kicked-off fixture with no live feed is still probably running.
-const MATCH_MS = 2.25 * 60 * 60 * 1000
+// The one window, from the config. It used to be declared here AND defaulted inside
+// createTimeUtils, which never received it: two copies of the same number, one of them
+// the factory's basketball fallback.
+const MATCH_MS = LEAGUE.gameLengthMs
 
 /**
  * Which bucket the "When" quick-filter puts a fixture in. Reads the same three

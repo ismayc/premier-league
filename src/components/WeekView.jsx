@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import TeamLogo from './TeamLogo.jsx'
 import { TEAM_BY_ABBR } from '../data/teams.js'
 import { dateKey, startOfWeek, timeOf } from '../utils/time.js'
+import { LEAGUE } from '../config/league.js'
 
 /**
  * A week at a time, laid out Monday to Sunday.
@@ -52,7 +53,10 @@ export default function WeekView({ fixtures, tz, hideScores, onOpen }) {
     }
   })
 
-  const monthLabel = new Intl.DateTimeFormat('en-GB', {
+  // LEAGUE.locale, not a second 'en-GB' literal: this call sits outside the
+  // createTimeUtils factory, so it is the one place the locale could quietly diverge
+  // from every other date this app renders.
+  const monthLabel = new Intl.DateTimeFormat(LEAGUE.locale, {
     month: 'long',
     year: 'numeric',
     timeZone: 'UTC',

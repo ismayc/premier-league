@@ -16,6 +16,7 @@ import { detectEvents, eventKey } from './services/alerts.js'
 import { useFollow } from './context/follow.jsx'
 import { readState, writeState } from './utils/urlState.js'
 import { COMMON_ZONES, detectZone } from './utils/time.js'
+import { LEAGUE } from './config/league.js'
 
 /**
  * The shell: one impure boundary (the live poll), one merge, and everything
@@ -26,6 +27,11 @@ import { COMMON_ZONES, detectZone } from './utils/time.js'
  * is small enough to live in useState and serialise into the query string,
  * which has the useful property that any state worth reaching is shareable.
  */
+
+// localStorage namespace, from the config rather than spelled out at each call site.
+// test/chrome-identity.test.js ties it to the pre-paint literal in index.html, which
+// guards.test.js checks against the family registry.
+const NS = LEAGUE.storageKey
 
 const VIEWS = [
   { id: 'fixtures', label: 'Fixtures' },
@@ -54,7 +60,7 @@ export default function App() {
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'dark')
   const [alerts, setAlerts] = useState(() => {
     try {
-      return localStorage.getItem('pl:alerts') === '1'
+      return localStorage.getItem(`${NS}:alerts`) === '1'
     } catch {
       // Private mode: alerts simply start off.
       return false
@@ -66,7 +72,7 @@ export default function App() {
   // recipient's list by the sender's subscriptions, which is nonsense.
   const [watchOnly, setWatchOnly] = useState(() => {
     try {
-      return localStorage.getItem('pl:watchOnly') === '1'
+      return localStorage.getItem(`${NS}:watchOnly`) === '1'
     } catch {
       return false
     }
@@ -109,7 +115,7 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     try {
-      localStorage.setItem('pl:theme', theme)
+      localStorage.setItem(`${NS}:theme`, theme)
     } catch {
       // Non-persistent storage; the theme still applies for this session.
     }
@@ -239,7 +245,7 @@ export default function App() {
               const next = !alerts
               setAlerts(next)
               try {
-                localStorage.setItem('pl:alerts', next ? '1' : '0')
+                localStorage.setItem(`${NS}:alerts`, next ? '1' : '0')
               } catch {
                 // Private mode; alerts still work for this session.
               }
@@ -330,7 +336,7 @@ export default function App() {
             const next = !watchOnly
             setWatchOnly(next)
             try {
-              localStorage.setItem('pl:watchOnly', next ? '1' : '0')
+              localStorage.setItem(`${NS}:watchOnly`, next ? '1' : '0')
             } catch {
               // Private mode; the filter still applies for this session.
             }

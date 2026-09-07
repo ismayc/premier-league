@@ -8,6 +8,7 @@ import { clubHistory } from '../utils/stats.js'
 import { dayOf, timeOf } from '../utils/time.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useFollow } from '../context/follow.jsx'
+import { LEAGUE } from '../config/league.js'
 
 /**
  * Everything about one club in a single drawer: current standing, form,
@@ -84,10 +85,10 @@ export default function TeamPanel({ abbr, fixtures, tz, hideScores, onClose, onO
             <h2>{team.displayName}</h2>
             <p className="muted">
               {past.length
-                ? `${past.length} Premier League season${past.length === 1 ? '' : 's'}${
+                ? `${past.length} ${LEAGUE.name} season${past.length === 1 ? '' : 's'}${
                     titles ? ` · ${titles} title${titles === 1 ? '' : 's'}` : ''
                   }`
-                : 'Premier League'}
+                : LEAGUE.name}
             </p>
           </div>
           <button

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { SERVICE_CATALOG } from '../utils/watch.js'
+import { LEAGUE } from '../config/league.js'
 
 /**
  * The streaming services and TV packages this viewer says they subscribe to,
@@ -10,7 +11,7 @@ import { SERVICE_CATALOG } from '../utils/watch.js'
  * fixture list by channels they may not have.
  */
 
-const KEY = 'pl:services'
+const KEY = `${LEAGUE.storageKey}:services`
 const VALID = new Set(SERVICE_CATALOG.map((s) => s.key))
 const ServicesCtx = createContext(null)
 

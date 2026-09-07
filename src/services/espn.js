@@ -1,3 +1,4 @@
+import { LEAGUE } from '../config/league.js'
 /**
  * The live overlay.
  *
@@ -10,7 +11,7 @@
  * Keyless and CORS-open, so there is no backend and no secret to leak.
  */
 
-const SCOREBOARD = 'https://site.web.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard'
+const SCOREBOARD = `https://site.web.api.espn.com/apis/site/v2/sports/${LEAGUE.espnPath}/scoreboard`
 
 const ymd = (d) => d.toISOString().slice(0, 10).replace(/-/g, '')
 

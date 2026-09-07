@@ -1,3 +1,4 @@
+import { LEAGUE } from '../config/league.js'
 /**
  * Team sheets, fetched per match rather than committed.
  *
@@ -13,7 +14,7 @@
  * team sheet yet.
  */
 
-const SUMMARY = 'https://site.web.api.espn.com/apis/site/v2/sports/soccer/eng.1/summary'
+const SUMMARY = `https://site.web.api.espn.com/apis/site/v2/sports/${LEAGUE.espnPath}/summary`
 
 /**
  * ESPN's positional abbreviations are granular and side-suffixed. Sampled

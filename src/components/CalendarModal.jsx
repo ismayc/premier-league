@@ -3,11 +3,12 @@ import Modal from './Modal.jsx'
 import { useFollow } from '../context/follow.jsx'
 import { downloadCalendar, webcalUrl, googleCalendarUrl } from '../utils/ics.js'
 import { TEAM_BY_ABBR } from '../data/teams.js'
+import { LEAGUE } from '../config/league.js'
 
 // A subscription must point at the DEPLOYED feed — a localhost URL can't be subscribed
 // to, and only Netlify serves the function (GitHub Pages ships the static download only).
 // So the webcal/Google links always use the production Netlify origin.
-const PROD = 'https://premier-league-viewer.netlify.app'
+const PROD = LEAGUE.feedHost
 const FEED = `${PROD}/calendar.ics`
 
 // One subscribe row: open-in-app (webcal), a Google Calendar deep link, and copy-the-URL.
@@ -126,8 +127,8 @@ export default function CalendarModal({ fixtures, onClose }) {
           className="primary"
           disabled={!selected.length}
           onClick={() => {
-            downloadCalendar(selected, 'premier-league.ics', {
-              name: scope === 'followed' ? `Premier League — ${clubs.join(', ')}` : 'Premier League',
+            downloadCalendar(selected, `${LEAGUE.ics.filenameBase}.ics`, {
+              name: scope === 'followed' ? `${LEAGUE.name} — ${clubs.join(', ')}` : LEAGUE.name,
             })
             onClose?.()
           }}

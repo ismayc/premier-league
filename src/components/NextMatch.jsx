@@ -3,6 +3,7 @@ import { TEAM_BY_ABBR } from '../data/teams.js'
 import { countdown, dateKey, timeOf, zoneAbbr, whenBucket } from '../utils/time.js'
 import { useFollow } from '../context/follow.jsx'
 import TeamLogo from './TeamLogo.jsx'
+import { LEAGUE } from '../config/league.js'
 
 const clubName = (abbr) => TEAM_BY_ABBR[abbr]?.name || abbr
 
@@ -89,7 +90,7 @@ export default function NextMatch({ fixtures, tz, onJump }) {
         {list.map((f) => (
           <button key={f.id} className="nm-live-row" onClick={() => onJump?.(dateKey(f.ko, tz))}>
             <Side abbr={f.home} />
-            <span className="nm-v">v</span>
+            <span className="nm-v">{LEAGUE.homeAwaySep}</span>
             <Side abbr={f.away} />
             <span className="nm-when">{f.city}</span>
           </button>
@@ -114,7 +115,7 @@ export default function NextMatch({ fixtures, tz, onJump }) {
 
       <div className="nm-teams">
         <Side abbr={lead.home} />
-        <span className="nm-v">v</span>
+        <span className="nm-v">{LEAGUE.homeAwaySep}</span>
         <Side abbr={lead.away} />
       </div>
 

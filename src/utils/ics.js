@@ -13,6 +13,7 @@
  */
 
 import { TEAM_BY_ABBR } from '../data/teams.js'
+import { LEAGUE } from '../config/league.js'
 
 const stamp = (iso) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
 
@@ -34,11 +35,11 @@ const escape = (s = '') => String(s).replace(/([,;\\])/g, '\\$1').replace(/\n/g,
 
 const nameOf = (abbr) => TEAM_BY_ABBR[abbr]?.name ?? abbr
 
-export function buildCalendar(fixtures, { name = 'Premier League' } = {}) {
+export function buildCalendar(fixtures, { name = LEAGUE.name } = {}) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//premier-league-viewer//EN',
+    `PRODID:${LEAGUE.ics.prodId}`,
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${escape(name)}`,
@@ -46,21 +47,19 @@ export function buildCalendar(fixtures, { name = 'Premier League' } = {}) {
 
   for (const f of fixtures) {
     const start = new Date(f.ko)
-    // Premier League matches run 90 minutes plus a half-time break and added
-    // time; two hours is the block a calendar should reserve.
-    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000)
+    const end = new Date(start.getTime() + LEAGUE.ics.durationMs)
     const title = `${nameOf(f.home)} v ${nameOf(f.away)}`
     const score = f.score ? ` (${f.score[0]}-${f.score[1]})` : ''
 
     lines.push(
       'BEGIN:VEVENT',
-      `UID:${f.id}@premier-league-viewer`,
+      `UID:${f.id}@${LEAGUE.ics.domain}`,
       `DTSTAMP:${stamp(new Date().toISOString())}`,
       `DTSTART:${stamp(start.toISOString())}`,
       `DTEND:${stamp(end.toISOString())}`,
       fold(`SUMMARY:${escape(title + score)}`),
       fold(`LOCATION:${escape([f.venue, f.city].filter(Boolean).join(', '))}`),
-      fold(`DESCRIPTION:${escape(f.tv?.length ? `TV: ${f.tv.join(', ')}` : 'Premier League')}`),
+      fold(`DESCRIPTION:${escape(f.tv?.length ? `TV: ${f.tv.join(', ')}` : LEAGUE.name)}`),
       'END:VEVENT'
     )
   }
@@ -69,7 +68,7 @@ export function buildCalendar(fixtures, { name = 'Premier League' } = {}) {
   return lines.join('\r\n')
 }
 
-export function downloadCalendar(fixtures, filename = 'premier-league.ics', options) {
+export function downloadCalendar(fixtures, filename = `${LEAGUE.ics.filenameBase}.ics`, options) {
   const blob = new Blob([buildCalendar(fixtures, options)], { type: 'text/calendar;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

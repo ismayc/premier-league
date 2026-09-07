@@ -4,6 +4,7 @@ import Lineups from './Lineups.jsx'
 import { TEAM_BY_ABBR } from '../data/teams.js'
 import { longDayOf, timeOf, countdown } from '../utils/time.js'
 import Modal from './Modal.jsx'
+import { LEAGUE } from '../config/league.js'
 
 const nameOf = (abbr) => TEAM_BY_ABBR[abbr]?.name ?? abbr
 
@@ -55,7 +56,7 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
                 {score[0]}–{score[1]}
               </strong>
             ) : (
-              <strong className="md-vs">v</strong>
+              <strong className="md-vs">{LEAGUE.homeAwaySep}</strong>
             )}
             {live && <span className="md-live">{fixture.clock || 'Live'}</span>}
             {unplayed && <span className="md-off">{unplayed}</span>}
@@ -80,7 +81,7 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
 
         <dl className="md-facts">
           <div>
-            <dt>Kickoff</dt>
+            <dt>{LEAGUE.kickoffLabel}</dt>
             <dd>
               {longDayOf(fixture.ko, tz)}, {timeOf(fixture.ko, tz)}
               <span className="muted"> · {timeOf(fixture.ko, 'Europe/London')} UK</span>

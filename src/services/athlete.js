@@ -1,3 +1,4 @@
+import { LEAGUE } from '../config/league.js'
 /**
  * Player biography, fetched when a player is opened from a team sheet.
  *
@@ -18,7 +19,7 @@
  * production. Callers that no longer care simply ignore the result.
  */
 
-const ATHLETE = 'https://site.web.api.espn.com/apis/common/v3/sports/soccer/eng.1/athletes'
+const ATHLETE = `https://site.web.api.espn.com/apis/common/v3/sports/${LEAGUE.espnPath}/athletes`
 
 const cache = new Map()
 const logCache = new Map()
@@ -92,8 +93,6 @@ export async function fetchAthlete(id) {
  *
  * Memoised and non-cancellable for the same reasons as `fetchAthlete` above.
  */
-/** The feed's own name for the competition this app covers. */
-const LEAGUE = 'English Premier League'
 
 /**
  * The score, read from the player's side.
@@ -149,7 +148,7 @@ export async function fetchRecentMatches(id) {
             result: m.gameResult ?? null,
             score: scoreFor(m),
             competition: m.leagueAbbreviation ?? m.leagueName ?? null,
-            isLeague: m.leagueName === LEAGUE,
+            isLeague: m.leagueName === LEAGUE.espnLeagueName,
             appearance: at('APP'),
             stats,
           }
