@@ -29,8 +29,12 @@
 //   • There is NO `hour12` field. timeCore derives the hour cycle from the locale
 //     (timeCore.js:50-55) and gets something a boolean cannot: 12-hour locales drop the
 //     leading zero ("7:05 PM") while 24-hour locales keep it ("09:05"). A separate
-//     switch would let the two drift, and the NFL's `hour12: true` has no consumer at
-//     all, so removing it there costs nothing.
+//     switch would let the two drift.
+//
+//     The NFL's `hour12: true` IS consumed, at that repo's src/utils/time.js:44, but
+//     redundantly: it sits beside `locale: 'en-US'`, which already resolves to a
+//     12-hour cycle. So it is not free to delete, unlike its `weekStartsMonday`, which
+//     has no consumer at all. Reconciling the two repos is its own piece of work.
 import { SEASON } from '../data/teams.js'
 
 export const LEAGUE = {
