@@ -6,6 +6,36 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-09-06
 
+- **Every league fact now lives in one file, `src/config/league.js`.** Fifth of ten repos,
+  and the one that had to settle a disagreement rather than just move strings. 13 files
+  import it. `src/utils/timeCore.js` is the only piece of `sports-viewer-meta` any
+  deployed app actually uses and it already takes an adapter, so its contract wins over
+  the NFL viewer's config where the two differ: `weekStart: 0|1` rather than
+  `weekStartsMonday`, and **no** `hour12` field, because `timeCore` derives the hour cycle
+  from the locale and gets something a boolean cannot (12-hour locales drop the leading
+  zero, 24-hour locales keep it).
+- **`gameLengthMs` was never being passed to `createTimeUtils`.** The factory silently
+  fell back to its 2.25h basketball default while `src/utils/time.js` declared a second
+  copy of the same number beside it. One value now, passed in.
+- **`services/athlete.js` had its own `const LEAGUE = 'English Premier League'`**, which
+  collided with the config the moment the file imported it and broke thirteen tests. That
+  string is the feed's name for this competition, used to tell a league match from a cup
+  one, so it is now `LEAGUE.espnLeagueName`. It is a different string from `LEAGUE.name`
+  and not ours to choose, which is why it deserves a field.
+- **The browser chrome shipped `#12121a` while the page painted `#15171b`.** `index.html`
+  and the manifest now say what `index.css` paints. `public/icon.svg` keeps its own value:
+  that is artwork, not chrome.
+- **The season badge did string surgery on a feed value.** It rendered
+  `SEASON_LABEL.replace(' English Premier League', '')`, one upstream rename away from
+  printing the whole sentence into a span sized for five characters. It now takes
+  `LEAGUE.seasonLabel`, derived from `SEASON`.
+- **Two more sites had drifted out of reach of the time factory**: `WeekView.jsx` formatted
+  its month heading with a second `en-GB` literal, and `ics.js` and `TeamPanel.jsx` each
+  spelled the competition name by hand.
+- **New `test/chrome-identity.test.js`** holds `index.html`, the manifest and
+  `package.json` to the config, and pins the two deploy slugs apart on purpose: this app is
+  `premier-league` on GitHub and Pages but `premier-league-viewer` on Netlify, and the
+  `.ics` identity follows Netlify because that is the host a subscriber's calendar polls.
 - **A red refresh now says which of three things it means.** Fourteen days of Refresh
   data failures across the family sorted into a fetch that did not land (ESPN 5xx, or a
   guard correctly refusing bad data; the site is fine), a red gate (a test asserted a
