@@ -31,7 +31,7 @@
 //     leading zero ("7:05 PM") while 24-hour locales keep it ("09:05"). A separate
 //     switch would let the two drift, and the NFL's `hour12: true` has no consumer at
 //     all, so removing it there costs nothing.
-import { SEASON, SEASON_LABEL } from '../data/teams.js'
+import { SEASON } from '../data/teams.js'
 
 export const LEAGUE = {
   id: 'pl',
@@ -40,7 +40,12 @@ export const LEAGUE = {
   // "— every game in your timezone" half, so there is no `tagline` field to carry.
   title: 'Premier League Fixtures',
   season: SEASON,
-  seasonLabel: SEASON_LABEL,
+  // Derived from SEASON, not from the generated SEASON_LABEL. That value is ESPN's own
+  // phrasing ("2026-27 English Premier League"), and App.jsx used to strip the
+  // competition name back out of it with a .replace() on a feed string. Upstream
+  // renames a competition often enough in this family that the surgery would fail
+  // silently, leaving the full sentence in a space sized for five characters.
+  seasonLabel: `${SEASON}-${String(SEASON + 1).slice(-2)}`,
   espnPath: 'soccer/eng.1',
   // What the ESPN feed calls this competition in a player's match log, used to tell a
   // league match from a cup one. Not the same string as `name`, and not ours to choose.
@@ -48,6 +53,9 @@ export const LEAGUE = {
   // module the moment the file imported it.
   espnLeagueName: 'English Premier League',
   storageKey: 'pl', // 'pl:theme', 'pl:followed', 'pl:alerts', …
+  // UI chrome only. Matches --bg in index.css, <meta name="theme-color">, and the
+  // manifest. The chrome shipped #12121a against a page painting #15171b until today.
+  themeColor: '#15171b',
 
   // ── Vocabulary ──────────────────────────────────────────────────────────────
   // Football says "v", not "@" or "vs", and the away side is named second.
@@ -88,4 +96,4 @@ export const LEAGUE = {
   feedHost: 'https://premier-league-viewer.netlify.app',
 }
 
-export { SEASON, SEASON_LABEL }
+export { SEASON }

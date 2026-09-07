@@ -10,7 +10,6 @@ import CalendarModal from './components/CalendarModal.jsx'
 import Toasts from './components/Toasts.jsx'
 import ServicesModal from './components/ServicesModal.jsx'
 import { FIXTURES } from './data/fixtures.js'
-import { SEASON_LABEL } from './data/teams.js'
 import { applyLive, fetchLive } from './services/espn.js'
 import { detectEvents, eventKey } from './services/alerts.js'
 import { useFollow } from './context/follow.jsx'
@@ -207,7 +206,7 @@ export default function App() {
       <header className="topbar">
         <div className="brand">
           <h1>Premier League</h1>
-          <span className="season">{SEASON_LABEL.replace(' English Premier League', '')}</span>
+          <span className="season">{LEAGUE.seasonLabel}</span>
           {liveCount > 0 && (
             <span className="live-pill">
               <span className="mc-live-dot" aria-hidden="true" />
