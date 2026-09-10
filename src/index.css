@@ -1831,7 +1831,15 @@ table {
 
 .modal-wrap {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* Pin to the visible viewport, not the layout viewport. On iOS Safari
+     `100vh` is the large viewport (toolbars hidden), so a centered full-height
+     modal has its top, and the close button, pushed behind the address bar.
+     `100dvh` tracks the actually-visible height; the vh line is the fallback. */
+  height: 100vh;
+  height: 100dvh;
   background: rgb(0 0 0 / 0.55);
   display: flex;
   align-items: center;
@@ -1850,6 +1858,7 @@ table {
   padding: 22px;
   width: 100%;
   max-height: 88vh;
+  max-height: 88dvh;
   overflow-y: auto;
 }
 
@@ -1872,6 +1881,7 @@ table {
   max-width: 420px;
   margin-left: auto;
   max-height: 100vh;
+  max-height: 100dvh;
   border-radius: 2px 0 0 14px;
 }
 

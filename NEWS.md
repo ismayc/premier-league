@@ -4,6 +4,14 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-09-10
+
+- **Fixed: the match-detail popup could not be closed on mobile.** The modal was sized and
+  centered with `100vh`, which on iOS Safari is the large viewport (as if the toolbars were
+  hidden), so its top, and the close button with it, sat behind the address bar out of
+  reach. The overlay, modal, and drawer now size with `100dvh` (the visible viewport
+  height), falling back to `100vh` on browsers without `dvh`.
+
 ## 2026-09-06
 
 - **Every league fact now lives in one file, `src/config/league.js`.** Fifth of ten repos,
