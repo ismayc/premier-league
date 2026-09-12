@@ -101,7 +101,7 @@ const goalKind = (typeText = '') =>
 /**
  * The scoring plays of one finished match, oldest first: minute, scorer, and the
  * abbr of the side CREDITED with the goal. For an own goal that credited side is
- * the BENEFITING team, not the scorer's own club — ESPN reports it that way
+ * the BENEFITING team, not the scorer's own club. ESPN reports it that way
  * (verified: an own goal by a Newcastle player is filed under Bournemouth), which
  * is also how a scoreline should read.
  */
@@ -222,7 +222,7 @@ async function main() {
 
   // Goal scorers for finished matches. A final match's scoring never changes, so
   // reuse whatever is already committed and only fetch matches that have newly gone
-  // final — the incremental trick that keeps the twice-daily refresh to a handful of
+  // final. That incremental trick keeps the twice-daily refresh to a handful of
   // summary requests instead of one per played match. A 0-0 keeps `goals: []`, so it
   // counts as fetched and is never re-requested.
   const abbrById = new Map(teams.map((t) => [String(t.id), t.abbr]))
