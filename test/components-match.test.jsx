@@ -477,6 +477,53 @@ describe('MatchDetail', () => {
     expect(screen.queryByRole('button', { name: /reveal score|hide score/i })).toBeNull()
   })
 
+  it('lists the goal scorers with minute, and marks penalties and own goals', () => {
+    const { container } = render(
+      <MatchDetail
+        fixture={fixture({
+          home: 'ARS',
+          away: 'CHE',
+          score: [2, 1],
+          goals: [
+            { team: 'ARS', scorer: 'Bukayo Saka', min: "23'" },
+            { team: 'CHE', scorer: 'Cole Palmer', min: "70'", kind: 'pen' },
+            { team: 'ARS', scorer: 'Marc Cucurella', min: "88'", kind: 'og' },
+          ],
+        })}
+        fixtures={[]}
+        tz="Europe/London"
+      />
+    )
+    const rows = container.querySelectorAll('.md-scorer')
+    expect(rows).toHaveLength(3)
+    expect(rows[0].textContent).toContain('Bukayo Saka')
+    expect(rows[0].textContent).toContain("23'")
+    expect(rows[1].textContent).toContain('(pen)')
+    expect(rows[2].textContent).toContain('(OG)')
+  })
+
+  it('shows no scoring timeline for a goalless match', () => {
+    const { container } = render(
+      <MatchDetail fixture={fixture({ score: [0, 0], goals: [] })} fixtures={[]} tz="Europe/London" />
+    )
+    expect(container.querySelector('.md-scorers')).toBeNull()
+  })
+
+  it('keeps the scoring timeline hidden in spoiler-free mode until the score is revealed', async () => {
+    const user = userEvent.setup()
+    const { container } = render(
+      <MatchDetail
+        fixture={fixture({ score: [1, 0], goals: [{ team: 'ARS', scorer: 'Kai Havertz', min: "15'" }] })}
+        fixtures={[]}
+        tz="Europe/London"
+        hideScores
+      />
+    )
+    expect(container.querySelector('.md-scorers')).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Reveal score' }))
+    expect(container.querySelector('.md-scorer').textContent).toContain('Kai Havertz')
+  })
+
   it('shows a live badge with the clock, and a generic one without', () => {
     const { unmount } = render(
       <MatchDetail

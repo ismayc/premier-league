@@ -2027,6 +2027,35 @@ table {
   white-space: nowrap;
 }
 
+/* Scoring timeline in the match detail: minute, club crest, scorer. */
+.md-scorers {
+  list-style: none;
+  margin: 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.md-scorer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.md-scorer-min {
+  min-width: 42px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.md-scorer-note {
+  color: var(--muted);
+}
+
 .md-facts {
   margin: 0;
   display: flex;

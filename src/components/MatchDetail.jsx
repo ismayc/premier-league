@@ -79,6 +79,24 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
           </button>
         </div>
 
+        {/* The scoring timeline, oldest goal first. Gated on showScore so it stays
+            hidden in spoiler-free mode until the viewer reveals this match. */}
+        {showScore && fixture.goals?.length > 0 && (
+          <ul className="md-scorers">
+            {fixture.goals.map((g, i) => (
+              <li className="md-scorer" key={`${g.min}-${g.scorer}-${i}`}>
+                <span className="md-scorer-min">{g.min}</span>
+                <TeamLogo abbr={g.team} size={16} />
+                <span className="md-scorer-name">
+                  {g.scorer}
+                  {g.kind === 'pen' && <span className="md-scorer-note"> (pen)</span>}
+                  {g.kind === 'og' && <span className="md-scorer-note"> (OG)</span>}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
         <dl className="md-facts">
           <div>
             <dt>{LEAGUE.kickoffLabel}</dt>

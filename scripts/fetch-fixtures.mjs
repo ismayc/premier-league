@@ -18,8 +18,9 @@
 import { writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { fetchRetry, getJson } from './lib/fetch.mjs'
+import { fetchRetry, getJson, mapLimit, CONCURRENCY } from './lib/fetch.mjs'
 import { SEASON as COMMITTED_SEASON } from '../src/data/teams.js'
+import { FIXTURES as COMMITTED_FIXTURES } from '../src/data/fixtures.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 // site.web.api, NOT site.api. ESPN's edge applies a datacenter-egress block to
@@ -92,6 +93,32 @@ function normalizeEvent(ev) {
   if (tv.length) fixture.tv = [...new Set(tv)]
 
   return fixture
+}
+
+const goalKind = (typeText = '') =>
+  /own goal/i.test(typeText) ? 'og' : /penalt/i.test(typeText) ? 'pen' : undefined
+
+/**
+ * The scoring plays of one finished match, oldest first: minute, scorer, and the
+ * abbr of the side CREDITED with the goal. For an own goal that credited side is
+ * the BENEFITING team, not the scorer's own club — ESPN reports it that way
+ * (verified: an own goal by a Newcastle player is filed under Bournemouth), which
+ * is also how a scoreline should read.
+ */
+async function fetchGoals(eventId, abbrById) {
+  const summary = await getJson(`${SITE}/summary?event=${eventId}`)
+  return (summary.keyEvents || [])
+    .filter((k) => k.scoringPlay)
+    .map((k) => {
+      const goal = {
+        team: abbrById.get(String(k.team?.id)) ?? null,
+        scorer: k.participants?.[0]?.athlete?.displayName ?? null,
+        min: k.clock?.displayValue || null,
+      }
+      const kind = goalKind(k.type?.text)
+      if (kind) goal.kind = kind
+      return goal
+    })
 }
 
 async function fetchTeams() {
@@ -192,6 +219,24 @@ async function main() {
   const abbrs = new Set(teams.map((t) => t.abbr))
   const unknown = [...new Set(fixtures.flatMap((f) => [f.home, f.away]))].filter((a) => !abbrs.has(a))
   if (unknown.length) throw new Error(`fixtures reference unknown clubs: ${unknown.join(', ')}`)
+
+  // Goal scorers for finished matches. A final match's scoring never changes, so
+  // reuse whatever is already committed and only fetch matches that have newly gone
+  // final — the incremental trick that keeps the twice-daily refresh to a handful of
+  // summary requests instead of one per played match. A 0-0 keeps `goals: []`, so it
+  // counts as fetched and is never re-requested.
+  const abbrById = new Map(teams.map((t) => [String(t.id), t.abbr]))
+  const committedGoals = new Map(
+    COMMITTED_FIXTURES.filter((f) => 'goals' in f).map((f) => [f.id, f.goals])
+  )
+  for (const f of fixtures) {
+    if (f.score && committedGoals.has(f.id)) f.goals = committedGoals.get(f.id)
+  }
+  const needGoals = fixtures.filter((f) => f.score && !('goals' in f))
+  await mapLimit(needGoals, CONCURRENCY, async (f) => {
+    f.goals = await fetchGoals(f.id, abbrById)
+  })
+  console.log(`  goals: reused ${played - needGoals.length}, fetched ${needGoals.length}`)
 
   const logos = await mirrorLogos(teams)
   console.log(`  ${logos} crests mirrored`)

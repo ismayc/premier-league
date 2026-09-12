@@ -4,6 +4,15 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-09-11
+
+- **Match details now show the goal scorers and when they scored.** Opening a finished
+  match lists each goal oldest first with the minute, the scoring club's crest, and the
+  scorer, and marks penalties "(pen)" and own goals "(OG)". The scoring timeline respects
+  spoiler-free mode: it stays hidden until you reveal the match. Goal data comes from ESPN's
+  match summary and is fetched only for matches that have newly gone final, so the twice-daily
+  refresh stays light; a final match's goals are reused, never re-fetched.
+
 ## 2026-09-10
 
 - **Fixed: the match-detail popup could not be closed on mobile.** The modal was sized and
