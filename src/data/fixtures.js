@@ -40,7 +40,7 @@ export const FIXTURES = [
   {"id":"401879284","ko":"2026-09-12T14:00:00.000Z","home":"AVL","away":"NFO","venue":"Villa Park","city":"Birmingham","score":[1,2],"tv":["Peacock"],"goals":[{"team":"NFO","scorer":"Liam Delap","min":"46'"},{"team":"AVL","scorer":"Alysson","min":"74'"},{"team":"NFO","scorer":"Igor Jesus","min":"88'"}]},
   {"id":"401879285","ko":"2026-09-12T14:00:00.000Z","home":"BOU","away":"BRE","venue":"Vitality Stadium","city":"Bournemouth","score":[2,2],"tv":["Peacock"],"goals":[{"team":"BRE","scorer":"Kevin Schade","min":"34'"},{"team":"BOU","scorer":"Justin Kluivert","min":"38'"},{"team":"BOU","scorer":"Marcus Tavernier","min":"52'"},{"team":"BRE","scorer":"Kevin Schade","min":"56'"}]},
   {"id":"401879277","ko":"2026-09-12T16:30:00.000Z","home":"TOT","away":"EVE","venue":"Tottenham Hotspur Stadium","city":"London","score":[0,0],"tv":["NBC"],"goals":[]},
-  {"id":"401878779","ko":"2026-09-12T19:00:00.000Z","home":"SUN","away":"ARS","venue":"Stadium of Light","city":"Sunderland","tv":["USA Net","Tele"]},
+  {"id":"401878779","ko":"2026-09-12T19:00:00.000Z","home":"SUN","away":"ARS","venue":"Stadium of Light","city":"Sunderland","score":[0,2],"tv":["USA Net","Tele"],"goals":[{"team":"ARS","scorer":"Bruno Guimarães","min":"58'"},{"team":"ARS","scorer":"Bukayo Saka","min":"90'+7'","kind":"pen"}]},
   {"id":"401879282","ko":"2026-09-13T13:00:00.000Z","home":"COV","away":"BHA","venue":"Coventry Building Society Arena","city":"Coventry","tv":["USA Net"]},
   {"id":"401879278","ko":"2026-09-13T15:30:00.000Z","home":"MAN","away":"MNC","venue":"Old Trafford","city":"Manchester","tv":["Peacock","Tele"]},
   {"id":"401879280","ko":"2026-09-14T19:00:00.000Z","home":"LEE","away":"NEW","venue":"Elland Road","city":"Leeds","tv":["USA Net"]},
