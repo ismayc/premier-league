@@ -2052,6 +2052,13 @@ table {
   font-variant-numeric: tabular-nums;
 }
 
+.md-scorer-icon {
+  font-size: 12px;
+  line-height: 1;
+  width: 16px;
+  text-align: center;
+}
+
 .md-scorer-note {
   color: var(--muted);
 }

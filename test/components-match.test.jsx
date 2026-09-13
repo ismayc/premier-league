@@ -524,6 +524,66 @@ describe('MatchDetail', () => {
     expect(container.querySelector('.md-scorer').textContent).toContain('Kai Havertz')
   })
 
+  it('merges goals, cards and substitutions into one timeline in minute order', () => {
+    const { container } = render(
+      <MatchDetail
+        fixture={fixture({
+          home: 'ARS',
+          away: 'CHE',
+          score: [1, 0],
+          goals: [{ team: 'ARS', scorer: 'Kai Havertz', min: "15'" }],
+          cards: [
+            { team: 'CHE', player: 'Wesley Fofana', min: "40'", color: 'yellow' },
+            { team: 'CHE', player: 'Enzo Fernández', min: "90'+2'", color: 'red' },
+          ],
+          subs: [{ team: 'ARS', on: 'Leandro Trossard', off: 'Kai Havertz', min: "70'" }],
+        })}
+        fixtures={[]}
+        tz="Europe/London"
+      />
+    )
+    const rows = [...container.querySelectorAll('.md-scorer')]
+    expect(rows).toHaveLength(4)
+    // Oldest first, with stoppage time sorting after the 90th minute rather than as 9002.
+    expect(rows.map((r) => r.querySelector('.md-scorer-min').textContent)).toEqual([
+      "15'",
+      "40'",
+      "70'",
+      "90'+2'",
+    ])
+    // Goal, then yellow card, then substitution, then red card, each with its own icon.
+    expect(rows[0]).toHaveClass('md-scorer-goal')
+    expect(rows[0].querySelector('.md-scorer-icon').textContent).toBe('⚽')
+    expect(rows[1]).toHaveClass('md-scorer-card')
+    expect(rows[1].querySelector('.md-scorer-icon').textContent).toBe('🟨')
+    expect(rows[1].textContent).toContain('Wesley Fofana')
+    expect(rows[2]).toHaveClass('md-scorer-sub')
+    expect(rows[2].querySelector('.md-scorer-icon').textContent).toBe('🔁')
+    expect(rows[2].textContent).toContain('Leandro Trossard')
+    expect(rows[2].textContent).toContain('for Kai Havertz')
+    expect(rows[3].querySelector('.md-scorer-icon').textContent).toBe('🟥')
+    expect(rows[3].textContent).toContain('Enzo Fernández')
+  })
+
+  it('sorts an event with no recorded minute to the start of the timeline', () => {
+    // ESPN drops `clock` on some events; a minute-less event reads as minute zero
+    // rather than throwing off the parse.
+    const { container } = render(
+      <MatchDetail
+        fixture={fixture({
+          score: [1, 0],
+          goals: [{ team: 'ARS', scorer: 'Later', min: "80'" }],
+          cards: [{ team: 'ARS', player: 'Earlier', min: null, color: 'yellow' }],
+        })}
+        fixtures={[]}
+        tz="Europe/London"
+      />
+    )
+    const rows = [...container.querySelectorAll('.md-scorer')]
+    expect(rows[0].textContent).toContain('Earlier')
+    expect(rows[1].textContent).toContain('Later')
+  })
+
   it('shows a live badge with the clock, and a generic one without', () => {
     const { unmount } = render(
       <MatchDetail

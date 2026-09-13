@@ -8,6 +8,18 @@ import { LEAGUE } from '../config/league.js'
 
 const nameOf = (abbr) => TEAM_BY_ABBR[abbr]?.name ?? abbr
 
+// Sort key for a match minute like "45'+2'": the base minute, with stoppage time
+// as a tiebreak so "90'+1'" follows "90'" rather than sorting as 901.
+const minSort = (min) => {
+  const s = String(min ?? '')
+  const base = parseInt(s, 10) || 0
+  const extra = /\+(\d+)/.exec(s)
+  return base * 100 + (extra ? Number(extra[1]) : 0)
+}
+
+const eventIcon = (e) =>
+  e.type === 'card' ? (e.color === 'red' ? '🟥' : '🟨') : e.type === 'sub' ? '🔁' : '⚽'
+
 /**
  * One fixture in full: kickoff in both the viewer's zone and UK time, venue,
  * broadcasters, and the head-to-head record from the committed season.
@@ -32,6 +44,16 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
   const hide = hideScores && !revealed
   const showScore = score && !hide
   const upcoming = !score && !unplayed
+
+  // Goals, cards and substitutions merged into one oldest-first timeline, the
+  // same shape the tournament siblings show. Each event already carries the abbr
+  // of the side it belongs to, so the crest identifies the team and the icon the
+  // kind of event.
+  const timeline = [
+    ...(fixture.goals ?? []).map((g) => ({ type: 'goal', ...g })),
+    ...(fixture.cards ?? []).map((c) => ({ type: 'card', ...c })),
+    ...(fixture.subs ?? []).map((s) => ({ type: 'sub', ...s })),
+  ].sort((a, b) => minSort(a.min) - minSort(b.min))
 
   // Earlier meetings this season between the same two clubs, either way round.
   const h2h = fixtures.filter(
@@ -79,18 +101,30 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
           </button>
         </div>
 
-        {/* The scoring timeline, oldest goal first. Gated on showScore so it stays
+        {/* The match timeline, oldest event first. Gated on showScore so it stays
             hidden in spoiler-free mode until the viewer reveals this match. */}
-        {showScore && fixture.goals?.length > 0 && (
+        {showScore && timeline.length > 0 && (
           <ul className="md-scorers">
-            {fixture.goals.map((g, i) => (
-              <li className="md-scorer" key={`${g.min}-${g.scorer}-${i}`}>
-                <span className="md-scorer-min">{g.min}</span>
-                <TeamLogo abbr={g.team} size={16} />
+            {timeline.map((e, i) => (
+              <li className={`md-scorer md-scorer-${e.type}`} key={`${e.type}-${e.min}-${i}`}>
+                <span className="md-scorer-min">{e.min}</span>
+                <TeamLogo abbr={e.team} size={16} />
+                <span className="md-scorer-icon" aria-hidden="true">{eventIcon(e)}</span>
                 <span className="md-scorer-name">
-                  {g.scorer}
-                  {g.kind === 'pen' && <span className="md-scorer-note"> (pen)</span>}
-                  {g.kind === 'og' && <span className="md-scorer-note"> (OG)</span>}
+                  {e.type === 'goal' && (
+                    <>
+                      {e.scorer}
+                      {e.kind === 'pen' && <span className="md-scorer-note"> (pen)</span>}
+                      {e.kind === 'og' && <span className="md-scorer-note"> (OG)</span>}
+                    </>
+                  )}
+                  {e.type === 'card' && e.player}
+                  {e.type === 'sub' && (
+                    <>
+                      {e.on}
+                      <span className="md-scorer-note"> for {e.off}</span>
+                    </>
+                  )}
                 </span>
               </li>
             ))}

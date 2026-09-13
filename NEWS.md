@@ -4,6 +4,17 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-09-13
+
+- **The match detail now shows a full timeline, not just the goals.** Yellow and red
+  cards and substitutions join the scorers in one oldest-first list, each row carrying
+  the minute, the club crest, and an icon for the event (⚽ goal, 🟨/🟥 card, 🔁
+  substitution; a substitution reads "on for off"). This brings the Premier League
+  viewer to parity with the tournament siblings, which already showed cards and subs.
+  Card and substitution data comes from the same ESPN match summary the goals do and is
+  fetched only for matches that have newly gone final. The timeline still respects
+  spoiler-free mode.
+
 ## 2026-09-11
 
 - **Match details now show the goal scorers and when they scored.** Opening a finished

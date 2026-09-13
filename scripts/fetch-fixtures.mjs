@@ -98,27 +98,45 @@ function normalizeEvent(ev) {
 const goalKind = (typeText = '') =>
   /own goal/i.test(typeText) ? 'og' : /penalt/i.test(typeText) ? 'pen' : undefined
 
+const cardColor = (typeText = '') => (/red/i.test(typeText) ? 'red' : 'yellow')
+
 /**
- * The scoring plays of one finished match, oldest first: minute, scorer, and the
- * abbr of the side CREDITED with the goal. For an own goal that credited side is
- * the BENEFITING team, not the scorer's own club. ESPN reports it that way
- * (verified: an own goal by a Newcastle player is filed under Bournemouth), which
- * is also how a scoreline should read.
+ * The notable events of one finished match, each carrying the minute and the abbr
+ * of the side it belongs to: goals, cards, and substitutions. The match detail
+ * merges them into one oldest-first timeline, the same shape the tournament
+ * siblings already show.
+ *
+ * For a goal the side is the one CREDITED, so an own goal is filed under the
+ * BENEFITING team, not the scorer's own club. ESPN reports it that way (verified:
+ * an own goal by a Newcastle player is filed under Bournemouth), which is also how
+ * a scoreline should read. For a substitution ESPN lists the player coming ON
+ * first and the player going OFF second ("X replaces Y").
  */
-async function fetchGoals(eventId, abbrById) {
+async function fetchEvents(eventId, abbrById) {
   const summary = await getJson(`${SITE}/summary?event=${eventId}`)
-  return (summary.keyEvents || [])
+  const events = summary.keyEvents || []
+  const side = (k) => abbrById.get(String(k.team?.id)) ?? null
+  const minute = (k) => k.clock?.displayValue || null
+  const name = (k, i = 0) => k.participants?.[i]?.athlete?.displayName ?? null
+
+  const goals = events
     .filter((k) => k.scoringPlay)
     .map((k) => {
-      const goal = {
-        team: abbrById.get(String(k.team?.id)) ?? null,
-        scorer: k.participants?.[0]?.athlete?.displayName ?? null,
-        min: k.clock?.displayValue || null,
-      }
+      const goal = { team: side(k), scorer: name(k), min: minute(k) }
       const kind = goalKind(k.type?.text)
       if (kind) goal.kind = kind
       return goal
     })
+
+  const cards = events
+    .filter((k) => /card/i.test(k.type?.text || ''))
+    .map((k) => ({ team: side(k), player: name(k), min: minute(k), color: cardColor(k.type?.text) }))
+
+  const subs = events
+    .filter((k) => /substitution/i.test(k.type?.text || ''))
+    .map((k) => ({ team: side(k), on: name(k, 0), off: name(k, 1), min: minute(k) }))
+
+  return { goals, cards, subs }
 }
 
 async function fetchTeams() {
@@ -220,23 +238,29 @@ async function main() {
   const unknown = [...new Set(fixtures.flatMap((f) => [f.home, f.away]))].filter((a) => !abbrs.has(a))
   if (unknown.length) throw new Error(`fixtures reference unknown clubs: ${unknown.join(', ')}`)
 
-  // Goal scorers for finished matches. A final match's scoring never changes, so
-  // reuse whatever is already committed and only fetch matches that have newly gone
-  // final. That incremental trick keeps the twice-daily refresh to a handful of
-  // summary requests instead of one per played match. A 0-0 keeps `goals: []`, so it
-  // counts as fetched and is never re-requested.
+  // Timeline events (goals, cards, subs) for finished matches. A final match's
+  // events never change, so reuse whatever is already committed and only fetch
+  // matches that have newly gone final. That incremental trick keeps the twice-daily
+  // refresh to a handful of summary requests instead of one per played match. A goalless
+  // draw keeps `goals: []`, so it still counts as fetched and is never re-requested.
+  // Reuse needs all three arrays: a match committed before cards and subs were tracked
+  // (goals only) is re-fetched once to backfill them.
   const abbrById = new Map(teams.map((t) => [String(t.id), t.abbr]))
-  const committedGoals = new Map(
-    COMMITTED_FIXTURES.filter((f) => 'goals' in f).map((f) => [f.id, f.goals])
-  )
+  const hasEvents = (f) => 'goals' in f && 'cards' in f && 'subs' in f
+  const committed = new Map(COMMITTED_FIXTURES.filter(hasEvents).map((f) => [f.id, f]))
   for (const f of fixtures) {
-    if (f.score && committedGoals.has(f.id)) f.goals = committedGoals.get(f.id)
+    if (f.score && committed.has(f.id)) {
+      const c = committed.get(f.id)
+      f.goals = c.goals
+      f.cards = c.cards
+      f.subs = c.subs
+    }
   }
-  const needGoals = fixtures.filter((f) => f.score && !('goals' in f))
-  await mapLimit(needGoals, CONCURRENCY, async (f) => {
-    f.goals = await fetchGoals(f.id, abbrById)
+  const needEvents = fixtures.filter((f) => f.score && !hasEvents(f))
+  await mapLimit(needEvents, CONCURRENCY, async (f) => {
+    Object.assign(f, await fetchEvents(f.id, abbrById))
   })
-  console.log(`  goals: reused ${played - needGoals.length}, fetched ${needGoals.length}`)
+  console.log(`  events: reused ${played - needEvents.length}, fetched ${needEvents.length}`)
 
   const logos = await mirrorLogos(teams)
   console.log(`  ${logos} crests mirrored`)
