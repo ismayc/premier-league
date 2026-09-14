@@ -13,8 +13,10 @@
 import { buildTable } from './table.js'
 
 export function seasonTotals(fixtures) {
-  const played = fixtures.filter((f) => f.score && !f.unplayed)
-  const scheduled = fixtures.filter((f) => !f.score && !f.unplayed)
+  // A match in progress carries a provisional score; season aggregates are facts
+  // about completed matches, so a live match counts as still to come, not played.
+  const played = fixtures.filter((f) => f.score && !f.unplayed && !f.live)
+  const scheduled = fixtures.filter((f) => !f.unplayed && (!f.score || f.live))
 
   const goals = played.reduce((t, f) => t + f.score[0] + f.score[1], 0)
   const homeWins = played.filter((f) => f.score[0] > f.score[1]).length
@@ -75,7 +77,9 @@ function rankScoring(rows) {
 
 /** Attack and defence for the season in progress, derived from its fixtures. */
 export function teamScoring(fixtures, abbrs) {
-  const table = buildTable(fixtures, abbrs)
+  // Final-only: a live match's provisional goals must not sway the attack/defence
+  // ranking until the result is settled.
+  const table = buildTable(fixtures, abbrs, { includeLive: false })
 
   return rankScoring(
     table.map((r) => ({

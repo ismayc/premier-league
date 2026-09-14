@@ -4,6 +4,17 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-09-14
+
+- **The table now flags itself as provisional while a match is live, and the Finish
+  column no longer locks on a live score.** The table deliberately counts a match in
+  progress so it agrees with the live scores on screen, but nothing said so, and the
+  Finish position ranges treated a mid-match lead as a settled result, so a position
+  could "lock" on a provisional score. An "As it stands" label (with a note) now appears
+  whenever a match is live, the Finish ranges are computed from completed matches only,
+  and the season stat aggregates likewise exclude in-progress matches. Coverage stays at
+  100%.
+
 ## 2026-09-13
 
 - **The match detail now shows a full timeline, not just the goals.** Yellow and red

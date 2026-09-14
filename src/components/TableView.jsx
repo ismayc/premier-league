@@ -48,9 +48,15 @@ export default function TableView({ fixtures, onPickTeam }) {
 
   const table = useMemo(() => buildTable(fixtures, ALL_ABBRS), [fixtures])
   const anyPlayed = table.some((r) => r.played)
+  // A match in progress is counted in the table above (deliberate: the table
+  // agrees with the live scores on screen), so flag it as provisional.
+  const anyLive = useMemo(() => fixtures.some((f) => f.live), [fixtures])
   // Finish bounds always come from the overall table — a split position is not
   // a league finish, so the column (like Form) belongs to the overall view.
-  const finish = useMemo(() => positionRanges(table), [table])
+  // They come from a FINAL-ONLY table: a "locked" position must never rest on a
+  // provisional live score, so a match in progress is excluded from the bounds.
+  const finalTable = useMemo(() => buildTable(fixtures, ALL_ABBRS, { includeLive: false }), [fixtures])
+  const finish = useMemo(() => positionRanges(finalTable), [finalTable])
 
   // The split view re-sorts on the split's own points, but keeps the overall
   // position visible so the two readings can be compared rather than confused.
@@ -90,6 +96,12 @@ export default function TableView({ fixtures, onPickTeam }) {
     <main className="view">
       <div className="view-head">
         <h2>Table</h2>
+        {anyLive && (
+          <span className="live-pill" title="A match is in progress — the table counts its live score, so positions are provisional until full time">
+            <span className="mc-live-dot" aria-hidden="true" />
+            As it stands
+          </span>
+        )}
         <div className="view-tools" role="group" aria-label="Table split">
           {SPLITS.map((s) => (
             <button
@@ -109,6 +121,14 @@ export default function TableView({ fixtures, onPickTeam }) {
         <p className="note">
           The season hasn’t kicked off yet — every club starts on zero. The table fills in as
           results land.
+        </p>
+      )}
+
+      {anyLive && (
+        <p className="note">
+          A match is in progress. The table counts its live score, so positions are provisional
+          until full time. The Finish column ignores in-progress matches, so a position locks only
+          on completed results.
         </p>
       )}
 

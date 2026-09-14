@@ -63,8 +63,13 @@ function record(row, split, scored, conceded) {
 /**
  * @param fixtures the season's fixtures, live overlay already applied
  * @param abbrs    every club in the league, so clubs yet to play still appear
+ * @param opts.includeLive  count matches currently in progress. Default true, so
+ *   the displayed table keeps agreeing with the live scores on screen (see the
+ *   file header). Pass false for any verdict that must not rest on a provisional
+ *   result — a "locked" finish position, a "safe from relegation" claim — where a
+ *   mid-match lead would wrongly settle the arithmetic.
  */
-export function buildTable(fixtures, abbrs = []) {
+export function buildTable(fixtures, abbrs = [], { includeLive = true } = {}) {
   const rows = new Map(abbrs.map((a) => [a, blank(a)]))
   const row = (abbr) => {
     if (!rows.has(abbr)) rows.set(abbr, blank(abbr))
@@ -73,7 +78,7 @@ export function buildTable(fixtures, abbrs = []) {
 
   // Chronological, so `form` reads oldest-to-newest for each club.
   const decided = fixtures
-    .filter((f) => f.score && !f.unplayed)
+    .filter((f) => f.score && !f.unplayed && (includeLive || !f.live))
     .sort((a, b) => a.ko.localeCompare(b.ko))
 
   for (const f of decided) {

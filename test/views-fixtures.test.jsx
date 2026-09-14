@@ -746,6 +746,26 @@ describe('TableView', () => {
     expect(within(rows[0]).getByText('0', { selector: 'td[class=""]' })).toBeInTheDocument()
   })
 
+  it('flags the table as provisional while a match is live', () => {
+    render(
+      <TableView
+        fixtures={[...RESULTS, fx('lv', TODAY, 'TOT', 'EVE', { score: [1, 0], live: true })]}
+      />
+    )
+    // The "As it stands" pill and the provisional note both appear.
+    expect(screen.getByText('As it stands')).toBeInTheDocument()
+    expect(screen.getByText(/positions are provisional/)).toBeInTheDocument()
+    // The live match is still counted in the table: Spurs are on 3 points.
+    const tot = screen.getByText('Spurs').closest('tr')
+    expect(within(tot).getByText('3', { selector: '.col-pts' })).toBeInTheDocument()
+  })
+
+  it('shows no provisional flag when nothing is live', () => {
+    render(<TableView fixtures={RESULTS} />)
+    expect(screen.queryByText('As it stands')).not.toBeInTheDocument()
+    expect(screen.queryByText(/positions are provisional/)).not.toBeInTheDocument()
+  })
+
   it('ranks, stripes and keys the table once results land', () => {
     const { container } = render(<TableView fixtures={RESULTS} />)
 

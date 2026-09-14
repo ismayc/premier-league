@@ -38,6 +38,29 @@ describe('buildTable', () => {
     expect(table.every((r) => r.played === 0 && r.points === 0)).toBe(true)
   })
 
+  it('counts a live match by default but excludes it when includeLive is false', () => {
+    const live = { ...match('ARS', 'CHE', 2, 0), live: true }
+    const abbrs = ['ARS', 'CHE']
+
+    const shown = buildTable([live], abbrs)
+    expect(shown.find((r) => r.abbr === 'ARS').points).toBe(3) // provisional, on screen
+    expect(shown.find((r) => r.abbr === 'ARS').played).toBe(1)
+
+    const final = buildTable([live], abbrs, { includeLive: false })
+    expect(final.every((r) => r.played === 0 && r.points === 0)).toBe(true)
+  })
+
+  it('does not lock a finish position on a live lead', () => {
+    // A one-round mini-league where ARS leads 2-0 live: on the provisional table
+    // ARS would top the table, but Finish must not treat that as decided.
+    const live = { ...match('ARS', 'CHE', 2, 0), live: true }
+    const abbrs = ['ARS', 'CHE']
+    const finalTable = buildTable([live], abbrs, { includeLive: false })
+    const ranges = positionRanges(finalTable, 1) // one match each
+    // Every club still level on zero played: nobody's position is locked.
+    expect(ranges.ARS.best).not.toBe(ranges.ARS.worst)
+  })
+
   it('separates clubs level on points by goal difference, then goals scored', () => {
     // All three win once. Goal difference then goals scored must decide.
     const table = buildTable(
