@@ -44,10 +44,25 @@ const ymd = (d) => d.toISOString().slice(0, 10).replace(/-/g, '')
 
 const label = `${SEASON}-${String(SEASON + 1).slice(2)}`
 
+// Some ESPN endpoints reject a scoreboard query for a season that does not exist
+// yet with an HTTP 400 rather than answering (the US-league watches hit exactly
+// this). A 400/404 means the same thing as the TRAP above: not published yet. It
+// is treated as an empty response so the watch still exits 0; anything else (a
+// 403, a 5xx that outlasted the retries, a network error) is a real outage and
+// still throws, so it stays visible instead of masquerading as "not yet".
+const NOT_YET = /\bHTTP 40[04]\b/
+
 // The season's match-day calendar, via a date inside the season — the same call
 // fetch-fixtures.mjs opens with. An unreleased season answers with the CURRENT
 // season's context (see TRAP above), which the year check turns into "not yet".
-const opening = await getJson(`${SITE}/scoreboard?dates=${SEASON}0801`)
+let opening = {}
+try {
+  opening = await getJson(`${SITE}/scoreboard?dates=${SEASON}0801`)
+} catch (err) {
+  if (!NOT_YET.test(err.message)) throw err
+  // A 400/404 leaves `opening` empty, so seasonYear stays 0 and the season reads
+  // as unpublished below.
+}
 const league = opening.leagues?.[0]
 const seasonYear = Number(league?.season?.year ?? 0)
 const calendar = (league?.calendar || []).map((c) => new Date(c))
@@ -63,7 +78,13 @@ if (seasonYear === SEASON && calendar.length) {
     const chunk = calendar.slice(i, i + 8)
     const from = ymd(chunk[0])
     const to = ymd(chunk[chunk.length - 1])
-    const d = await getJson(`${SITE}/scoreboard?dates=${from}-${to}&limit=100`)
+    let d
+    try {
+      d = await getJson(`${SITE}/scoreboard?dates=${from}-${to}&limit=100`)
+    } catch (err) {
+      if (!NOT_YET.test(err.message)) throw err
+      continue // a rejected window contributes no fixtures; released stays conservative
+    }
     for (const ev of d.events || []) {
       if (seen.has(ev.id)) continue
       seen.add(ev.id)
@@ -88,7 +109,9 @@ if (!released) {
   const why =
     seasonYear === SEASON
       ? 'the calendar is up but no fixtures are posted yet'
-      : `ESPN still answers with the ${seasonYear}-${String(seasonYear + 1).slice(2)} season`
+      : seasonYear
+        ? `ESPN still answers with the ${seasonYear}-${String(seasonYear + 1).slice(2)} season`
+        : 'ESPN has no schedule for it yet'
   console.log(`summary=Not yet — no ${label} fixtures posted (${why}).`)
 } else {
   const when = (ev) => ev.date.slice(0, 10)
