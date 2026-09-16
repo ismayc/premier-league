@@ -71,19 +71,18 @@ let count = 0
 let first = null
 let last = null
 if (seasonYear === SEASON && calendar.length) {
-  // Count fixtures across the calendar in windows of 8 match-days, like
-  // fetch-fixtures — each stays well under the scoreboard's silent ~50-event cap.
+  // Count fixtures one match-day at a time, like fetch-fixtures. ESPN dropped
+  // hyphenated date-range queries in September 2026 (every `dates=A-B` now 400s),
+  // so a range window would be rejected here and, caught by NOT_YET below, wrongly
+  // read a live season as unreleased.
   const seen = new Set()
-  for (let i = 0; i < calendar.length; i += 8) {
-    const chunk = calendar.slice(i, i + 8)
-    const from = ymd(chunk[0])
-    const to = ymd(chunk[chunk.length - 1])
+  for (const day of calendar) {
     let d
     try {
-      d = await getJson(`${SITE}/scoreboard?dates=${from}-${to}&limit=100`)
+      d = await getJson(`${SITE}/scoreboard?dates=${ymd(day)}`)
     } catch (err) {
       if (!NOT_YET.test(err.message)) throw err
-      continue // a rejected window contributes no fixtures; released stays conservative
+      continue // a rejected match-day contributes no fixtures; released stays conservative
     }
     for (const ev of d.events || []) {
       if (seen.has(ev.id)) continue

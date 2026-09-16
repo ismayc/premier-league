@@ -50,16 +50,6 @@ async function fetchCalendar(season) {
   return { calendar, displayName: league.season?.displayName ?? String(season) }
 }
 
-/** Split the matchday list into windows small enough to stay under the 50-event cap. */
-function windows(calendar, size = 8) {
-  const out = []
-  for (let i = 0; i < calendar.length; i += size) {
-    const chunk = calendar.slice(i, i + size)
-    out.push([chunk[0], chunk[chunk.length - 1]])
-  }
-  return out
-}
-
 function normalizeEvent(ev) {
   const comp = ev.competitions?.[0]
   if (!comp) return null
@@ -211,9 +201,16 @@ async function main() {
   const { calendar, displayName } = await fetchCalendar(season)
   console.log(`  ${calendar.length} matchdays: ${ymd(calendar[0])} to ${ymd(calendar.at(-1))}`)
 
+  // ESPN dropped hyphenated date-range scoreboard queries in September 2026:
+  // every `dates=A-B` now answers HTTP 400 (even a same-day `A-A`), while a
+  // single `dates=A` still works. So walk the calendar one matchday at a time,
+  // concurrently, instead of in windows. A single matchday is well under the
+  // 50-event cap that the old windowing existed to respect.
   const byId = new Map()
-  for (const [from, to] of windows(calendar)) {
-    const data = await getJson(`${SITE}/scoreboard?dates=${ymd(from)}-${ymd(to)}`)
+  const perDay = await mapLimit(calendar, CONCURRENCY, (day) =>
+    getJson(`${SITE}/scoreboard?dates=${ymd(day)}`)
+  )
+  for (const data of perDay) {
     for (const ev of data.events ?? []) {
       const fixture = normalizeEvent(ev)
       if (fixture) byId.set(fixture.id, fixture)
@@ -225,12 +222,12 @@ async function main() {
   console.log(`  ${fixtures.length} fixtures (${played} played)`)
 
   // A 20-club double round-robin is exactly 380 matches. Anything else means
-  // a window came back short and the snapshot would silently omit fixtures.
+  // a matchday query came back short and the snapshot would silently omit games.
   const expected = teams.length * (teams.length - 1)
   if (fixtures.length !== expected) {
     throw new Error(
       `expected ${expected} fixtures for ${teams.length} clubs, got ${fixtures.length}. ` +
-        `A date window likely hit the 50-event cap — reduce the window size.`
+        `A matchday query likely came back short or the calendar is incomplete.`
     )
   }
 
