@@ -50,8 +50,13 @@ env:
   FRESH_MAX_HOURS: 30
   # SAME title as refresh-data.yml's STALE_ISSUE, deliberately: one shared issue.
   STALE_ISSUE: 'Refresh has not landed for days'
-  # The Refresh workflow whose fetch this monitors, and the prefix of its fetch step.
+  # The Refresh workflow this monitors. FETCH_OK_STEP is the step that runs ONLY on a
+  # successful fetch (`if: steps.fetch.outcome == 'success'`) and then always succeeds,
+  # so its conclusion being "success" is a name-independent proof the fetch reached
+  # ESPN. The fetch step itself is named differently across the family ("Fetch ..." vs
+  # "Regenerate ..."), but this step's name is identical in every repo.
   REFRESH_WORKFLOW: refresh-data.yml
+  FETCH_OK_STEP: 'Summarize what changed'
 
 jobs:
   check:
@@ -69,13 +74,12 @@ jobs:
           threshold="${OVERRIDE:-$FRESH_MAX_HOURS}"
           now=$(date -u +%s)
 
-          # Walk recent Refresh runs newest-first; stop at the first whose fetch step
-          # (any step whose name starts "Fetch") concluded success. That step's finish
-          # time is the heartbeat.
+          # Walk recent Refresh runs newest-first; stop at the first where the
+          # fetch-success step concluded "success". Its finish time is the heartbeat.
           fetch_at=""
           for id in $(gh api "repos/$GH_REPO/actions/workflows/$REFRESH_WORKFLOW/runs?per_page=15&status=completed" --jq '.workflow_runs[].id'); do
             line=$(gh api "repos/$GH_REPO/actions/runs/$id/jobs" \
-              --jq '([.jobs[].steps[] | select(.name | ascii_downcase | startswith("fetch"))][0]) // {} | "\(.conclusion // "") \(.completed_at // "")"' 2>/dev/null || echo "")
+              --jq '([.jobs[].steps[] | select(.name == env.FETCH_OK_STEP)][0]) // {} | "\(.conclusion // "") \(.completed_at // "")"' 2>/dev/null || echo "")
             concl=${line%% *}
             when=${line#* }
             if [ "$concl" = "success" ]; then
