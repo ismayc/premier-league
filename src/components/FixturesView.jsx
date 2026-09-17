@@ -368,16 +368,36 @@ export default function FixturesView({
         {filtersOpen && (
           <div className="filters-panel" id="filters-panel">
             <div className="filters">
-              <label className="field search-field">
-                <span className="sr-only">Search fixtures</span>
-                <input
-                  className="search"
-                  type="search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder='Search — try "team: Arsenal" or "city: London"'
-                />
-              </label>
+              {/* The search field and its example chips share one focus-within
+                  group so the chips reveal only while the search is in use, and a
+                  chip click (which moves focus onto the chip, still inside the
+                  group) does not make them vanish before it registers. */}
+              <div className="search-group">
+                <label className="field search-field">
+                  <span className="sr-only">Search fixtures</span>
+                  <input
+                    className="search"
+                    type="search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder='Search — try "team: Arsenal" or "city: London"'
+                  />
+                </label>
+                <div className="search-hints">
+                  <span className="hint-label">Try:</span>
+                  {SEARCH_EXAMPLES.map((ex) => (
+                    <button
+                      key={ex}
+                      type="button"
+                      className="hint-chip"
+                      onClick={() => setSearch(ex)}
+                    >
+                      {ex}
+                    </button>
+                  ))}
+                  <span className="hint-note">fields: team · city · venue · tv</span>
+                </div>
+              </div>
               <button
                 type="button"
                 className={`chip ${onlyFollowed ? 'on' : ''}`}
@@ -407,20 +427,6 @@ export default function FixturesView({
               >
                 {serviceCount ? 'Edit services' : '📺 My services'}
               </button>
-            </div>
-            <div className="search-hints">
-              <span className="hint-label">Try:</span>
-              {SEARCH_EXAMPLES.map((ex) => (
-                <button
-                  key={ex}
-                  type="button"
-                  className="hint-chip"
-                  onClick={() => setSearch(ex)}
-                >
-                  {ex}
-                </button>
-              ))}
-              <span className="hint-note">fields: team · city · venue · tv</span>
             </div>
             <div className="when-chips">
               <span className="hint-label">When:</span>
