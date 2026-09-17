@@ -18,6 +18,20 @@ describe('watchableServices', () => {
     expect(found.map((s) => s.key)).toEqual(['peacock'])
   })
 
+  it('counts an NBC broadcast game as watchable on Peacock (it simulcasts)', () => {
+    // ESPN tags a national broadcast game only "NBC", but it streams live on
+    // Peacock too, so a Peacock subscriber can watch it.
+    expect(watchableServices(['NBC'], ['peacock']).map((s) => s.key)).toEqual(['peacock'])
+  })
+
+  it('does not count a Versant cable game as watchable on Peacock', () => {
+    // Since the late-2025 Versant spin-off, USA / CNBC / SYFY games no longer
+    // stream live on Peacock (only a next-day replay), so Peacock must not match.
+    for (const net of ['USA Net', 'CNBC', 'SYFY']) {
+      expect(watchableServices([net], ['peacock'])).toEqual([])
+    }
+  })
+
   it('matches a bundle by the networks it carries, not by name', () => {
     // "YouTube TV" never appears in a listing; USA Net does.
     const found = watchableServices(['USA Net'], ['youtubetv'])

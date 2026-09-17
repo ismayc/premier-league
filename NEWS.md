@@ -4,6 +4,16 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-09-17
+
+- **Games on NBC now count as watchable on Peacock.** The national broadcast
+  matches that air on NBC simulcast live on Peacock, but ESPN tags them only
+  "NBC", so a Peacock subscriber's "On my services" filter was hiding them. The
+  Peacock matcher now accepts "NBC" as well as "Peacock". The Versant cable
+  channels (USA, CNBC, and SYFY) are deliberately left out: since NBCUniversal
+  spun those off into Versant in late 2025 they no longer stream live on Peacock
+  (only a next-day replay), so counting them would over-claim.
+
 ## 2026-09-14
 
 - **The table now flags itself as provisional while a match is live, and the Finish

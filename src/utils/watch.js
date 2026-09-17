@@ -6,14 +6,22 @@
  * The feed is US-region, so these are US carriers — the same reason the match
  * cards name NBC and Peacock rather than Sky and TNT.
  *
- * Peacock carries the bulk of the season and is matched by its own name. The
- * rest go out on NBCUniversal's linear channels, and because several matches
- * kick off at once the overflow lands on whichever network is free — USA, CNBC,
- * even SYFY. A live-TV *bundle* (YouTube TV, Fubo, Sling, cable) never appears
- * in the broadcast list at all: it carries a match whenever that match is on a
- * linear network the bundle includes, so each bundle is defined by the networks
- * it carries. Carriage varies by package, market and over time, so these are
- * the national defaults and are deliberately approximate.
+ * Peacock carries the bulk of the season and is matched by its own name, plus
+ * NBC: the national broadcast games that air on NBC simulcast live on Peacock,
+ * yet ESPN tags them only "NBC", so without NBC in the matcher those games look
+ * unwatchable to a Peacock subscriber. The other linear channels are NOT added:
+ * since NBCUniversal spun its cable networks off into Versant (late 2025), games
+ * on USA, CNBC, and SYFY no longer stream live on Peacock (only a next-day
+ * replay), so counting them as live-on-Peacock would over-claim.
+ *
+ * The rest of the season goes out on those linear channels, and because several
+ * matches kick off at once the overflow lands on whichever network is free: USA,
+ * CNBC, even SYFY. A live-TV *bundle* (YouTube TV, Fubo, Sling, cable) never
+ * appears in the broadcast list at all: it carries a match whenever that match
+ * is on a linear network the bundle includes, so each bundle is defined by the
+ * networks it carries (the Versant spin-off changed ownership, not which bundles
+ * carry the channels live). Carriage varies by package, market and over time, so
+ * these are the national defaults and are deliberately approximate.
  */
 
 // Exactly as ESPN spells them. NBCSN closed in 2021 but still appears against
@@ -39,7 +47,7 @@ const carries = (...names) => {
 // Streaming first, then the live-TV bundles. This is also the display order in
 // the picker. `kind` only labels the group.
 export const SERVICE_CATALOG = [
-  { key: 'peacock', label: 'Peacock', kind: 'stream', match: carries('Peacock') },
+  { key: 'peacock', label: 'Peacock', kind: 'stream', match: carries('Peacock', NBC) },
   {
     key: 'telemundo',
     label: 'Telemundo / Universo',
