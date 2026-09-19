@@ -13,6 +13,15 @@ data/source updates, deployment). Newest day on top.
   larger crest and the club's full name ("Manchester City"), which opens the
   club's panel when the club is still in the league. A relegated club is shown
   the same way but is not a link.
+- **Goal difference per match names its clubs on a phone again.** Below 560px
+  the club name was hidden outright, leaving the crest as the only label, and a
+  club with no crest (every relegated club, before today's crest map) had nothing
+  at all. The name now stays and truncates inside the column, with the full name
+  on hover, since "Sheffield United" and "Sheffield Wednesday" truncate alike.
+- **The longest bar no longer runs under its own value label.** The label is
+  clamped to stay inside the card, so at 390px a full-length bar met it. The NBA
+  and March Madness viewers already shrink the bars on a narrow track with
+  `--arm-scale: 0.68`, which this viewer never got; it is ported here.
 - **Wimbledon gets its crest.** The original Wimbledon FC (in the Premier League
   from 1992 to 2000) now shows the blue-and-yellow double-headed-eagle shield it
   wore from 1981 to 2003, in place of the empty circle. ESPN has no record of the

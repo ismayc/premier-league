@@ -496,12 +496,14 @@ function ScoringRow({ row, span, count, onPickTeam }) {
         {abbr ? (
           <button type="button" className="club-btn" onClick={() => onPickTeam?.(abbr)}>
             <TeamLogo abbr={abbr} size={18} />
-            <span>{TEAM_BY_ABBR[abbr]?.name ?? label}</span>
+            {/* The name ellipsizes in a narrow track, where "Sheffield United" and
+                "Sheffield Wednesday" truncate alike, so the full name is on hover. */}
+            <span title={TEAM_BY_ABBR[abbr]?.name ?? label}>{TEAM_BY_ABBR[abbr]?.name ?? label}</span>
           </button>
         ) : (
           <span className="club-btn is-former">
             <TeamLogo slug={crestSlugForName(label)} size={18} />
-            <span>{label}</span>
+            <span title={label}>{label}</span>
           </span>
         )}
       </div>
