@@ -1357,6 +1357,18 @@ table {
   white-space: nowrap;
 }
 
+/* Historical tables: a crest before the club's name. The cell stays a plain
+   table cell (not flex) so the name still ellipsizes beside it. */
+.col-club > .logo {
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.season-summary > .logo {
+  vertical-align: -4px;
+  margin-right: 6px;
+}
+
 .crown {
   margin-left: 6px;
   color: var(--zone-conference);
@@ -2423,8 +2435,17 @@ table {
   flex-wrap: wrap;
 }
 
-.lead-detail .recent {
+.lead-detail .recent,
+.lead-detail .lead-club {
   flex-basis: 100%;
+}
+
+/* The club heads the pop-out, so it reads as the player's club before the
+   headshot and facts. */
+.lead-club .club-btn {
+  gap: 10px;
+  margin-left: -4px;
+  font-weight: 700;
 }
 
 /* The table's cells are right-aligned for the figures, and only the player and

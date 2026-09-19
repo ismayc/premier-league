@@ -1,5 +1,8 @@
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { HISTORY, HISTORY_BY_YEAR } from '../../src/data/history.js'
+import { crestSlugForName } from '../../src/utils/crests.js'
 
 /**
  * LIVE suite (npm run test:data): moved here from test/history-data.test.js on
@@ -18,6 +21,20 @@ import { HISTORY, HISTORY_BY_YEAR } from '../../src/data/history.js'
  */
 
 describe('committed history', () => {
+  it('has a committed crest for every club it names, bar Wimbledon', () => {
+    // A rollover adds a season. A club new to the League that has just been
+    // relegated is then named here but gone from teams.js: add it to
+    // src/data/club-crests.js (its crest is already in public/logos from its
+    // season up).
+    const logo = (file) => existsSync(join(__dirname, '../../public/logos', file))
+    const clubs = [...new Set(HISTORY.flatMap((s) => s.table.map((r) => r.team)))]
+    const missing = clubs.filter((c) => {
+      const slug = crestSlugForName(c)
+      return !slug || !logo(`${slug}.png`) || !logo(`${slug}-dark.png`)
+    })
+    expect(missing).toEqual(['Wimbledon'])
+  })
+
   it('covers every season from 1992-93 with no gaps', () => {
     const years = HISTORY.map((s) => s.year)
     expect(years[0]).toBe(1992)

@@ -6,6 +6,23 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-09-19
 
+- **Stats leaders show each player's club crest.** A collapsed leaderboard row
+  now shows the club crest just before the player's name, so the club is still
+  visible at phone width, where the Club column drops. The Club column keeps the
+  name but no longer repeats the crest. Opening a player heads the panel with a
+  larger crest and the club's full name ("Manchester City"), which opens the
+  club's panel when the club is still in the league. A relegated club is shown
+  the same way but is not a link.
+- **History shows every club's crest.** The season table, the all-time table,
+  the champion line, and the By-club header all carry crests, as does the Stats
+  goal-difference chart for past seasons. The historical tables name clubs in
+  full, so a new hand-kept map, `src/data/club-crests.js`, gives each of the 51
+  clubs its ESPN crest. It was built by exact name match against ESPN's eng.1 to
+  eng.5 club lists, and the 16 crests the repo did not have yet were saved into
+  `public/logos/`. Wimbledon (1992 to 2000) keeps the empty circle: the original
+  club was dissolved in 2004, ESPN has no record of it, and AFC Wimbledon is a
+  different club. A test in the main suite and another in the live suite fail,
+  naming the club, if any club in the history has no committed crest.
 - **`fetch-fixtures.mjs --season` builds a season whose clubs differ from
   today's.** The club list used to come from ESPN's `/teams`, which always
   returns the current twenty clubs and ignores `?season=`, so `--season 2025`

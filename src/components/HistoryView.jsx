@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react'
+import TeamLogo from './TeamLogo.jsx'
 import { HISTORY, HISTORY_BY_YEAR } from '../data/history.js'
+import { crestSlugForName } from '../utils/crests.js'
 import { allTimeRecord, clubHistory, relegatedCount } from '../utils/stats.js'
+
+/** A historical club's crest; the tables name clubs in full, not by abbr. */
+const Crest = ({ name, size = 20 }) => <TeamLogo slug={crestSlugForName(name)} size={size} />
 
 /**
  * Every final Premier League table since 1992-93.
@@ -75,6 +80,7 @@ function SeasonTable({ season, onSeason }) {
           </select>
         </label>
         <p className="season-summary">
+          <Crest name={data.champion} size={18} />
           <strong>{data.champion}</strong> — champions, {data.label}
           <span className="muted">
             {' '}
@@ -110,6 +116,7 @@ function SeasonTable({ season, onSeason }) {
               >
                 <td className="col-pos">{r.pos}</td>
                 <td className="col-club">
+                  <Crest name={r.team} />
                   <span className="club-plain">{r.team}</span>
                   {r.pos === 1 && <span className="crown" title="Champions">★</span>}
                 </td>
@@ -187,6 +194,7 @@ function AllTime() {
               <tr key={r.team}>
                 <td className="col-pos">{i + 1}</td>
                 <td className="col-club">
+                  <Crest name={r.team} />
                   <span className="club-plain">{r.team}</span>
                 </td>
                 <td className="hide-phone">{r.seasons}</td>
@@ -236,6 +244,7 @@ function ByClub() {
           </select>
         </label>
         <p className="season-summary">
+          <Crest name={club} size={18} />
           {seasons.length} season{seasons.length === 1 ? '' : 's'}
           <span className="muted">
             {' '}

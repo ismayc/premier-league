@@ -206,6 +206,64 @@ describe('StatsView leaders', () => {
     expect(onPickTeam).toHaveBeenCalledWith('MNC')
   })
 
+  it('puts the club crest beside the player name, not again in the club cell', () => {
+    // The Club column drops at phone width, so the crest travels with the name.
+    renderStats()
+
+    const table = screen.getByRole('table', { name: /Goals leaders, 2025-26/ })
+    const rows = within(table).getAllByRole('row').slice(1)
+    const crestSrc = (row) =>
+      within(row).getByRole('button', { name: /^Erling|^Departed|^Unattached/ }).querySelector('.logo-light')
+        ?.getAttribute('src')
+
+    expect(crestSrc(rows[0])).toMatch(/logos\/eng\.man_city\.png$/)
+    // A relegated club's crest comes from the slug on the row itself.
+    expect(crestSrc(rows[3])).toMatch(/logos\/eng\.leicester_city\.png$/)
+    // No club, no crest: not even the empty placeholder circle.
+    expect(crestSrc(rows[2])).toBeUndefined()
+    expect(rows[2].querySelector('.logo')).toBeNull()
+    // One crest per row: the club cell keeps its name but not a second crest.
+    const clubCell = within(rows[0]).getAllByRole('cell')[2]
+    expect(clubCell.textContent).toBe('Man City')
+    expect(clubCell.querySelector('.logo')).toBeNull()
+  })
+
+  it('heads an opened player with their club, which opens the club when still in the league', async () => {
+    global.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 404 }))
+    const onPickTeam = vi.fn()
+    renderStats({ onPickTeam })
+
+    await userEvent.click(screen.getByRole('button', { name: /Erling Haaland/ }))
+    const head = document.querySelector('.lead-detail .lead-club')
+    // The panel names the club in full, where the row uses the short name.
+    const club = within(head).getByRole('button', { name: 'Manchester City' })
+    expect(club.querySelector('.logo')).toHaveStyle({ width: '28px', height: '28px' })
+    // It sits first in the panel, above the tally.
+    expect(document.querySelector('.lead-detail').firstElementChild).toBe(head)
+
+    await userEvent.click(club)
+    expect(onPickTeam).toHaveBeenCalledWith('MNC')
+  })
+
+  it('heads a relegated club plainly and leaves a clubless player unheaded', async () => {
+    global.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 404 }))
+    renderStats()
+
+    await userEvent.click(screen.getByRole('button', { name: /Departed Striker/ }))
+    const head = document.querySelector('.lead-detail .lead-club')
+    expect(within(head).queryByRole('button')).not.toBeInTheDocument()
+    expect(within(head).getByTitle(/Leicester are not in the league this season/)).toBeInTheDocument()
+    expect(head.querySelector('.logo-light')).toHaveAttribute(
+      'src',
+      expect.stringMatching(/logos\/eng\.leicester_city\.png$/)
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /Departed Striker/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Unattached Trialist/ }))
+    expect(screen.getByText(/5 goals in 2025-26/)).toBeInTheDocument()
+    expect(document.querySelector('.lead-club')).toBeNull()
+  })
+
   it('opens a player to their tally and, once it arrives, their biography', async () => {
     global.fetch = vi.fn(() =>
       Promise.resolve({
@@ -622,11 +680,15 @@ describe('StatsView attack and defence', () => {
     await userEvent.selectOptions(within(chartCard()).getByRole('combobox'), '2003')
 
     // Charlton Athletic are long gone from the league, so the row names them in
-    // full but is not operable — the current-club lookup knows no crest for it.
+    // full but is not operable. The crest comes from the historical crest map.
     const charlton = within(chartGrid()).getByText('Charlton Athletic')
     const cell = charlton.closest('.margin-club')
     expect(within(cell).queryByRole('button')).not.toBeInTheDocument()
     expect(cell.querySelector('.is-former')).toBeInTheDocument()
+    expect(cell.querySelector('.logo-light')).toHaveAttribute(
+      'src',
+      expect.stringMatching(/logos\/eng\.charlton\.png$/)
+    )
     await userEvent.click(charlton)
     expect(onPickTeam).not.toHaveBeenCalled()
   })
@@ -717,6 +779,31 @@ describe('HistoryView by season', () => {
     expect(screen.getByText(/· 20 clubs · 380 matches/)).toBeInTheDocument()
     expect(screen.getByRole('table', { name: /Final Premier League table, 2025-26/ }))
       .toBeInTheDocument()
+  })
+
+  it('crests every club in a final table, the champion, and a former club too', () => {
+    render(<HistoryView season={1992} />)
+    const table = screen.getByRole('table', { name: /Final Premier League table/ })
+    const crest = (club) =>
+      within(table).getByText(club).closest('td').querySelector('.logo-light')?.getAttribute('src')
+
+    expect(crest('Manchester United')).toMatch(/logos\/eng\.man_utd\.png$/)
+    // Long gone from the League: resolved through the historical crest map.
+    expect(crest('Oldham Athletic')).toMatch(/logos\/eng\.oldham\.png$/)
+    // The original Wimbledon has no crest anywhere, so it keeps the empty circle
+    // rather than borrowing AFC Wimbledon's.
+    const wimbledon = within(table).getByText('Wimbledon').closest('td')
+    expect(wimbledon.querySelector('.logo-missing')).toBeInTheDocument()
+    expect(wimbledon.querySelector('img')).toBeNull()
+    // Every other row has a real crest.
+    const rows = within(table).getAllByRole('row').slice(1)
+    expect(rows.filter((r) => r.querySelector('.col-club img.logo-light'))).toHaveLength(21)
+
+    const summary = screen.getByText(/champions, 1992-93/)
+    expect(summary.querySelector('.logo-light')).toHaveAttribute(
+      'src',
+      expect.stringMatching(/logos\/eng\.man_utd\.png$/)
+    )
   })
 
   it('falls back to the newest season for a year that never happened', () => {
@@ -814,6 +901,12 @@ describe('HistoryView all-time', () => {
     const spurs = within(screen.getByText('Tottenham Hotspur').closest('tr')).getAllByRole('cell')
     expect(spurs[10].textContent).toBe('')
 
+    // Every club carries its crest, bar the original Wimbledon, which has none.
+    const clubCells = [...document.querySelectorAll('tbody td.col-club')]
+    expect(clubCells).toHaveLength(51)
+    const bare = clubCells.filter((td) => !td.querySelector('img.logo-light'))
+    expect(bare.map((td) => td.textContent)).toEqual(['Wimbledon'])
+
     // Only one mode is on screen at a time.
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
   })
@@ -846,6 +939,11 @@ describe('HistoryView by club', () => {
 
     expect(document.querySelector('.season-summary').textContent).toMatch(/^1 season\b/)
     expect(screen.getAllByRole('row')).toHaveLength(1)
+    // The chosen club's crest heads the summary, here from the historical map.
+    expect(document.querySelector('.season-summary .logo-light')).toHaveAttribute(
+      'src',
+      expect.stringMatching(/logos\/eng\.barnsley\.png$/)
+    )
   })
 
   it('marks a title-winning season and a relegation season differently', async () => {

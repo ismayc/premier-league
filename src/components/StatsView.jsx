@@ -4,6 +4,7 @@ import { ALL_ABBRS, TEAMS, TEAM_BY_ABBR } from '../data/teams.js'
 import { PLAYER_STATS, STAT_CATEGORIES, STAT_SEASONS } from '../data/players.js'
 import { HISTORY, HISTORY_BY_YEAR } from '../data/history.js'
 import { fetchAthlete } from '../services/athlete.js'
+import { crestSlugForName } from '../utils/crests.js'
 import RecentMatches from './RecentMatches.jsx'
 import { leaderboard, seasonScoring, seasonTotals, teamScoring } from '../utils/stats.js'
 
@@ -217,6 +218,9 @@ function LeaderRow({ player, meta, season, max, onPickTeam }) {
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
           >
+            {/* The crest rides with the name because the Club column drops at
+                phone width, where it would otherwise be the only clue. */}
+            {player.team && <TeamLogo abbr={player.team} slug={player.teamSlug} size={16} />}
             <span className="lead-name">{player.name}</span>
             {player.pos && <span className="lead-pos">{player.pos}</span>}
             <span className="lead-caret" aria-hidden="true">
@@ -236,7 +240,7 @@ function LeaderRow({ player, meta, season, max, onPickTeam }) {
       {open && (
         <tr className="lead-detail-row">
           <td className="lead-detail-cell" colSpan={5}>
-            <PlayerBio player={player} meta={meta} season={season} />
+            <PlayerBio player={player} meta={meta} season={season} onPickTeam={onPickTeam} />
           </td>
         </tr>
       )}
@@ -253,7 +257,7 @@ function LeaderRow({ player, meta, season, max, onPickTeam }) {
  * arrive (or exist), so the panel is useful before it lands rather than
  * waiting on it.
  */
-function PlayerBio({ player, meta, season }) {
+function PlayerBio({ player, meta, season, onPickTeam }) {
   const [bio, setBio] = useState(null)
 
   useEffect(() => {
@@ -277,6 +281,12 @@ function PlayerBio({ player, meta, season }) {
 
   return (
     <div className="lead-detail">
+      {player.team && (
+        <div className="lead-club">
+          <PlayerClub player={player} onPickTeam={onPickTeam} crestSize={28} full />
+        </div>
+      )}
+
       {bio?.headshot && <img className="lead-shot" src={bio.headshot} alt="" aria-hidden="true" loading="lazy" />}
 
       <div className="lead-facts">
@@ -343,17 +353,21 @@ function PlayerBio({ player, meta, season }) {
  * Only a club still in the league is clickable: the team drawer is built from
  * this season's fixtures and table, so opening it for a relegated club would
  * show an empty panel.
+ *
+ * The Club column passes no `crestSize`: the row already shows the crest
+ * beside the player's name. The expanded panel heads itself with a larger
+ * crest and the club's `full` name.
  */
-function PlayerClub({ player, onPickTeam }) {
+function PlayerClub({ player, onPickTeam, crestSize, full = false }) {
   const current = TEAM_BY_ABBR[player.team]
-  const name = current?.name ?? player.teamName ?? player.team
-  const crest = <TeamLogo abbr={player.team} slug={player.teamSlug} size={18} />
+  const name = (full ? current?.displayName : current?.name) ?? player.teamName ?? player.team
+  const crest = crestSize && <TeamLogo abbr={player.team} slug={player.teamSlug} size={crestSize} />
 
   if (!current) {
     return (
       <span className="club-btn is-former" title={`${name} are not in the league this season`}>
         {crest}
-        <span className="hide-xs">{name}</span>
+        <span>{name}</span>
       </span>
     )
   }
@@ -361,7 +375,7 @@ function PlayerClub({ player, onPickTeam }) {
   return (
     <button type="button" className="club-btn" onClick={() => onPickTeam?.(player.team)}>
       {crest}
-      <span className="hide-xs">{name}</span>
+      <span>{name}</span>
     </button>
   )
 }
@@ -467,7 +481,8 @@ function ScoringRow({ row, span, count, onPickTeam }) {
 
   // A current-season row is keyed by abbreviation; a historical one by full
   // name. Resolve an abbreviation either way so a club still in the league
-  // gets its crest and stays clickable, and a relegated one is shown plainly.
+  // stays clickable, and a relegated one is shown plainly, with its crest from
+  // the historical crest map.
   const abbr = row.abbr ?? ABBR_BY_NAME[row.name] ?? null
   const label = row.name ?? TEAM_BY_ABBR[abbr]?.name ?? abbr
 
@@ -485,7 +500,7 @@ function ScoringRow({ row, span, count, onPickTeam }) {
           </button>
         ) : (
           <span className="club-btn is-former">
-            <TeamLogo abbr={null} size={18} />
+            <TeamLogo slug={crestSlugForName(label)} size={18} />
             <span>{label}</span>
           </span>
         )}
