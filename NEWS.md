@@ -4,6 +4,30 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-09-19
+
+- **A refresh can no longer move the coverage gate, by construction.** Ported
+  from the WNBA, NBA, and NFL siblings, where a refresh reddened the gate by
+  moving a season fact the tests asserted or by drying up a covered branch. A
+  plugin in `vite.config.js` now resolves every import of `src/data/fixtures.js`,
+  `players.js`, `teams.js`, and `history.js` (the four modules `npm run
+  fetch:all` rewrites) to a frozen copy of the committed matchweek-5 board (41 of
+  380 played) in `test/fixtures/frozen/`, matching on the resolved path so the
+  importer does not matter. `history.js` is frozen too because, unlike the
+  basketball siblings, this repo's refresh re-runs the history build every time.
+- **The refresh gate is now a live suite, not the coverage gate.** `npm run
+  test:data` runs `test/live/`: fixture-list invariants (380 fixtures, every
+  pairing once at each ground, UTC kickoffs, events filed under one of the two
+  sides), a table that independently recounts the results, leaderboard
+  invariants for every season, the historical-table checks (moved from
+  `test/history-data.test.js`), export parity between live and frozen modules,
+  and a smoke render of every view, match dialog, club panel, historical season,
+  and leaderboard. The refresh workflow and CI's next-refresh rehearsal gate on
+  it, and CI's test job also runs it against the committed data.
+- **The ever-present check is pinned to a closed record.** "Exactly six clubs in
+  every season" now reads the 34 seasons through 2025-26, since a newly finished
+  season could add a relegation without anything being misparsed.
+
 ## 2026-09-17
 
 - **Games on NBC now count as watchable on Peacock.** The national broadcast

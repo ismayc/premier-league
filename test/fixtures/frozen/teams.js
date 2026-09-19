@@ -1,0 +1,32 @@
+// A FROZEN copy of src/data/teams.js as committed at 3596d09 (the September 19, 2026
+// refresh 401f43b). The refresh workflow rewrites the live module, so under vitest every
+// import of it resolves here instead; see the frozenData plugin in vite.config.js. Never
+// regenerated. The LIVE module has its own gate in test/live/.
+export const SEASON = 2026
+export const SEASON_LABEL = "2026-27 English Premier League"
+
+export const TEAMS = [
+  {"id":"359","abbr":"ARS","slug":"eng.arsenal","name":"Arsenal","displayName":"Arsenal","color":"e20520","altColor":"003399"},
+  {"id":"362","abbr":"AVL","slug":"eng.aston_villa","name":"Aston Villa","displayName":"Aston Villa","color":"660e36","altColor":"000000"},
+  {"id":"349","abbr":"BOU","slug":"eng.bournemouth","name":"Bournemouth","displayName":"AFC Bournemouth","color":"f42727","altColor":"B57EDC"},
+  {"id":"337","abbr":"BRE","slug":"eng.brentford","name":"Brentford","displayName":"Brentford","color":"f42727","altColor":"0f1c3f"},
+  {"id":"331","abbr":"BHA","slug":"eng.brighton","name":"Brighton","displayName":"Brighton & Hove Albion","color":"0606fa","altColor":"005F60"},
+  {"id":"384","abbr":"CRY","slug":"eng.crystal_palace","name":"C Palace","displayName":"Crystal Palace","color":"0202fb","altColor":"000000"},
+  {"id":"363","abbr":"CHE","slug":"eng.chelsea","name":"Chelsea","displayName":"Chelsea","color":"144992","altColor":"FFFFFF"},
+  {"id":"388","abbr":"COV","slug":"eng.coventry","name":"Coventry","displayName":"Coventry City","color":"87cced","altColor":"ffffff"},
+  {"id":"368","abbr":"EVE","slug":"eng.everton","name":"Everton","displayName":"Everton","color":"0606fa","altColor":"ffffff"},
+  {"id":"370","abbr":"FUL","slug":"eng.fulham","name":"Fulham","displayName":"Fulham","color":"ffffff","altColor":"CC0000"},
+  {"id":"306","abbr":"HUL","slug":"eng.hull","name":"Hull","displayName":"Hull City","color":"f28800","altColor":"ffffff"},
+  {"id":"373","abbr":"IPS","slug":"eng.ipswich","name":"Ipswich","displayName":"Ipswich Town","color":"0000fa","altColor":"F5F2DC"},
+  {"id":"357","abbr":"LEE","slug":"eng.leeds","name":"Leeds","displayName":"Leeds United","color":"ffffff","altColor":"FFCD00"},
+  {"id":"364","abbr":"LIV","slug":"eng.liverpool","name":"Liverpool","displayName":"Liverpool","color":"d11317","altColor":"FFFFFF"},
+  {"id":"382","abbr":"MNC","slug":"eng.man_city","name":"Man City","displayName":"Manchester City","color":"99c5ea","altColor":"000000"},
+  {"id":"360","abbr":"MAN","slug":"eng.man_utd","name":"Man United","displayName":"Manchester United","color":"da020e","altColor":"4169E1"},
+  {"id":"361","abbr":"NEW","slug":"eng.newcastle","name":"Newcastle","displayName":"Newcastle United","color":"000000","altColor":"0B1B3D"},
+  {"id":"393","abbr":"NFO","slug":"eng.nottm_forest","name":"Nottm Forest","displayName":"Nottingham Forest","color":"c8102e","altColor":"1B3624"},
+  {"id":"367","abbr":"TOT","slug":"eng.tottenham","name":"Spurs","displayName":"Tottenham Hotspur","color":"ffffff","altColor":"0B1426"},
+  {"id":"366","abbr":"SUN","slug":"eng.sunderland","name":"Sunderland","displayName":"Sunderland","color":"EB172B","altColor":"FFB6C1"},
+]
+
+export const TEAM_BY_ABBR = Object.fromEntries(TEAMS.map((t) => [t.abbr, t]))
+export const ALL_ABBRS = TEAMS.map((t) => t.abbr)

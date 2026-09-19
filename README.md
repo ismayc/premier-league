@@ -96,6 +96,16 @@ untested. Test files run serially (`fileParallelism: false`) because Vitest's
 v8 coverage provider races when several workers finish at once and dies trying
 to read a temp file that has already been cleaned up.
 
+The suite runs against **frozen data**. A plugin in `vite.config.js` resolves
+every import of the four modules the refresh rewrites (`fixtures.js`,
+`players.js`, `teams.js`, and `history.js` in `src/data/`) to a frozen copy in
+`test/fixtures/frozen/`, so a twice-daily refresh cannot move the coverage gate.
+The real modules have their own suite: `npm run test:data` runs `test/live/`
+(invariants on the fixtures, the table, the leaderboards, and every historical
+season, plus a smoke render of every view) with no coverage threshold. That
+live suite is the gate the refresh workflow runs before it commits new data,
+and CI runs it on every push too.
+
 ## How the data works
 
 The entire season, every historical table, and the player leaderboards are

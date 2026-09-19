@@ -1,14 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { HISTORY, HISTORY_BY_YEAR } from '../src/data/history.js'
+import { HISTORY, HISTORY_BY_YEAR } from '../../src/data/history.js'
 
 /**
+ * LIVE suite (npm run test:data): moved here from test/history-data.test.js on
+ * September 19, 2026, when the main suite's data was frozen, because under the
+ * freeze it would have been checking a copy that never changes. The refresh
+ * re-runs fetch-history.mjs every time, so this is where a bad parse is caught.
+ *
  * These assert against the committed historical data rather than against a
  * function, which makes them regression tests for the ETL: if a future refresh
  * misparses openfootball's format, the champion roll or the arithmetic
  * invariants break here rather than silently shipping a wrong table.
  *
  * The invariants hold for any correctly parsed season, so they run over all of
- * them. The named results are checks against the record books.
+ * them. The named results are checks against the record books, which do not
+ * change once a season is over.
  */
 
 describe('committed history', () => {
@@ -96,13 +102,18 @@ describe('committed history', () => {
     expect(variants).toEqual([])
   })
 
-  it('has exactly the six ever-present clubs', () => {
+  // Pinned to the 34 seasons through 2025-26, a closed record, rather than to all of
+  // HISTORY: when a newly finished season is appended, one of these six may have been
+  // relegated, which is a fact about football and not a parsing failure.
+  it('has exactly six clubs present in every season from 1992-93 to 2025-26', () => {
+    const closed = HISTORY.filter((s) => s.year <= 2025)
+    expect(closed).toHaveLength(34)
     const counts = new Map()
-    for (const season of HISTORY) {
+    for (const season of closed) {
       for (const r of season.table) counts.set(r.team, (counts.get(r.team) ?? 0) + 1)
     }
     const everPresent = [...counts.entries()]
-      .filter(([, n]) => n === HISTORY.length)
+      .filter(([, n]) => n === closed.length)
       .map(([team]) => team)
       .sort()
 
