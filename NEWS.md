@@ -13,6 +13,13 @@ data/source updates, deployment). Newest day on top.
   larger crest and the club's full name ("Manchester City"), which opens the
   club's panel when the club is still in the league. A relegated club is shown
   the same way but is not a link.
+- **Wimbledon gets its crest.** The original Wimbledon FC (in the Premier League
+  from 1992 to 2000) now shows the blue-and-yellow double-headed-eagle shield it
+  wore from 1981 to 2003, in place of the empty circle. ESPN has no record of the
+  club, so the crest was rendered from Wikipedia's `Wimbledon_FC_crest.svg` and
+  saved as `public/logos/wimbledon_fc_1981.png`, a name that cannot collide with
+  AFC Wimbledon, a separate club. All 51 historical clubs now carry a crest,
+  and the crest tests expect none missing.
 - **History shows every club's crest.** The season table, the all-time table,
   the champion line, and the By-club header all carry crests, as does the Stats
   goal-difference chart for past seasons. The historical tables name clubs in

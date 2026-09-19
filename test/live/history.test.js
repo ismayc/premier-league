@@ -21,7 +21,7 @@ import { crestSlugForName } from '../../src/utils/crests.js'
  */
 
 describe('committed history', () => {
-  it('has a committed crest for every club it names, bar Wimbledon', () => {
+  it('has a committed crest for every club it names', () => {
     // A rollover adds a season. A club new to the League that has just been
     // relegated is then named here but gone from teams.js: add it to
     // src/data/club-crests.js (its crest is already in public/logos from its
@@ -32,7 +32,7 @@ describe('committed history', () => {
       const slug = crestSlugForName(c)
       return !slug || !logo(`${slug}.png`) || !logo(`${slug}-dark.png`)
     })
-    expect(missing).toEqual(['Wimbledon'])
+    expect(missing).toEqual([])
   })
 
   it('covers every season from 1992-93 with no gaps', () => {

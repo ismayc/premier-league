@@ -790,14 +790,12 @@ describe('HistoryView by season', () => {
     expect(crest('Manchester United')).toMatch(/logos\/eng\.man_utd\.png$/)
     // Long gone from the League: resolved through the historical crest map.
     expect(crest('Oldham Athletic')).toMatch(/logos\/eng\.oldham\.png$/)
-    // The original Wimbledon has no crest anywhere, so it keeps the empty circle
-    // rather than borrowing AFC Wimbledon's.
-    const wimbledon = within(table).getByText('Wimbledon').closest('td')
-    expect(wimbledon.querySelector('.logo-missing')).toBeInTheDocument()
-    expect(wimbledon.querySelector('img')).toBeNull()
-    // Every other row has a real crest.
+    // The original Wimbledon is not on ESPN; its 1981-2003 crest is committed
+    // under its own slug, not AFC Wimbledon's.
+    expect(crest('Wimbledon')).toMatch(/logos\/wimbledon_fc_1981\.png$/)
+    // Every row has a real crest.
     const rows = within(table).getAllByRole('row').slice(1)
-    expect(rows.filter((r) => r.querySelector('.col-club img.logo-light'))).toHaveLength(21)
+    expect(rows.filter((r) => r.querySelector('.col-club img.logo-light'))).toHaveLength(22)
 
     const summary = screen.getByText(/champions, 1992-93/)
     expect(summary.querySelector('.logo-light')).toHaveAttribute(
@@ -901,11 +899,11 @@ describe('HistoryView all-time', () => {
     const spurs = within(screen.getByText('Tottenham Hotspur').closest('tr')).getAllByRole('cell')
     expect(spurs[10].textContent).toBe('')
 
-    // Every club carries its crest, bar the original Wimbledon, which has none.
+    // Every club carries its crest.
     const clubCells = [...document.querySelectorAll('tbody td.col-club')]
     expect(clubCells).toHaveLength(51)
     const bare = clubCells.filter((td) => !td.querySelector('img.logo-light'))
-    expect(bare.map((td) => td.textContent)).toEqual(['Wimbledon'])
+    expect(bare.map((td) => td.textContent)).toEqual([])
 
     // Only one mode is on screen at a time.
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()

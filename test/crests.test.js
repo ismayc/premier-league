@@ -16,14 +16,14 @@ import { crestSlugForName } from '../src/utils/crests.js'
 const logo = (file) => existsSync(join(__dirname, '../public/logos', file))
 
 describe('historical club crests', () => {
-  it('resolves every club in the history to a committed crest, bar Wimbledon', () => {
+  it('resolves every club in the history to a committed crest', () => {
     const clubs = [...new Set(HISTORY.flatMap((s) => s.table.map((r) => r.team)))]
     const missing = clubs.filter((c) => {
       const slug = crestSlugForName(c)
       return !slug || !logo(`${slug}.png`) || !logo(`${slug}-dark.png`)
     })
     // Add a club named here to CLUB_CREST_SLUGS, with its crest in public/logos.
-    expect(missing).toEqual(['Wimbledon'])
+    expect(missing).toEqual([])
   })
 
   it('lists no club the history never names', () => {

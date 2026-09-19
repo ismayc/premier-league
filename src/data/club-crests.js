@@ -10,9 +10,13 @@
 // dark one (Bradford, Swindon). Current clubs are listed too, so a relegation
 // never costs a club its crest.
 //
-// Wimbledon is deliberately null. The original Wimbledon FC was dissolved in
-// 2004 and ESPN has no record of it; AFC Wimbledon, the only match, is a
-// separate club founded in 2002, so its crest would misrepresent the 1990s side.
+// Wimbledon is the one crest not from ESPN, hence the non-ESPN slug. The
+// original Wimbledon FC was dissolved in 2004 and ESPN has no record of it
+// (AFC Wimbledon, its only match, is a separate club founded in 2002). The
+// crest is the blue-and-yellow shield the club wore from 1981 until 2003, so
+// through all eight of its Premier League seasons, rendered to a 160px PNG from
+// Wikipedia's File:Wimbledon_FC_crest.svg (tagged there as a non-free logo).
+// It has no dark variant; the light one is reused.
 //
 // test/crests.test.js fails if a club in the history has no entry here and no
 // current-season crest, naming the club to add.
@@ -67,6 +71,6 @@ export const CLUB_CREST_SLUGS = {
   "West Bromwich Albion": "eng.west_brom",
   "West Ham United": "eng.west_ham",
   "Wigan Athletic": "eng.wigan",
-  "Wimbledon": null,
+  "Wimbledon": "wimbledon_fc_1981",
   "Wolverhampton Wanderers": "eng.wolverhampton",
 }
