@@ -129,9 +129,17 @@ async function fetchEvents(eventId, abbrById) {
   return { goals, cards, subs }
 }
 
-async function fetchTeams() {
-  const data = await getJson(`${SITE}/teams`)
-  const entries = data.sports?.[0]?.leagues?.[0]?.teams ?? []
+/**
+ * Club metadata for the clubs in THIS season's fixtures, one `/teams/<id>` call
+ * each. The `/teams` list is no use for a season other than the current one: it
+ * always returns today's twenty clubs and ignores `?season=`, so a past season
+ * (relegated clubs missing) or a new one published before the list switches over
+ * (promoted clubs missing) could not be built from it. The per-club route still
+ * serves a relegated club with its slug and both crests (verified 2026-09-19 for
+ * West Ham, Burnley, and Wolves, all absent from the list by then).
+ */
+async function fetchTeams(ids) {
+  const entries = await mapLimit(ids, CONCURRENCY, (id) => getJson(`${SITE}/teams/${id}`))
   return entries.map(({ team }) => ({
     id: team.id,
     abbr: team.abbreviation,
@@ -195,9 +203,6 @@ async function main() {
 
   console.log(`Fetching Premier League ${season} season\n`)
 
-  const teams = await fetchTeams()
-  console.log(`  ${teams.length} clubs`)
-
   const { calendar, displayName } = await fetchCalendar(season)
   console.log(`  ${calendar.length} matchdays: ${ymd(calendar[0])} to ${ymd(calendar.at(-1))}`)
 
@@ -207,13 +212,17 @@ async function main() {
   // concurrently, instead of in windows. A single matchday is well under the
   // 50-event cap that the old windowing existed to respect.
   const byId = new Map()
+  // The season's clubs are the ones its own fixtures name (ESPN id -> abbr).
+  const clubAbbrById = new Map()
   const perDay = await mapLimit(calendar, CONCURRENCY, (day) =>
     getJson(`${SITE}/scoreboard?dates=${ymd(day)}`)
   )
   for (const data of perDay) {
     for (const ev of data.events ?? []) {
       const fixture = normalizeEvent(ev)
-      if (fixture) byId.set(fixture.id, fixture)
+      if (!fixture) continue
+      byId.set(fixture.id, fixture)
+      for (const c of ev.competitions[0].competitors) clubAbbrById.set(String(c.team.id), c.team.abbreviation)
     }
   }
 
@@ -221,8 +230,12 @@ async function main() {
   const played = fixtures.filter((f) => f.score).length
   console.log(`  ${fixtures.length} fixtures (${played} played)`)
 
-  // A 20-club double round-robin is exactly 380 matches. Anything else means
-  // a matchday query came back short and the snapshot would silently omit games.
+  const teams = await fetchTeams([...clubAbbrById.keys()])
+  console.log(`  ${teams.length} clubs`)
+
+  // A 20-club double round-robin is exactly 380 matches. Anything else means a
+  // matchday query came back short (or a stray match brought in a 21st club) and
+  // the snapshot would silently omit games.
   const expected = teams.length * (teams.length - 1)
   if (fixtures.length !== expected) {
     throw new Error(
@@ -231,9 +244,15 @@ async function main() {
     )
   }
 
-  const abbrs = new Set(teams.map((t) => t.abbr))
-  const unknown = [...new Set(fixtures.flatMap((f) => [f.home, f.away]))].filter((a) => !abbrs.has(a))
-  if (unknown.length) throw new Error(`fixtures reference unknown clubs: ${unknown.join(', ')}`)
+  // Fixtures key clubs by abbr, so the club record must carry the same abbr the
+  // scoreboard used, or the app could not look the club up.
+  const mismatched = teams.filter((t) => clubAbbrById.get(String(t.id)) !== t.abbr)
+  if (mismatched.length) {
+    throw new Error(
+      `club abbr differs between scoreboard and /teams: ` +
+        mismatched.map((t) => `${t.id} ${clubAbbrById.get(String(t.id))} vs ${t.abbr}`).join(', ')
+    )
+  }
 
   // Timeline events (goals, cards, subs) for finished matches. A final match's
   // events never change, so reuse whatever is already committed and only fetch

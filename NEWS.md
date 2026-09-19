@@ -6,6 +6,18 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-09-19
 
+- **`fetch-fixtures.mjs --season` builds a season whose clubs differ from
+  today's.** The club list used to come from ESPN's `/teams`, which always
+  returns the current twenty clubs and ignores `?season=`, so `--season 2025`
+  failed with `fixtures reference unknown clubs: WHU, BUR, WOL`. The season
+  rollover PR runs `--season <next>` and would have failed the same way if ESPN
+  published the new fixtures before `/teams` switched over. The clubs now come
+  from the season's own fixtures, with each club's details (slug, colors, and
+  both crests) from `/teams/<id>`, which still serves relegated clubs. Checked by
+  running it: 2025 now builds all 380 matches with West Ham, Burnley, and Wolves;
+  2026 writes a `teams.js` and crests byte-identical to the committed ones. A new
+  check fails the run if a club's abbreviation differs between the scoreboard
+  and its club record, since fixtures key clubs by abbreviation.
 - **A refresh can no longer move the coverage gate, by construction.** Ported
   from the WNBA, NBA, and NFL siblings, where a refresh reddened the gate by
   moving a season fact the tests asserted or by drying up a covered branch. A
