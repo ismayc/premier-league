@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
+import BreakNote from './BreakNote.jsx'
 import TeamLogo from './TeamLogo.jsx'
 import { TEAM_BY_ABBR } from '../data/teams.js'
+import { breakAfter, breakBefore, findBreaks } from '../utils/breaks.js'
 import { dateKey, startOfWeek, timeOf } from '../utils/time.js'
 import { LEAGUE } from '../config/league.js'
 
@@ -10,6 +12,12 @@ import { LEAGUE } from '../config/league.js'
  * A league season is a rhythm — Saturday 15:00, the Sunday afternoon game, the
  * Tuesday night rearrangement — and a flat list flattens that away. The grid
  * makes an empty midweek and a congested festive period legible at a glance.
+ *
+ * Only weeks that hold a match are paged through: an international break is two
+ * or three weeks with nothing in them, and paging through blank grids is not
+ * information. What the skip needs instead is a caption, so the arrow that
+ * jumps a fortnight says why — noted on the last week before a break and again
+ * on the first week back.
  */
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -24,6 +32,9 @@ export default function WeekView({ fixtures, tz, hideScores, onOpen }) {
     }
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   }, [fixtures, tz])
+
+  // Breaks come from the whole fixture list, like the week buckets themselves.
+  const breaks = useMemo(() => findBreaks(fixtures, tz), [fixtures, tz])
 
   const todayWeek = startOfWeek(new Date().toISOString(), tz)
   const initial = Math.max(
@@ -52,6 +63,14 @@ export default function WeekView({ fixtures, tz, hideScores, onOpen }) {
         .sort((a, b) => a.ko.localeCompare(b.ko)),
     }
   })
+
+  // The break either side of this week, if the week sits against one: `before`
+  // is the one this week returns from, `after` the one it runs into. Both are
+  // matched on the week's own span rather than on its last fixture, so a break
+  // that starts mid-week is still caught.
+  const weekEnd = columns[columns.length - 1].key
+  const returnsFrom = breakBefore(breaks, weekStart, weekEnd)
+  const runsInto = breakAfter(breaks, weekStart, weekEnd)
 
   // LEAGUE.locale, not a second 'en-GB' literal: this call sits outside the
   // createTimeUtils factory, so it is the one place the locale could quietly diverge
@@ -89,6 +108,8 @@ export default function WeekView({ fixtures, tz, hideScores, onOpen }) {
         </div>
       </div>
 
+      {returnsFrom && <BreakNote gap={returnsFrom} tz={tz} />}
+
       <div className="week-grid">
         {columns.map((col) => (
           <div key={col.key} className={`week-col ${col.fixtures.length ? '' : 'is-empty'}`}>
@@ -114,6 +135,8 @@ export default function WeekView({ fixtures, tz, hideScores, onOpen }) {
           </div>
         ))}
       </div>
+
+      {runsInto && <BreakNote gap={runsInto} tz={tz} />}
     </main>
   )
 }

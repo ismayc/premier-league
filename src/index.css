@@ -811,6 +811,59 @@ select {
   font-variant-numeric: tabular-nums;
 }
 
+/* ── International break note ──────────────────────────────────────────
+   The hole in the calendar, captioned. Deliberately NOT a fixture card: a
+   dashed band reads as an absence BETWEEN blocks rather than as one more row
+   to scan. The same note appears in the fixture list, between matchweeks, in
+   the week grid, in a club's drawer and above the next/live banner, so it
+   carries its own spacing and stretches to whatever column it lands in. */
+.break-note {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 4px 0 22px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  font-size: 12.5px;
+}
+
+.bn-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.bn-text {
+  color: var(--text-2);
+}
+
+/* The break the viewer is actually sitting in: the dashes close up and the
+   accent edge matches the banner it sits above, because the wait is the news. */
+.break-note.is-active {
+  border-style: solid;
+  border-left: 3px solid var(--accent);
+}
+
+.bn-countdown {
+  margin-left: auto;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 2px 8px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* In a club's drawer the note is a row of the fixture list, so it drops the
+   list spacing and sits tight against the fixtures either side of it. */
+.tp-break .break-note {
+  margin: 4px 0;
+}
+
 /* Full-season navigation: a sticky month jump-bar over collapsible month
    sections, shown only when "Played" opens the whole season. */
 .month-jump {

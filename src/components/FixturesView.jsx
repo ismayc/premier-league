@@ -1,8 +1,10 @@
 import { useMemo, useRef, useEffect, useState } from 'react'
 import MatchCard from './MatchCard.jsx'
 import NextMatch from './NextMatch.jsx'
+import BreakNote from './BreakNote.jsx'
 import { groupByDay, longDayOf, dateKey, whenBucket } from '../utils/time.js'
 import { assignMatchweeks, groupByMatchweek } from '../utils/matchweek.js'
+import { breakAt, breaksBetween, findBreaks } from '../utils/breaks.js'
 import { useFollow } from '../context/follow.jsx'
 import { useServices } from '../context/services.jsx'
 import { watchableServices } from '../utils/watch.js'
@@ -163,6 +165,12 @@ export default function FixturesView({
 
   // Full-season grouping: [ { mw, days:[day,...], count }, ... ] in matchweek order.
   const weeks = useMemo(() => groupByMatchweek(allDays, mwById), [allDays, mwById])
+
+  // International breaks, like the matchweek numbers, come from the FULL fixture
+  // list: a break is a property of the league calendar, not of whatever the
+  // filters have left on screen.
+  const breaks = useMemo(() => findBreaks(fixtures, tz), [fixtures, tz])
+  const breakNow = breakAt(breaks, todayKey)
 
   // Where a "Today" jump (and the full-season landing) goes: today if it has
   // fixtures, else the NEXT fixture-day, else (the whole season already past)
@@ -326,6 +334,22 @@ export default function FixturesView({
     )
   }
 
+  const renderBreak = (gap) => (
+    <BreakNote key={gap.id} gap={gap} tz={tz} active={gap.id === breakNow?.id} />
+  )
+
+  // Day sections with the breaks between them spelled out. What matters is
+  // whether a break falls between two sections AS RENDERED — the filters can
+  // leave a club's two fixtures either side of a window with nothing between
+  // them — so the test is a range rather than "are these consecutive match
+  // days", and it can turn up more than one break at a time.
+  const renderDays = (list) =>
+    list.flatMap((day, i) => {
+      const next = list[i + 1]
+      const gaps = next ? breaksBetween(breaks, day.key, next.key) : []
+      return [renderDay(day), ...gaps.map((gap) => renderBreak(gap))]
+    })
+
   return (
     <main className="view">
       <div className="view-head">
@@ -446,7 +470,12 @@ export default function FixturesView({
         )}
       </div>
 
-      <NextMatch fixtures={baseList} tz={tz} onJump={(key) => setPendingScroll(key)} />
+      <NextMatch
+        fixtures={baseList}
+        tz={tz}
+        breaks={breaks}
+        onJump={(key) => setPendingScroll(key)}
+      />
 
       {!days.length && (
         <p className="empty">
@@ -456,7 +485,7 @@ export default function FixturesView({
         </p>
       )}
 
-      {days.length > 0 && !showPast && days.map(renderDay)}
+      {days.length > 0 && !showPast && renderDays(days)}
 
       {!showPast && laterCount > 0 && (
         <button
@@ -508,9 +537,16 @@ export default function FixturesView({
               Today
             </button>
           </nav>
-          {weeks.map(({ mw, days: weekDays, count }) => {
+          {weeks.flatMap(({ mw, days: weekDays, count }, i) => {
             const open = expanded.has(mw)
-            return (
+            // A break between two matchweeks is called out between their
+            // headers, so the jump from one to the next is explained even with
+            // both collapsed.
+            const next = weeks[i + 1]
+            const gaps = next
+              ? breaksBetween(breaks, weekDays[weekDays.length - 1].key, next.days[0].key)
+              : []
+            return [
               <div className="month" key={mw} ref={(el) => (weekRefs.current[mw] = el)}>
                 <button
                   type="button"
@@ -523,9 +559,10 @@ export default function FixturesView({
                     {count} {count === 1 ? 'match' : 'matches'}
                   </span>
                 </button>
-                {open && <div className="month-days">{weekDays.map(renderDay)}</div>}
-              </div>
-            )
+                {open && <div className="month-days">{renderDays(weekDays)}</div>}
+              </div>,
+              ...gaps.map((gap) => renderBreak(gap)),
+            ]
           })}
         </>
       )}

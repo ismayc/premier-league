@@ -1,11 +1,13 @@
 import { useMemo } from 'react'
+import BreakNote from './BreakNote.jsx'
 import TeamLogo from './TeamLogo.jsx'
 import { TEAM_BY_ABBR, ALL_ABBRS } from '../data/teams.js'
 import { buildTable } from '../utils/table.js'
 import { HISTORY } from '../data/history.js'
 import { PLAYER_STATS, STAT_SEASONS } from '../data/players.js'
 import { clubHistory } from '../utils/stats.js'
-import { dayOf, timeOf } from '../utils/time.js'
+import { breakAt, breaksBetween, findBreaks } from '../utils/breaks.js'
+import { dateKey, dayOf, timeOf } from '../utils/time.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useFollow } from '../context/follow.jsx'
 import { LEAGUE } from '../config/league.js'
@@ -37,6 +39,13 @@ export default function TeamPanel({ abbr, fixtures, tz, hideScores, onClose, onO
       mine.filter((f) => !f.score && !f.unplayed).slice(0, 5),
     ]
   }, [fixtures, abbr])
+
+  // "Next up" is where a club's calendar looks strangest during a window: three
+  // weeks between two fixtures, with no reason given. The breaks come from the
+  // whole league list, not this club's, and a club can sit either side of one
+  // without playing in the weekend that ends it.
+  const breaks = useMemo(() => findBreaks(fixtures, tz), [fixtures, tz])
+  const breakNow = breakAt(breaks, dateKey(new Date().toISOString(), tz))
 
   // Historical names differ from the feed's; try the full name then the short.
   const past = useMemo(() => {
@@ -152,9 +161,25 @@ export default function TeamPanel({ abbr, fixtures, tz, hideScores, onClose, onO
           <section>
             <h3>Next up</h3>
             <ul className="tp-list">
-              {upcoming.map((f) => (
-                <TeamFixture key={f.id} f={f} abbr={abbr} tz={tz} onOpen={onOpen} />
-              ))}
+              {breakNow && (
+                <li className="tp-break">
+                  <BreakNote gap={breakNow} tz={tz} active />
+                </li>
+              )}
+              {upcoming.flatMap((f, i) => {
+                const next = upcoming[i + 1]
+                const gaps = next
+                  ? breaksBetween(breaks, dateKey(f.ko, tz), dateKey(next.ko, tz))
+                  : []
+                return [
+                  <TeamFixture key={f.id} f={f} abbr={abbr} tz={tz} onOpen={onOpen} />,
+                  ...gaps.map((gap) => (
+                    <li className="tp-break" key={gap.id}>
+                      <BreakNote gap={gap} tz={tz} />
+                    </li>
+                  )),
+                ]
+              })}
             </ul>
           </section>
         )}

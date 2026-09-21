@@ -4,6 +4,41 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-09-21
+
+- **International breaks are named across the viewer.** The season stops for
+  two or three weeks in September/October, November and March, and until today
+  the app showed that as nothing at all: the fixture list jumped from 20
+  September to 10 October between two day headings, the Week grid's arrow
+  skipped three weeks in one click, a club's next two fixtures sat three weeks
+  apart, and the banner counted down to a match eighteen days out — all of
+  which read as a fault in the app rather than as the league's own calendar.
+  A new `BreakNote` now captions the hole wherever it shows: between the day
+  sections it separates, between two collapsed matchweek headers, before and
+  after the weeks the Week grid skips over, in a club's "Next up" list, and
+  above the next/live banner while a break is on, where it carries a countdown
+  to the first kickoff back. Opening a match on either edge of a break says
+  which edge it is in its facts list. Every note reads the same two facts: how
+  many days the league is away, and the day it returns.
+- **The breaks are read off the fixture list, not hand-maintained.** ESPN
+  publishes no calendar of FIFA windows beside the fixtures, so
+  `src/utils/breaks.js` infers them the way `matchweek.js` infers matchweek
+  numbers: a gap counts as an international break when it runs at least eleven
+  clear days AND its midpoint falls in a month FIFA holds a men's window
+  (September, October, November, March, June). The league plays weekly and a
+  cup weekend or the mid-season break opens a week or a little more, so the
+  threshold sits in open space between the two populations — in the 2026-27
+  list the domestic holes are 7, 8 and 9 clear days and the international ones
+  13, 19 and 20. The month test is what stops a long January hole being called
+  a call-up. The note never claims which countries are playing or when the
+  window itself opens, because neither is in the data. A refreshed fixture
+  list re-derives its own breaks with nothing to update by hand.
+- **Coverage stays at 100%.** Two new suites: `test/breaks.test.js` for the
+  derivation (including the holes that must NOT be named a break, and the
+  viewer's timezone deciding a break's edges) and
+  `test/international-breaks.test.jsx` for the note in each of the five places
+  it appears.
+
 ## 2026-09-19
 
 - **Stats leaders show each player's club crest.** A collapsed leaderboard row

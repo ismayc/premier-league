@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { TEAM_BY_ABBR } from '../data/teams.js'
 import { countdown, dateKey, timeOf, zoneAbbr, whenBucket } from '../utils/time.js'
+import { breakAt } from '../utils/breaks.js'
 import { useFollow } from '../context/follow.jsx'
+import BreakNote from './BreakNote.jsx'
 import TeamLogo from './TeamLogo.jsx'
 import { LEAGUE } from '../config/league.js'
 
@@ -30,8 +32,13 @@ const TICK_MS = 30000
  * itself. It resolves to at most two units (2d 3h / 3h 5m / 12m), so there is no
  * seconds digit to keep live and the banner can re-render every half-minute
  * instead of every second.
+ *
+ * During an international break the banner leads with the break itself: "next
+ * match" alone, eighteen days out, reads as a fault in the app rather than as
+ * the league's own calendar. `breaks` comes in from the unfiltered fixture list
+ * so a filter can never hide one.
  */
-export default function NextMatch({ fixtures, tz, onJump }) {
+export default function NextMatch({ fixtures, tz, breaks, onJump }) {
   const { isFollowed } = useFollow()
   const [, setTick] = useState(0)
 
@@ -71,67 +78,81 @@ export default function NextMatch({ fixtures, tz, onJump }) {
   // read through `bucket`, which is what bounds how often this recomputes.
   }, [fixtures, bucket, isFollowed])
 
-  if (!list.length) {
-    return <div className="nextmatch done">⚽ No fixtures left — see you next season!</div>
-  }
+  // The break the viewer is sitting in, if any. Read from `now` on every render
+  // for the same reason the selection above is: a banner pinned to mount time
+  // would keep the note up into the first day back.
+  const gap = breakAt(breaks, dateKey(new Date(now).toISOString(), tz))
 
-  const live = mode === 'live'
-  const lead = list[0]
-  // Null once the clock passes kickoff, which the live branch already covers.
-  const left = countdown(lead.ko, now)
+  const card = () => {
+    if (!list.length) {
+      return <div className="nextmatch done">⚽ No fixtures left — see you next season!</div>
+    }
 
-  if (list.length > 1) {
-    return (
-      <div className={`nextmatch nextmatch-stack${live ? ' is-live' : ''}`}>
-        <div className="nm-label">
-          {live ? '🔴 Live now' : '⏱ Next up'}
-          <span className="nm-stage">{list.length} matches{live ? '' : ' at once'}</span>
-        </div>
-        {list.map((f) => (
-          <button key={f.id} className="nm-live-row" onClick={() => onJump?.(dateKey(f.ko, tz))}>
-            <Side abbr={f.home} />
-            <span className="nm-v">{LEAGUE.homeAwaySep}</span>
-            <Side abbr={f.away} />
-            <span className="nm-when">{f.city}</span>
-          </button>
-        ))}
-        {!live && left && (
-          <div className="nm-bottom nm-stack-bottom">
-            <span className="nm-countdown">{left}</span>
-            <span className="nm-when">
-              {timeOf(lead.ko, tz)} {zoneAbbr(lead.ko, tz)}
-            </span>
+    const live = mode === 'live'
+    const lead = list[0]
+    // Null once the clock passes kickoff, which the live branch already covers.
+    const left = countdown(lead.ko, now)
+
+    if (list.length > 1) {
+      return (
+        <div className={`nextmatch nextmatch-stack${live ? ' is-live' : ''}`}>
+          <div className="nm-label">
+            {live ? '🔴 Live now' : '⏱ Next up'}
+            <span className="nm-stage">{list.length} matches{live ? '' : ' at once'}</span>
           </div>
-        )}
+          {list.map((f) => (
+            <button key={f.id} className="nm-live-row" onClick={() => onJump?.(dateKey(f.ko, tz))}>
+              <Side abbr={f.home} />
+              <span className="nm-v">{LEAGUE.homeAwaySep}</span>
+              <Side abbr={f.away} />
+              <span className="nm-when">{f.city}</span>
+            </button>
+          ))}
+          {!live && left && (
+            <div className="nm-bottom nm-stack-bottom">
+              <span className="nm-countdown">{left}</span>
+              <span className="nm-when">
+                {timeOf(lead.ko, tz)} {zoneAbbr(lead.ko, tz)}
+              </span>
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    return (
+      <div className={`nextmatch${live ? ' is-live' : ''}`}>
+        <div className="nm-label">
+          {live ? '🔴 Live now' : followed ? '⭐ Your next match' : '⏱ Next match'}
+        </div>
+
+        <div className="nm-teams">
+          <Side abbr={lead.home} />
+          <span className="nm-v">{LEAGUE.homeAwaySep}</span>
+          <Side abbr={lead.away} />
+        </div>
+
+        <div className="nm-bottom">
+          {live ? (
+            <span className="nm-countdown live">● in progress</span>
+          ) : (
+            left && <span className="nm-countdown">{left}</span>
+          )}
+          <span className="nm-when">
+            {timeOf(lead.ko, tz)} {zoneAbbr(lead.ko, tz)} · {lead.city}
+          </span>
+          <button className="nm-jump" onClick={() => onJump?.(dateKey(lead.ko, tz))}>
+            Jump to it ↓
+          </button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className={`nextmatch${live ? ' is-live' : ''}`}>
-      <div className="nm-label">
-        {live ? '🔴 Live now' : followed ? '⭐ Your next match' : '⏱ Next match'}
-      </div>
-
-      <div className="nm-teams">
-        <Side abbr={lead.home} />
-        <span className="nm-v">{LEAGUE.homeAwaySep}</span>
-        <Side abbr={lead.away} />
-      </div>
-
-      <div className="nm-bottom">
-        {live ? (
-          <span className="nm-countdown live">● in progress</span>
-        ) : (
-          left && <span className="nm-countdown">{left}</span>
-        )}
-        <span className="nm-when">
-          {timeOf(lead.ko, tz)} {zoneAbbr(lead.ko, tz)} · {lead.city}
-        </span>
-        <button className="nm-jump" onClick={() => onJump?.(dateKey(lead.ko, tz))}>
-          Jump to it ↓
-        </button>
-      </div>
-    </div>
+    <>
+      {gap && <BreakNote gap={gap} tz={tz} active />}
+      {card()}
+    </>
   )
 }

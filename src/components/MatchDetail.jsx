@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import TeamLogo from './TeamLogo.jsx'
 import Lineups from './Lineups.jsx'
 import { TEAM_BY_ABBR } from '../data/teams.js'
-import { longDayOf, timeOf, countdown } from '../utils/time.js'
+import { breakAfter, breakBefore, findBreaks } from '../utils/breaks.js'
+import { dateKey, longDayOf, timeOf, countdown } from '../utils/time.js'
 import Modal from './Modal.jsx'
 import { LEAGUE } from '../config/league.js'
 
@@ -37,6 +38,12 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
     setRevealed(false)
   }, [fixture?.id])
 
+  // Where this match sits against the league's own calendar. A fixture on
+  // either edge of an international break is the one a viewer plans around —
+  // the last before the players scatter, or the first of the weekend the league
+  // comes back — and neither is visible from the date alone.
+  const breaks = useMemo(() => findBreaks(fixtures, tz), [fixtures, tz])
+
   if (!fixture) return null
 
   const { home, away, score, live, unplayed } = fixture
@@ -44,6 +51,10 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
   const hide = hideScores && !revealed
   const showScore = score && !hide
   const upcoming = !score && !unplayed
+
+  const day = dateKey(fixture.ko, tz)
+  const backFrom = breakBefore(breaks, day)
+  const intoBreak = breakAfter(breaks, day)
 
   // Goals, cards and substitutions merged into one oldest-first timeline, the
   // same shape the tournament siblings show. Each event already carries the abbr
@@ -143,6 +154,16 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
             <div>
               <dt>Starts in</dt>
               <dd>{countdown(fixture.ko)}</dd>
+            </div>
+          )}
+          {(backFrom || intoBreak) && (
+            <div>
+              <dt>International break</dt>
+              <dd>
+                {backFrom
+                  ? `First match back, after ${backFrom.days} days without a fixture`
+                  : `Last match before ${intoBreak.days} days without a fixture`}
+              </dd>
             </div>
           )}
           {fixture.venue && (

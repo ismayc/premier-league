@@ -35,6 +35,15 @@ team sheets, and **every final table since the competition began in 1992-93**.
   Kept in your browser rather than the URL, since a shared link should not
   filter someone else's list by your subscriptions.
 - **Next-kickoff bar** — a live countdown to the next match still to come.
+- **International breaks, named** — the league stops for two or three weeks in
+  September/October, November and March, and a fixture list that silently jumps
+  a fortnight looks like a bug. Every view that shows the hole now captions it:
+  between the two day sections it separates, between two collapsed matchweeks,
+  either side of the weeks the Week grid skips, inside a club's next fixtures,
+  and above the next-match banner — with a countdown to the first kickoff back —
+  while a break is on. Opening a match on either edge of one says which edge.
+  Derived from the fixture list itself (see *Design notes*), so there is no
+  calendar of windows to keep up to date.
 - **Live table** — the standings computed from results as they land, with
   **home/away splits**, recent **form**, and the Champions League / Europa /
   Conference / relegation bands (named in a legend, never colour alone).
@@ -177,6 +186,21 @@ league-zone palettes were checked for colour-vision separation and contrast
 against both the light and dark surfaces, and colour never carries meaning
 alone — positions are always printed, zones are named in a legend, and every
 bar is labelled with its value.
+
+**International breaks are inferred, not fetched.** The feed carries this
+competition and nothing else: no field says the players are away with their
+countries. What the fixture list does carry is the hole, and `src/utils/breaks.js`
+calls one an international break on two conditions — it runs at least eleven
+clear days, and its midpoint falls in a month FIFA holds a men's window
+(September, October, November, March, June). The league's own rhythm is weekly
+and a cup weekend or the mid-season break opens a week or a little more: in the
+2026-27 list the domestic holes run 7, 8 and 9 clear days and the international
+ones 13, 19 and 20, so the threshold sits in open space between the two
+populations rather than splitting either. Both tests describe the shape of a league calendar rather than one
+season's dates, so a refreshed fixture list re-derives its own breaks. What the
+app never claims is which countries are playing or when the window itself opens:
+the note says only what the fixture list can support — no league football for
+N days, back on this date.
 
 **Kickoffs are stored as UTC instants**, never as wall-clock strings. Premier
 League times are published in UK time, which is exactly what a naive "3pm
