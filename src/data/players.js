@@ -1341,7 +1341,7 @@ export const PLAYER_STATS = {
       {"id":"142055","name":"Bobby De Cordova-Reid","short":"B. De Cordova-Reid","pos":"F","team":"FUL","teamName":"Fulham","teamSlug":"eng.fulham","value":8,"matches":null},
       {"id":"222396","name":"Antonee Robinson","short":"A. Robinson","pos":"D","team":"FUL","teamName":"Fulham","teamSlug":"eng.fulham","value":8,"matches":null},
       {"id":"249299","name":"Alexis Mac Allister","short":"A. Mac Allister","pos":"M","team":"BHA","teamName":"Brighton","teamSlug":"eng.brighton","value":8,"matches":35},
-      {"id":"210143","name":"Andreas Pereira","short":"A. Pereira","pos":"M","team":"FUL","teamName":"Fulham","teamSlug":"eng.fulham","value":8,"matches":null},
+      {"id":"210143","name":"Andrea","short":"Andrea","pos":"M","team":"FUL","teamName":"Fulham","teamSlug":"eng.fulham","value":8,"matches":null},
       {"id":"196081","name":"Joachim Andersen","short":"J. Andersen","pos":"D","team":"CRY","teamName":"C Palace","teamSlug":"eng.crystal_palace","value":8,"matches":null},
       {"id":"190974","name":"Kenny Tete","short":"K. Tete","pos":"D","team":"FUL","teamName":"Fulham","teamSlug":"eng.fulham","value":8,"matches":null},
       {"id":"167127","name":"Luke Shaw","short":"L. Shaw","pos":"D","team":"MAN","teamName":"Man United","teamSlug":"eng.man_utd","value":8,"matches":null},
