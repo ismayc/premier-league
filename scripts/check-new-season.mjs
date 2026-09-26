@@ -52,6 +52,16 @@ const label = `${SEASON}-${String(SEASON + 1).slice(2)}`
 // still throws, so it stays visible instead of masquerading as "not yet".
 const NOT_YET = /\bHTTP 40[04]\b/
 
+// A longer retry budget than the refresh gets, for the per-match-day loop below. Once
+// a season is published that loop makes one request per match day, and any one of
+// them outlasting the retries fails the whole run, so the odds of a red run scale
+// with the day count. fetchRetry's default of 5 tries is about 15 s of backoff; on
+// September 26, 2026 the WNBA watch (run 36274585625) lost a run to a 502 burst on a
+// single day while the refresh two minutes later succeeded. 8 tries is about two
+// minutes of backoff per day. Nothing waits on this job, so a slow answer beats a
+// red one; a real outage still fails, just later. The guards test pins this.
+const WATCH_TRIES = 8
+
 // The season's match-day calendar, via a date inside the season — the same call
 // fetch-fixtures.mjs opens with. An unreleased season answers with the CURRENT
 // season's context (see TRAP above), which the year check turns into "not yet".
@@ -79,7 +89,7 @@ if (seasonYear === SEASON && calendar.length) {
   for (const day of calendar) {
     let d
     try {
-      d = await getJson(`${SITE}/scoreboard?dates=${ymd(day)}`)
+      d = await getJson(`${SITE}/scoreboard?dates=${ymd(day)}`, WATCH_TRIES)
     } catch (err) {
       if (!NOT_YET.test(err.message)) throw err
       continue // a rejected match-day contributes no fixtures; released stays conservative
