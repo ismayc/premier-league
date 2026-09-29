@@ -9,7 +9,9 @@ import TeamPanel from './components/TeamPanel.jsx'
 import CalendarModal from './components/CalendarModal.jsx'
 import Toasts from './components/Toasts.jsx'
 import ServicesModal from './components/ServicesModal.jsx'
+import FooterTimes from './components/FooterTimes.jsx'
 import { FIXTURES } from './data/fixtures.js'
+import { DATA_UPDATED_AT } from './data/meta.js'
 import { applyLive, fetchLive } from './services/espn.js'
 import { detectEvents, eventKey } from './services/alerts.js'
 import { useFollow } from './context/follow.jsx'
@@ -86,6 +88,8 @@ export default function App() {
   const { followed } = useFollow()
 
   const [live, setLive] = useState(null)
+  // When the last live poll SUCCEEDED; null until the first one lands.
+  const [liveAt, setLiveAt] = useState(null)
   // A ?game= deep link opens straight onto that match's detail (see urlState.js).
   const [detail, setDetail] = useState(
     () => (initial.game && FIXTURES.find((f) => f.id === initial.game)) || null
@@ -125,6 +129,7 @@ export default function App() {
   const load = useCallback(async (signal) => {
     try {
       setLive(await fetchLive({ signal }))
+      setLiveAt(new Date())
     } catch {
       // Offline, rate-limited, or a feed hiccup. The committed fixture list
       // still renders — the app is stale, not broken.
@@ -398,6 +403,7 @@ export default function App() {
           </a>{' '}
           results. Not affiliated with the Premier League.
         </p>
+        <FooterTimes dataAt={DATA_UPDATED_AT} checkedAt={liveAt} tz={tz} />
       </footer>
     </div>
   )

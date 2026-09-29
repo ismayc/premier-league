@@ -6,6 +6,16 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-09-29
 
+- **The footer now shows when the committed data last changed, ported from the WNBA
+  viewer.** It reads "Data as of 28 Sept, 16:49 · Live scores checked 16:52" in the
+  selected time zone, in the league's own en-GB, 24-hour style. This viewer never showed
+  when the live poll last succeeded, so it gains that time too, and it appears only after
+  a poll succeeds. The stamp lives in `src/data/meta.js`. All three fetch scripts
+  (`fetch-fixtures.mjs`, `fetch-stats.mjs`, and `fetch-history.mjs`) write through
+  `scripts/lib/stamp.mjs`, which compares each output to what is on disk and rewrites the
+  stamp only when a data file or a crest actually changes. A refresh with nothing new
+  still produces no diff, no commit, and no deploy. Tests read a frozen stamp, and a
+  missing or unparseable stamp shows nothing rather than a wrong date.
 - **The data-freshness monitor now says "unknown" when it cannot read the run history.**
   Before, a GitHub API outage that failed every listing call looked the same as a dead
   pipeline: the run went red and filed "Refresh has not landed for days", a claim

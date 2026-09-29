@@ -48,6 +48,25 @@ export function isValidZone(tz) {
 
 export const timeOf = T.formatTime
 
+/**
+ * "28 Sept, 16:49" in the viewer's zone, in the league's locale, for the footer's
+ * "Data as of". A missing or unparseable stamp gives null, never "Invalid Date" and
+ * never the epoch: `new Date(null)` is a real date (December 31, 1969 in the US),
+ * which a TBC tip once printed.
+ */
+export function formatStamp(iso, tz) {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return null
+  return new Intl.DateTimeFormat(T.locale, {
+    timeZone: tz,
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(d)
+}
+
 /** The short zone name for an instant — "BST", "MST", "GMT+2" — for the card. */
 export function zoneAbbr(iso, tz) {
   try {

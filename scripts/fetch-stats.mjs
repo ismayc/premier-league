@@ -15,13 +15,19 @@
  * Uses Node built-ins only, so the refresh workflow can run without npm ci.
  */
 
-import { existsSync, writeFileSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { fetchRetry, getJson } from './lib/fetch.mjs'
+import { createDataWriter } from './lib/stamp.mjs'
 import { SEASON as COMMITTED_SEASON } from '../src/data/teams.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
+
+// Every generated file (players.js and any missing crest) is written through this: it
+// skips a file whose bytes have not changed and, on the first one that has, rewrites
+// src/data/meta.js with the time. See scripts/lib/stamp.mjs.
+const data = createDataWriter(join(ROOT, 'src/data/meta.js'))
 const CORE = 'https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1'
 
 /**
@@ -171,7 +177,7 @@ async function mirrorMissingCrests() {
       if (!logo) continue
       try {
         const res = await fetchRetry(resized(logo.href))
-        writeFileSync(path, Buffer.from(await res.arrayBuffer()))
+        await data.write(path, Buffer.from(await res.arrayBuffer()))
         saved++
       } catch (err) {
         console.log(`  ⚠ crest ${file}: ${err.message}`)
@@ -246,8 +252,13 @@ async function main() {
     '',
   ].join('\n')
 
-  writeFileSync(join(ROOT, 'src/data/players.js'), out)
+  await data.write(join(ROOT, 'src/data/players.js'), out)
   console.log(`\nWrote src/data/players.js — ${seasons.length} seasons, ${refCache.size} athletes/clubs resolved`)
+  console.log(
+    data.stampedAt
+      ? `  data changed; stamped src/data/meta.js ${data.stampedAt}`
+      : '  no data changed; src/data/meta.js left as is'
+  )
 }
 
 main().catch((err) => {

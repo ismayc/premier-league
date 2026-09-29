@@ -22,12 +22,16 @@
  * Uses Node built-ins only, so the refresh workflow can run without npm ci.
  */
 
-import { writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { getText } from './lib/fetch.mjs'
+import { createDataWriter } from './lib/stamp.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
+
+// history.js is written through this: it skips the file when its bytes have not changed
+// and otherwise rewrites src/data/meta.js with the time. See scripts/lib/stamp.mjs.
+const data = createDataWriter(join(ROOT, 'src/data/meta.js'))
 const RAW = 'https://raw.githubusercontent.com/openfootball/england/master'
 
 // The first three seasons ran with 22 clubs before the League cut to 20.
@@ -313,9 +317,14 @@ async function main() {
     '',
   ].join('\n')
 
-  writeFileSync(join(ROOT, 'src/data/history.js'), out)
+  await data.write(join(ROOT, 'src/data/history.js'), out)
 
   console.log(`\nWrote src/data/history.js — ${seasons.length} seasons`)
+  console.log(
+    data.stampedAt
+      ? `  data changed; stamped src/data/meta.js ${data.stampedAt}`
+      : '  no data changed; src/data/meta.js left as is'
+  )
   if (warnings.length) {
     console.log(`\n⚠ ${warnings.length} season(s) need review:`)
     for (const w of warnings) console.log(`  ${w}`)
