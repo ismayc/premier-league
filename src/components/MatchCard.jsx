@@ -1,6 +1,6 @@
 import TeamLogo from './TeamLogo.jsx'
 import { TEAM_BY_ABBR } from '../data/teams.js'
-import { countdown, timeOf, zoneAbbr } from '../utils/time.js'
+import { zoneAbbr, koTime, koCountdown } from '../utils/time.js'
 import { useFollow } from '../context/follow.jsx'
 
 const nameOf = (abbr) => TEAM_BY_ABBR[abbr]?.name ?? abbr
@@ -61,7 +61,7 @@ export default function MatchCard({ fixture, tz, hideScores, onOpen, onPickTeam 
   // A countdown is only useful when kickoff is close; on a fixture weeks away
   // it is noise, and the next-kickoff banner already covers the imminent one.
   const soon = !score && !unplayed && new Date(fixture.ko) - Date.now() < 48 * 3600 * 1000
-  const ticks = soon ? countdown(fixture.ko) : null
+  const ticks = soon ? koCountdown(fixture) : null
 
   return (
     <article className={`mc ${live ? 'is-live' : ''} ${unplayed ? 'is-off' : ''} ${tracked ? 'is-tracked' : ''}`}>
@@ -87,7 +87,7 @@ export default function MatchCard({ fixture, tz, hideScores, onOpen, onPickTeam 
           <span className="mc-ft">FT</span>
         ) : (
           <>
-            <span className="mc-ko">{timeOf(fixture.ko, tz)}</span>
+            <span className="mc-ko">{koTime(fixture, tz)}</span>
             <span className="mc-zone">{zoneAbbr(fixture.ko, tz)}</span>
           </>
         )}

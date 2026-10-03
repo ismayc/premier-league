@@ -3,7 +3,7 @@ import BreakNote from './BreakNote.jsx'
 import TeamLogo from './TeamLogo.jsx'
 import { TEAM_BY_ABBR } from '../data/teams.js'
 import { breakAfter, breakBefore, findBreaks } from '../utils/breaks.js'
-import { dateKey, startOfWeek, timeOf } from '../utils/time.js'
+import { startOfWeek, koDay, koTime } from '../utils/time.js'
 import { LEAGUE } from '../config/league.js'
 
 /**
@@ -59,7 +59,7 @@ export default function WeekView({ fixtures, tz, hideScores, onOpen }) {
       key,
       date: d.getUTCDate(),
       fixtures: weekFixtures
-        .filter((f) => dateKey(f.ko, tz) === key)
+        .filter((f) => koDay(f, tz) === key)
         .sort((a, b) => a.ko.localeCompare(b.ko)),
     }
   })
@@ -119,7 +119,7 @@ export default function WeekView({ fixtures, tz, hideScores, onOpen }) {
             </div>
             {col.fixtures.map((f) => (
               <button key={f.id} type="button" className="week-cell" onClick={() => onOpen?.(f)}>
-                <span className="week-time">{f.live ? 'LIVE' : timeOf(f.ko, tz)}</span>
+                <span className="week-time">{f.live ? 'LIVE' : koTime(f, tz)}</span>
                 <span className="week-side">
                   <TeamLogo abbr={f.home} size={16} />
                   <span className="week-abbr">{TEAM_BY_ABBR[f.home]?.abbr ?? f.home}</span>

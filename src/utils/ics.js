@@ -14,6 +14,7 @@
 
 import { TEAM_BY_ABBR } from '../data/teams.js'
 import { LEAGUE } from '../config/league.js'
+import { koDay, timeTbd } from './time.js'
 
 const stamp = (iso) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
 
@@ -55,8 +56,12 @@ export function buildCalendar(fixtures, { name = LEAGUE.name } = {}) {
       'BEGIN:VEVENT',
       `UID:${f.id}@${LEAGUE.ics.domain}`,
       `DTSTAMP:${stamp(new Date().toISOString())}`,
-      `DTSTART:${stamp(start.toISOString())}`,
-      `DTEND:${stamp(end.toISOString())}`,
+      // A fixture with no announced kickoff is an ALL-DAY event, not a timed one.
+      // Writing the placeholder as DTSTART puts a confident midnight-ET entry in the
+      // subscriber's calendar — 9pm the evening before, in Mountain time.
+      ...(timeTbd(f)
+        ? [`DTSTART;VALUE=DATE:${koDay(f, 'America/New_York').replace(/-/g, '')}`]
+        : [`DTSTART:${stamp(start.toISOString())}`, `DTEND:${stamp(end.toISOString())}`]),
       fold(`SUMMARY:${escape(title + score)}`),
       fold(`LOCATION:${escape([f.venue, f.city].filter(Boolean).join(', '))}`),
       fold(`DESCRIPTION:${escape(f.tv?.length ? `TV: ${f.tv.join(', ')}` : LEAGUE.name)}`),

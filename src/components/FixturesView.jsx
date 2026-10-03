@@ -2,7 +2,7 @@ import { useMemo, useRef, useEffect, useState } from 'react'
 import MatchCard from './MatchCard.jsx'
 import NextMatch from './NextMatch.jsx'
 import BreakNote from './BreakNote.jsx'
-import { groupByDay, longDayOf, dateKey, whenBucket } from '../utils/time.js'
+import { groupByDay, longDayOf, dateKey, whenBucket, koDay } from '../utils/time.js'
 import { assignMatchweeks, groupByMatchweek } from '../utils/matchweek.js'
 import { breakAt, breaksBetween, findBreaks } from '../utils/breaks.js'
 import { useFollow } from '../context/follow.jsx'
@@ -130,7 +130,7 @@ export default function FixturesView({
   // The default view: today onward plus any live match. Filtered at fixture
   // level so a live game on a past day survives while its finished siblings go.
   const upcomingDays = useMemo(() => {
-    const list = baseList.filter((f) => f.live || dateKey(f.ko, tz) >= todayKey)
+    const list = baseList.filter((f) => f.live || koDay(f, tz) >= todayKey)
     return groupByDay(list, tz)
   }, [baseList, tz, todayKey])
 

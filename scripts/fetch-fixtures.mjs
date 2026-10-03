@@ -70,6 +70,13 @@ function normalizeEvent(ev) {
   const fixture = {
     id: ev.id,
     ko: new Date(ev.date).toISOString(),
+    // ... EXCEPT when there is no time to announce. `timeValid: false` means ESPN has
+    // only set the DATE, and `ko` above is its placeholder for it: midnight US EASTERN
+    // that day. Stored as a real instant it becomes a kickoff nobody announced, on the
+    // day before the match anywhere west of Eastern. A Premier League fixture is TBC
+    // for weeks at a time while TV picks are made, so this is the common case here, not
+    // an edge one. See sports-viewer-meta/docs/LINEAGES.md §6.
+    timeTbd: comp.timeValid === false || undefined,
     home: home.team.abbreviation,
     away: away.team.abbreviation,
     venue: comp.venue?.fullName,

@@ -91,11 +91,36 @@ export const longDayOf = (iso, tz) =>
 /** A stable YYYY-MM-DD key *in the viewer's zone*, for grouping by matchday. */
 export const dateKey = T.dayKey
 
+// ── A KICKOFF ESPN HAS NOT ANNOUNCED ────────────────────────────────────────────────
+// `timeTbd` (set in scripts/fetch-fixtures.mjs from ESPN's `timeValid: false`) marks a
+// fixture whose `ko` is a PLACEHOLDER — midnight US EASTERN on the day of the match. It
+// is a date wearing the costume of an instant, and this league has them for weeks at a
+// time while the TV picks are made.
+//
+// Read as a real kickoff it prints a time nobody announced; prints it on the day BEFORE
+// anywhere west of Eastern (04:00Z is 9pm in Phoenix, 5am in London the same morning —
+// so a UK reader sees the right date by luck and an American one does not); and makes
+// the match look played, because "has it kicked off?" is a comparison against that
+// midnight. The WNBA sibling shipped all three on 2026-10-03; see
+// sports-viewer-meta/docs/LINEAGES.md §6.
+const ESPN_DAY_TZ = 'America/New_York'
+
+export const timeTbd = (f) => f?.timeTbd === true
+
+/** The day a fixture belongs to: the viewer's zone, or the Eastern date of a placeholder. */
+export const koDay = (f, tz) => dateKey(f.ko, timeTbd(f) ? ESPN_DAY_TZ : tz)
+
+/** The kickoff a fixture shows, or that one has not been set. */
+export const koTime = (f, tz) => (timeTbd(f) ? 'Time TBC' : timeOf(f.ko, tz))
+
+/** No countdown to a kickoff nobody has set. */
+export const koCountdown = (f, now = Date.now()) => (timeTbd(f) ? null : countdown(f.ko, now))
+
 /** Group fixtures into ordered day buckets in the viewer's zone. */
 export function groupByDay(fixtures, tz) {
   const days = new Map()
   for (const f of fixtures) {
-    const key = dateKey(f.ko, tz)
+    const key = koDay(f, tz)
     if (!days.has(key)) days.set(key, { key, iso: f.ko, fixtures: [] })
     days.get(key).fixtures.push(f)
   }
@@ -146,6 +171,10 @@ export function whenBucket(fixture, now = Date.now()) {
   if (fixture.unplayed) return 'void'
   if (fixture.live) return 'live'
   if (fixture.score) return 'final'
+  // A placeholder kickoff cannot say whether the match has started: midnight Eastern
+  // would make it live in the small hours and finished by mid-morning. A score or a
+  // live feed still proves it has been played — both are checked above.
+  if (timeTbd(fixture)) return 'upcoming'
   const start = new Date(fixture.ko).getTime()
   if (now < start) return 'upcoming'
   return now < start + MATCH_MS ? 'live' : 'final'

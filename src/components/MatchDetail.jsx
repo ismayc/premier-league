@@ -3,7 +3,7 @@ import TeamLogo from './TeamLogo.jsx'
 import Lineups from './Lineups.jsx'
 import { TEAM_BY_ABBR } from '../data/teams.js'
 import { breakAfter, breakBefore, findBreaks } from '../utils/breaks.js'
-import { dateKey, longDayOf, timeOf, countdown } from '../utils/time.js'
+import { longDayOf, timeOf, koDay, koTime, koCountdown, timeTbd } from '../utils/time.js'
 import Modal from './Modal.jsx'
 import { LEAGUE } from '../config/league.js'
 
@@ -52,7 +52,7 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
   const showScore = score && !hide
   const upcoming = !score && !unplayed
 
-  const day = dateKey(fixture.ko, tz)
+  const day = koDay(fixture, tz)
   const backFrom = breakBefore(breaks, day)
   const intoBreak = breakAfter(breaks, day)
 
@@ -146,14 +146,18 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
           <div>
             <dt>{LEAGUE.kickoffLabel}</dt>
             <dd>
-              {longDayOf(fixture.ko, tz)}, {timeOf(fixture.ko, tz)}
-              <span className="muted"> · {timeOf(fixture.ko, 'Europe/London')} UK</span>
+              {longDayOf(fixture.ko, tz)}, {koTime(fixture, tz)}
+              {/* The UK time is a second clock on the same kickoff; with no kickoff set
+                  there is nothing for it to say. */}
+              {!timeTbd(fixture) && (
+                <span className="muted"> · {timeOf(fixture.ko, 'Europe/London')} UK</span>
+              )}
             </dd>
           </div>
-          {upcoming && countdown(fixture.ko) && (
+          {upcoming && koCountdown(fixture) && (
             <div>
               <dt>Starts in</dt>
-              <dd>{countdown(fixture.ko)}</dd>
+              <dd>{koCountdown(fixture)}</dd>
             </div>
           )}
           {(backFrom || intoBreak) && (

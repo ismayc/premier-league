@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { TEAM_BY_ABBR } from '../data/teams.js'
-import { countdown, dateKey, timeOf, zoneAbbr, whenBucket } from '../utils/time.js'
+import { countdown, dateKey, zoneAbbr, whenBucket, koDay, koTime, koCountdown, timeTbd } from '../utils/time.js'
 import { breakAt } from '../utils/breaks.js'
 import { useFollow } from '../context/follow.jsx'
 import BreakNote from './BreakNote.jsx'
@@ -91,7 +91,7 @@ export default function NextMatch({ fixtures, tz, breaks, onJump }) {
     const live = mode === 'live'
     const lead = list[0]
     // Null once the clock passes kickoff, which the live branch already covers.
-    const left = countdown(lead.ko, now)
+    const left = koCountdown(lead, now)
 
     if (list.length > 1) {
       return (
@@ -101,7 +101,7 @@ export default function NextMatch({ fixtures, tz, breaks, onJump }) {
             <span className="nm-stage">{list.length} matches{live ? '' : ' at once'}</span>
           </div>
           {list.map((f) => (
-            <button key={f.id} className="nm-live-row" onClick={() => onJump?.(dateKey(f.ko, tz))}>
+            <button key={f.id} className="nm-live-row" onClick={() => onJump?.(koDay(f, tz))}>
               <Side abbr={f.home} />
               <span className="nm-v">{LEAGUE.homeAwaySep}</span>
               <Side abbr={f.away} />
@@ -112,7 +112,7 @@ export default function NextMatch({ fixtures, tz, breaks, onJump }) {
             <div className="nm-bottom nm-stack-bottom">
               <span className="nm-countdown">{left}</span>
               <span className="nm-when">
-                {timeOf(lead.ko, tz)} {zoneAbbr(lead.ko, tz)}
+                {koTime(lead, tz)} {!timeTbd(lead) && zoneAbbr(lead.ko, tz)}
               </span>
             </div>
           )}
@@ -139,9 +139,9 @@ export default function NextMatch({ fixtures, tz, breaks, onJump }) {
             left && <span className="nm-countdown">{left}</span>
           )}
           <span className="nm-when">
-            {timeOf(lead.ko, tz)} {zoneAbbr(lead.ko, tz)} · {lead.city}
+            {koTime(lead, tz)} {!timeTbd(lead) && zoneAbbr(lead.ko, tz)} · {lead.city}
           </span>
-          <button className="nm-jump" onClick={() => onJump?.(dateKey(lead.ko, tz))}>
+          <button className="nm-jump" onClick={() => onJump?.(koDay(lead, tz))}>
             Jump to it ↓
           </button>
         </div>
