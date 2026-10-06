@@ -1902,7 +1902,7 @@ export const PLAYER_STATS = {
       {"id":"214375","name":"Emiliano Buendía","short":"E. Buendía","pos":"M","team":"NOR","teamName":"Norwich City","teamSlug":"eng.norwich","value":1,"matches":36},
       {"id":"176948","name":"Ederson","short":"Ederson","pos":"G","team":"MNC","teamName":"Man City","teamSlug":"eng.man_city","value":1,"matches":null},
       {"id":"230757","name":"Çaglar Söyüncü","short":"Ç. Söyüncü","pos":"D","team":"LEI","teamName":"Leicester","teamSlug":"eng.leicester","value":1,"matches":null},
-      {"id":"157825","name":"Trézéguet","short":"Trézéguet","pos":"F","team":"AVL","teamName":"Aston Villa","teamSlug":"eng.aston_villa","value":1,"matches":null},
+      {"id":"157825","name":"Trézéguet","short":"Trézéguet","pos":"M","team":"AVL","teamName":"Aston Villa","teamSlug":"eng.aston_villa","value":1,"matches":null},
       {"id":"197399","name":"Jefferson Lerma","short":"J. Lerma","pos":"M","team":"BOU","teamName":"Bournemouth","teamSlug":"eng.bournemouth","value":1,"matches":null},
       {"id":"167686","name":"Romain Saïss","short":"R. Saïss","pos":"D","team":"WOL","teamName":"Wolves","teamSlug":"eng.wolverhampton","value":1,"matches":null},
       {"id":"143576","name":"Sèrge Aurier","short":"S. Aurier","pos":"D","team":"TOT","teamName":"Spurs","teamSlug":"eng.tottenham","value":1,"matches":null},
