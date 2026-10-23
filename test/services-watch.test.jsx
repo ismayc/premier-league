@@ -67,6 +67,14 @@ describe('watchableServices', () => {
     expect(found.map((s) => s.key)).toEqual(['youtubetv', 'cable'])
   })
 
+  it('matches a network whatever case ESPN spells it in', () => {
+    const keys = ['peacock', 'youtubetv', 'cable', 'sling']
+    const asWritten = watchableServices(['USA Net'], keys).map((s) => s.key)
+    expect(asWritten).toEqual(['youtubetv', 'sling', 'cable'])
+    expect(watchableServices(['usa net'], keys).map((s) => s.key)).toEqual(asWritten)
+    expect(watchableServices(['USA NET'], keys).map((s) => s.key)).toEqual(asWritten)
+  })
+
   it('indexes the catalog by key', () => {
     expect(SERVICE_BY_KEY.peacock.label).toBe('Peacock')
     expect(Object.keys(SERVICE_BY_KEY)).toHaveLength(SERVICE_CATALOG.length)
