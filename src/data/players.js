@@ -204,7 +204,7 @@ export const PLAYER_STATS = {
       {"id":"224077","name":"Yoane Wissa","short":"Y. Wissa","pos":"F","team":"NEW","teamName":"Newcastle","teamSlug":"eng.newcastle","value":13,"matches":null},
       {"id":"214375","name":"Emiliano Buendía","short":"E. Buendía","pos":"M","team":"AVL","teamName":"Aston Villa","teamSlug":"eng.aston_villa","value":13,"matches":null},
       {"id":"322654","name":"Emersonn","short":"Emersonn","pos":"F","team":"IPS","teamName":"Ipswich","teamSlug":"eng.ipswich","value":13,"matches":null},
-      {"id":"106139","name":"Lewis Hall","short":"L. Hall","pos":"D","team":"NEW","teamName":"Newcastle","teamSlug":"eng.newcastle","value":12,"matches":null},
+      {"id":"106139","name":"Lewis Hall","short":"L. Hall","pos":"M","team":"NEW","teamName":"Newcastle","teamSlug":"eng.newcastle","value":12,"matches":null},
     ],
     foulsCommitted: [
       {"id":"250936","name":"Boubacar Kamara","short":"B. Kamara","pos":"M","team":"AVL","teamName":"Aston Villa","teamSlug":"eng.aston_villa","value":18,"matches":null},
@@ -1231,7 +1231,7 @@ export const PLAYER_STATS = {
       {"id":"250787","name":"Phil Foden","short":"P. Foden","pos":"M","team":"MNC","teamName":"Man City","teamSlug":"eng.man_city","value":52,"matches":32},
       {"id":"159248","name":"Nathan Aké","short":"N. Aké","pos":"D","team":"MNC","teamName":"Man City","teamSlug":"eng.man_city","value":50,"matches":null},
       {"id":"97770","name":"César Azpilicueta","short":"C. Azpilicueta","pos":"D","team":"CHE","teamName":"Chelsea","teamSlug":"eng.chelsea","value":50,"matches":null},
-      {"id":"106139","name":"Lewis Hall","short":"L. Hall","pos":"D","team":"CHE","teamName":"Chelsea","teamSlug":"eng.chelsea","value":50,"matches":null},
+      {"id":"106139","name":"Lewis Hall","short":"L. Hall","pos":"M","team":"CHE","teamName":"Chelsea","teamSlug":"eng.chelsea","value":50,"matches":null},
       {"id":"325564","name":"Rico Lewis","short":"R. Lewis","pos":"D","team":"MNC","teamName":"Man City","teamSlug":"eng.man_city","value":48,"matches":null},
       {"id":"118381","name":"Liam Cooper","short":"L. Cooper","pos":"D","team":"LEE","teamName":"Leeds","teamSlug":"eng.leeds","value":47,"matches":null},
       {"id":"223532","name":"Trent Alexander-Arnold","short":"T. Alexander-Arnold","pos":"D","team":"LIV","teamName":"Liverpool","teamSlug":"eng.liverpool","value":45,"matches":37},
