@@ -91,7 +91,8 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
             ) : (
               <strong className="md-vs">{LEAGUE.homeAwaySep}</strong>
             )}
-            {live && <span className="md-live">{fixture.clock || 'Live'}</span>}
+            {/* The live minute hints at the result too, so it waits for the reveal. */}
+            {live && <span className="md-live">{(!hide && fixture.clock) || 'Live'}</span>}
             {unplayed && <span className="md-off">{unplayed}</span>}
             {score && !live && !unplayed && <span className="md-ft">Full time</span>}
             {score && hideScores && (

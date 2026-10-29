@@ -251,7 +251,8 @@ function TeamFixture({ f, abbr, tz, hideScores, onOpen }) {
   return (
     <li>
       <button type="button" className="tp-fixture" onClick={() => onOpen?.(f)}>
-        {result && <i className={`form-${result}`}>{result}</i>}
+        {/* The W/D/L pill is a spoiler too, so it stays off while scores are hidden. */}
+        {result && !hideScores && <i className={`form-${result}`}>{result}</i>}
         <span className="tp-venue">{isHome ? 'H' : 'A'}</span>
         <TeamLogo abbr={opponent} size={18} />
         <span className="tp-opp">{TEAM_BY_ABBR[opponent]?.name ?? opponent}</span>

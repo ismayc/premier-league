@@ -4,6 +4,17 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-10-29
+
+- **Spoiler-free mode no longer gives away the result through a live minute, a winner
+  highlight, or a result letter** (ported from the NFL Schedule fix for its issue #1).
+  With scores hidden, a live match card and the match popout still showed the minute
+  or status (such as 90+3' or HT), which hints at how close the match is. They now read
+  only "Live" until you press "Reveal score" in the popout. The match card also stopped
+  highlighting the winning club on a finished match, and the team panel stopped showing
+  the W, D, or L letter beside each recent result. Full time already read the same
+  either way, since league matches have no extra time.
+
 ## 2026-10-03
 
 - **A failed issue call no longer turns a fresh data-freshness run red.** At 21:47 UTC

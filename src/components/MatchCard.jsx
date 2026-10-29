@@ -26,7 +26,8 @@ export default function MatchCard({ fixture, tz, hideScores, onOpen, onPickTeam 
 
   const tracked = isFollowed(home) || isFollowed(away)
   const showScore = score && !hideScores
-  const winner = score ? (score[0] > score[1] ? home : score[1] > score[0] ? away : null) : null
+  // The winner highlight is a spoiler too, so it stays off while scores are hidden.
+  const winner = score && !hideScores ? (score[0] > score[1] ? home : score[1] > score[0] ? away : null) : null
 
   const side = (abbr, goals) => (
     <div
@@ -81,7 +82,9 @@ export default function MatchCard({ fixture, tz, hideScores, onOpen, onPickTeam 
         ) : live ? (
           <span className="mc-live-badge">
             <span className="mc-live-dot" aria-hidden="true" />
-            {fixture.clock || 'Live'}
+            {/* A minute like 90+3' or a status like HT hints at how close the match is, so
+                spoiler-free mode shows only Live. */}
+            {(!hideScores && fixture.clock) || 'Live'}
           </span>
         ) : showScore ? (
           <span className="mc-ft">FT</span>

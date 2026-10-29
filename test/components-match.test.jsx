@@ -212,6 +212,19 @@ describe('MatchCard', () => {
     expect(container.querySelector('.mc-ko')).toHaveTextContent('20:00')
   })
 
+  // Spoiler-free: a minute like 90+3' or a winner's bold row says how the match went.
+  it('shows only Live, never the minute, while scores are hidden', () => {
+    const { container } = render(
+      <MatchCard fixture={fixture({ live: true, clock: "90'+3'", score: [1, 0] })} tz="Europe/London" hideScores />
+    )
+    expect(container.querySelector('.mc-live-badge')).toHaveTextContent(/^Live$/)
+  })
+
+  it('marks no winner while scores are hidden', () => {
+    const { container } = render(<MatchCard fixture={fixture({ score: [2, 0] })} tz="Europe/London" hideScores />)
+    expect(container.querySelector('.is-winner')).toBeNull()
+  })
+
   it('shows the venue and where to watch beneath the clubs', () => {
     const { container } = render(
       <MatchCard
@@ -416,6 +429,21 @@ describe('MatchDetail', () => {
     expect(screen.queryByText('2–1')).toBeNull()
     // A finished match is still declared finished — only the score is withheld.
     expect(screen.getByText('Full time')).toBeInTheDocument()
+  })
+
+  it('shows only Live until the score is revealed in spoiler-free mode', async () => {
+    const user = userEvent.setup()
+    render(
+      <MatchDetail
+        fixture={fixture({ live: true, clock: "90'+3'", score: [1, 0] })}
+        fixtures={[]}
+        tz="Europe/London"
+        hideScores
+      />
+    )
+    expect(document.querySelector('.md-live')).toHaveTextContent(/^Live$/)
+    await user.click(screen.getByRole('button', { name: 'Reveal score' }))
+    expect(document.querySelector('.md-live')).toHaveTextContent("90'+3'")
   })
 
   it('reveals just this match’s score on demand in spoiler-free mode', async () => {
@@ -811,6 +839,20 @@ describe('TeamPanel', () => {
 
     await user.click(upcoming[0])
     expect(onOpen).toHaveBeenCalledWith(next)
+  })
+
+  it('drops the W/D/L pill from recent results while scores are hidden', () => {
+    render(
+      <TeamPanel
+        abbr="ARS"
+        fixtures={[result('ARS', 'CHE', 3, 0, at(-10 * DAY))]}
+        tz="Europe/London"
+        hideScores
+      />
+    )
+    const row = within(screen.getByText('Recent results').closest('section')).getByRole('button')
+    expect(row.querySelector('i')).toBeNull()
+    expect(row).not.toHaveTextContent('3–0')
   })
 
   it('shows a dash for a split the club has no matches in, and a negative goal difference', () => {
