@@ -13,7 +13,7 @@ import FooterTimes from './components/FooterTimes.jsx'
 import { FIXTURES } from './data/fixtures.js'
 import { DATA_UPDATED_AT } from './data/meta.js'
 import { applyLive, fetchLive } from './services/espn.js'
-import { detectEvents, eventKey } from './services/alerts.js'
+import { detectEvents, eventKey, spoilerSafe } from './services/alerts.js'
 import { useFollow } from './context/follow.jsx'
 import { readState, writeState } from './utils/urlState.js'
 import { COMMON_ZONES, detectZone } from './utils/time.js'
@@ -158,7 +158,7 @@ export default function App() {
     prevFixtures.current = fixtures
     if (!prev || !alerts) return
 
-    const found = detectEvents(prev, fixtures, { teams: followed })
+    const found = spoilerSafe(detectEvents(prev, fixtures, { teams: followed }), hideScores)
     if (!found.length) return
 
     setToasts((cur) => {
@@ -166,7 +166,7 @@ export default function App() {
       const fresh = found.map((e) => ({ ...e, key: eventKey(e) })).filter((e) => !seen.has(e.key))
       return [...fresh, ...cur].slice(0, 4)
     })
-  }, [fixtures, alerts, followed])
+  }, [fixtures, alerts, followed, hideScores])
 
   // Oldest first, so a burst of goals drains in the order it arrived.
   useEffect(() => {
@@ -387,7 +387,7 @@ export default function App() {
       {showServices && <ServicesModal onClose={() => setShowServices(false)} />}
 
       <Toasts
-        events={toasts}
+        events={spoilerSafe(toasts, hideScores)}
         onOpen={(f) => {
           setToasts([])
           setDetail(f)

@@ -855,6 +855,22 @@ describe('TeamPanel', () => {
     expect(row).not.toHaveTextContent('3–0')
   })
 
+  it('swaps the This season record and form strip for a note while scores are hidden', () => {
+    render(
+      <TeamPanel
+        abbr="ARS"
+        fixtures={[result('ARS', 'CHE', 3, 0, at(-10 * DAY))]}
+        tz="Europe/London"
+        hideScores
+      />
+    )
+    const block = screen.getByText('This season').closest('section')
+    expect(block).toHaveTextContent('Results are hidden in spoiler-free mode.')
+    expect(screen.queryByText('W-D-L')).toBeNull()
+    expect(screen.queryByText('Goal difference')).toBeNull()
+    expect(document.querySelector('.form-strip')).toBeNull()
+  })
+
   it('shows a dash for a split the club has no matches in, and a negative goal difference', () => {
     // Every away fixture: the home column has nothing to report.
     render(

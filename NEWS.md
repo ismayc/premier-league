@@ -4,6 +4,14 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-10-31
+
+- **Spoiler-free mode keeps only the kick-off alert.** Goal, red card, and full-time alerts say who leads,
+  how close it is, or who won, so with scores hidden only the kick-off alert shows.
+- **The team panel hides the season record in spoiler-free mode.** The "This season"
+  block (position, points, W-D-L, goal difference, home and away records, and the form
+  strip) adds up the results, so with scores hidden it shows a short note instead.
+
 ## 2026-10-29
 
 - **Spoiler-free mode no longer gives away the result through a live minute, a winner

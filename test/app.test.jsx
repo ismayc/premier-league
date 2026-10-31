@@ -784,6 +784,8 @@ describe('App live alerts', () => {
   it('stacks a second moment on top of a toast already showing', async () => {
     stubZone('Europe/London')
     localStorage.setItem('pl:alerts', '1')
+    // Scores are hidden by default here, and spoiler-free mode drops the goal toast.
+    setSearch('?hide=0')
     // The first poll kicks the match off, which flips liveCount and re-runs the
     // poll effect straight away. Holding that second poll until the kick-off
     // toast is up puts the goal on screen inside the 9s retire window — the only
@@ -800,6 +802,27 @@ describe('App live alerts', () => {
     })
     expect(screen.getByText('Goal')).toBeInTheDocument()
     expect(screen.getByText('Kick-off')).toBeInTheDocument()
+  })
+
+  it('keeps the kick-off but drops the goal toast in spoiler-free mode', async () => {
+    stubZone('Europe/London')
+    localStorage.setItem('pl:alerts', '1')
+    // The PL viewer keeps spoiler-free mode in the URL (hidden by default), not in
+    // localStorage.
+    setSearch('?hide=1')
+    let release
+    fetchLive.mockResolvedValueOnce(goLive())
+    fetchLive.mockReturnValue(new Promise((res) => { release = res }))
+    await renderApp()
+    await act(async () => {})
+    expect(screen.getByText('Kick-off')).toBeInTheDocument()
+
+    await act(async () => {
+      release(goLive({ score: [1, 0] }))
+    })
+    // The goal poll has landed: a goal toast would name the scorer and the score.
+    expect(screen.getByText('Kick-off')).toBeInTheDocument()
+    expect(screen.queryByText('Goal')).not.toBeInTheDocument()
   })
 
   it('retires a toast on its own after a while', async () => {

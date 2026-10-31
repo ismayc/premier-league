@@ -110,7 +110,16 @@ export default function TeamPanel({ abbr, fixtures, tz, hideScores, onClose, onO
           </button>
         </header>
 
-        {row && row.played > 0 && (
+        {/* The record, goal difference, and form strip add up the results, so
+            spoiler-free mode swaps the whole block for a note. */}
+        {row && row.played > 0 && hideScores && (
+          <section>
+            <h3>This season</h3>
+            <p className="muted tp-hidden">Results are hidden in spoiler-free mode.</p>
+          </section>
+        )}
+
+        {row && row.played > 0 && !hideScores && (
           <section>
             <h3>This season</h3>
             <div className="tiles compact">

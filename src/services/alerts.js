@@ -18,6 +18,12 @@ const redCount = (f) => f?.reds?.length ?? 0
 
 export const EVENT_KINDS = ['kickoff', 'goal', 'red', 'final']
 
+// Spoiler-free mode keeps only the start alert. Every other kind says who scored, who
+// was sent off, or who won, and any of those gives the score away.
+export const START_KINDS = new Set(['kickoff'])
+export const spoilerSafe = (events, hideScores) =>
+  hideScores ? events.filter((e) => START_KINDS.has(e.kind)) : events
+
 /**
  * Diff two snapshots of the fixture list and return the notable moments.
  *
