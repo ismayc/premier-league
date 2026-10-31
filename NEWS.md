@@ -6,6 +6,9 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-10-31
 
+- **The Stats view hides in spoiler-free mode.** Goal totals, scorer boards, and goal
+  difference all add up results, so once a match has been played the view shows a
+  "Reveal stats" button instead, like the Table view.
 - **The table hides in spoiler-free mode.** Once a match has been played, the Table view
   shows a "Reveal table" button instead of the standings, like the World Cup viewer's
   group tables. Before the season starts there is nothing to spoil, so the table shows.

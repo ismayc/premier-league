@@ -32,8 +32,27 @@ const seasonLabel = (year) => `${year}-${String((year + 1) % 100).padStart(2, '0
 const one = (n) => n.toFixed(1)
 const pct = (n) => `${Math.round(n * 100)}%`
 
-export default function StatsView({ fixtures, onPickTeam }) {
+export default function StatsView({ fixtures, hideScores, onPickTeam }) {
   const totals = useMemo(() => seasonTotals(fixtures), [fixtures])
+  // Goal totals, scorer boards, and goal difference all add up results, so
+  // spoiler-free mode hides the view until asked, like the Table view.
+  const [revealed, setRevealed] = useState(false)
+
+  if (hideScores && totals.played && !revealed) {
+    return (
+      <main className="view">
+        <div className="view-head">
+          <h2>Stats</h2>
+        </div>
+        <div className="standings-hidden">
+          <p>🙈 Season stats are hidden in spoiler-free mode.</p>
+          <button type="button" className="reveal-btn" onClick={() => setRevealed(true)}>
+            Reveal stats
+          </button>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="view">

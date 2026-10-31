@@ -129,6 +129,23 @@ describe('StatsView season totals', () => {
     expect(within(tile('Away wins')).getByText('2 clean sheets')).toBeInTheDocument()
     expect(within(tile('Goalless draws')).getByText('1')).toBeInTheDocument()
   })
+
+  it('hides the season stats behind a reveal button in spoiler-free mode', async () => {
+    const user = userEvent.setup()
+    render(<StatsView tz="UTC" hideScores fixtures={[played('ARS', 'CHE', 2, 1)]} />)
+    expect(screen.getByText(/Season stats are hidden in spoiler-free mode/)).toBeInTheDocument()
+    expect(screen.queryByText('Matches played')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Attack and defence' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Reveal stats' }))
+    expect(screen.getByText('Matches played')).toBeInTheDocument()
+  })
+
+  it('still shows the preseason view in spoiler-free mode (nothing to spoil)', () => {
+    render(<StatsView tz="UTC" hideScores fixtures={[scheduled('ARS', 'CHE')]} />)
+    expect(screen.getByText(/No matches played yet/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Reveal stats' })).not.toBeInTheDocument()
+  })
 })
 
 /* ── StatsView: leaderboards ───────────────────────────────────────────── */
