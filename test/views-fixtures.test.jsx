@@ -760,6 +760,22 @@ describe('TableView', () => {
     expect(within(tot).getByText('3', { selector: '.col-pts' })).toBeInTheDocument()
   })
 
+  it('hides the table behind a reveal button in spoiler-free mode', async () => {
+    const user = userEvent.setup()
+    render(<TableView fixtures={RESULTS} hideScores />)
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.getByText(/table is hidden in spoiler-free mode/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Reveal table' }))
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(clubs()[0]).toBe('Arsenal')
+  })
+
+  it('still shows the empty preseason table in spoiler-free mode (nothing to spoil)', () => {
+    render(<TableView fixtures={[]} hideScores />)
+    expect(bodyRows()).toHaveLength(20)
+  })
+
   it('shows no provisional flag when nothing is live', () => {
     render(<TableView fixtures={RESULTS} />)
     expect(screen.queryByText('As it stands')).not.toBeInTheDocument()

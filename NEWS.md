@@ -6,6 +6,9 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-10-31
 
+- **The table hides in spoiler-free mode.** Once a match has been played, the Table view
+  shows a "Reveal table" button instead of the standings, like the World Cup viewer's
+  group tables. Before the season starts there is nothing to spoil, so the table shows.
 - **Spoiler-free mode keeps only the kick-off alert.** Goal, red card, and full-time alerts say who leads,
   how close it is, or who won, so with scores hidden only the kick-off alert shows.
 - **The team panel hides the season record in spoiler-free mode.** The "This season"

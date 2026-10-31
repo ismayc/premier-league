@@ -354,7 +354,7 @@ export default function App() {
       {view === 'week' && (
         <WeekView fixtures={fixtures} tz={tz} hideScores={hideScores} onOpen={setDetail} />
       )}
-      {view === 'table' && <TableView fixtures={fixtures} onPickTeam={openTeam} />}
+      {view === 'table' && <TableView fixtures={fixtures} hideScores={hideScores} onPickTeam={openTeam} />}
       {view === 'stats' && <StatsView fixtures={fixtures} onPickTeam={openTeam} />}
       {view === 'history' && <HistoryView season={season} onSeason={setSeason} />}
 

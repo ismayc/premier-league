@@ -43,8 +43,11 @@ function FinishRange({ range }) {
   )
 }
 
-export default function TableView({ fixtures, onPickTeam }) {
+export default function TableView({ fixtures, hideScores, onPickTeam }) {
   const [split, setSplit] = useState('all')
+  // The table is every result added up, so spoiler-free mode hides it until asked.
+  // The World Cup viewer's group tables work the same way.
+  const [revealed, setRevealed] = useState(false)
 
   const table = useMemo(() => buildTable(fixtures, ALL_ABBRS), [fixtures])
   const anyPlayed = table.some((r) => r.played)
@@ -91,6 +94,22 @@ export default function TableView({ fixtures, onPickTeam }) {
       .sort((a, b) => b.points - a.points || b.gd - a.gd || b.gf - a.gf)
       .map((r, i) => ({ ...r, pos: i + 1 }))
   }, [table, split, anyPlayed])
+
+  if (hideScores && anyPlayed && !revealed) {
+    return (
+      <main className="view">
+        <div className="view-head">
+          <h2>Table</h2>
+        </div>
+        <div className="standings-hidden">
+          <p>🙈 The table is hidden in spoiler-free mode.</p>
+          <button type="button" className="reveal-btn" onClick={() => setRevealed(true)}>
+            Reveal table
+          </button>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="view">
