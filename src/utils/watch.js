@@ -24,8 +24,10 @@
  * these are the national defaults and are deliberately approximate.
  */
 
-// Exactly as ESPN spells them. NBCSN closed in 2021 but still appears against
-// older fixtures, so it stays in the NBC family for the historical seasons.
+// Exactly as ESPN spells them. NBCSN closed in 2021 and relaunched on November
+// 17, 2025 as NBC Sports' cable channel, so it appears against both the
+// historical seasons and the current one (seven 2026-27 fixtures by November
+// 1, 2026, each also tagged "Peacock").
 const NBC = 'NBC'
 const USA = 'USA Net'
 const CNBC = 'CNBC'
