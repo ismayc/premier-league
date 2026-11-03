@@ -58,6 +58,9 @@ export default function MatchCard({ fixture, tz, hideScores, onOpen, onPickTeam 
   const meta = []
   if (fixture.venue) meta.push(fixture.city ? `${fixture.venue}, ${fixture.city}` : fixture.venue)
   const tv = fixture.tv?.slice(0, 3).join(' · ')
+  // ESPN lists no channel until a few days before a match, and a blank looks like a missing
+  // listing. A kickoff already past gets no tag, even before its score arrives.
+  const channelTba = !tv && !score && !unplayed && new Date(fixture.ko) > Date.now()
 
   // A countdown is only useful when kickoff is close; on a fixture weeks away
   // it is noise, and the next-kickoff banner already covers the imminent one.
@@ -102,12 +105,13 @@ export default function MatchCard({ fixture, tz, hideScores, onOpen, onPickTeam 
           {side(away, score?.[1])}
         </div>
 
-        {(meta.length > 0 || tv || ticks) && (
+        {(meta.length > 0 || tv || channelTba || ticks) && (
           <div className="mc-meta">
             {meta.map((m) => (
               <span key={m}>{m}</span>
             ))}
             {tv && <span className="mc-tv">📺 {tv}</span>}
+            {channelTba && <span className="net-tba">Channel TBA</span>}
             {ticks && <span className="mc-countdown">in {ticks}</span>}
           </div>
         )}

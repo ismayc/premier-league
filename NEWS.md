@@ -4,6 +4,10 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-11-02
+
+- **An unannounced channel now says "Channel TBA".** ESPN lists no channel until a few days before a match, and the card and match detail used to show nothing. Only matches still to come get the tag.
+
 ## 2026-10-31
 
 - **The Stats view hides in spoiler-free mode.** Goal totals, scorer boards, and goal

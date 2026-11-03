@@ -681,7 +681,8 @@ describe('MatchDetail', () => {
   })
 
   it('omits the optional rows the feed left out', () => {
-    render(<MatchDetail fixture={fixture({ venue: 'Anfield' })} fixtures={[]} tz="Europe/London" />)
+    // A kickoff already past: one still to come shows "Channel TBA" in this row instead.
+    render(<MatchDetail fixture={fixture({ venue: 'Anfield', ko: at(-2 * DAY) })} fixtures={[]} tz="Europe/London" />)
 
     expect(screen.getByText('Anfield')).toBeInTheDocument()
     expect(screen.queryByText(/·\s*London/)).toBeNull()

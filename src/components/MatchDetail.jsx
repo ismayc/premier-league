@@ -183,6 +183,12 @@ export default function MatchDetail({ fixture, tz, fixtures, hideScores, onClose
           {/* Compared against 0 rather than tested for truthiness: React
               renders the number 0, so `tv?.length &&` would print a stray
               "0" in the facts list for a fixture with an empty tv array. */}
+          {upcoming && !fixture.tv?.length && new Date(fixture.ko) > Date.now() && (
+            <div>
+              <dt>Television</dt>
+              <dd><span className="net-tba">Channel TBA</span></dd>
+            </div>
+          )}
           {fixture.tv?.length > 0 && (
             <div>
               <dt>Television</dt>
