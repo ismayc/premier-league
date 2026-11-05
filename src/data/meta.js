@@ -2,4 +2,4 @@
 // When the committed data last changed. Rewritten only when a refresh changes a data
 // file or a logo, so its age is the age of the snapshot the site is serving.
 
-export const DATA_UPDATED_AT = '2026-11-04T18:25:41.471Z'
+export const DATA_UPDATED_AT = '2026-11-05T14:40:20.682Z'
