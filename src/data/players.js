@@ -1017,7 +1017,7 @@ export const PLAYER_STATS = {
       {"id":"224077","name":"Yoane Wissa","short":"Y. Wissa","pos":"F","team":"BRE","teamName":"Brentford","teamSlug":"eng.brentford","value":51,"matches":34},
       {"id":"238192","name":"Chiedozie Ogbene","short":"C. Ogbene","pos":"F","team":"LTN","teamName":"Luton","teamSlug":"eng.luton","value":50,"matches":null},
       {"id":"259902","name":"Matheus Cunha","short":"M. Cunha","pos":"F","team":"WOL","teamName":"Wolves","teamSlug":"eng.wolverhampton","value":49,"matches":32},
-      {"id":"207146","name":"Josh Cullen","short":"J. Cullen","pos":"M","team":"BUR","teamName":"Burnley","teamSlug":"eng.burnley","value":49,"matches":null},
+      {"id":"207146","name":"Josh Cullen","short":"J. Cullen","pos":"D","team":"BUR","teamName":"Burnley","teamSlug":"eng.burnley","value":49,"matches":null},
       {"id":"249299","name":"Alexis Mac Allister","short":"A. Mac Allister","pos":"M","team":"LIV","teamName":"Liverpool","teamSlug":"eng.liverpool","value":48,"matches":null},
       {"id":"251400","name":"Eberechi Eze","short":"E. Eze","pos":"M","team":"CRY","teamName":"C Palace","teamSlug":"eng.crystal_palace","value":48,"matches":27},
       {"id":"289877","name":"Moisés Caicedo","short":"M. Caicedo","pos":"M","team":"CHE","teamName":"Chelsea","teamSlug":"eng.chelsea","value":47,"matches":null},
