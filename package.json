@@ -5,7 +5,7 @@
   "type": "module",
   "description": "An unofficial, timezone-aware Premier League fixture viewer",
   "license": "MIT",
-  "author": "Chester Ismay (https://chester.rbind.io)",
+  "author": "Chester Ismay (https://chesterismay.com)",
   "homepage": "https://ismayc.github.io/premier-league/",
   "repository": {
     "type": "git",
