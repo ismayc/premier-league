@@ -28,12 +28,14 @@ team sheets, and **every final table since the competition began in 1992-93**.
 - **Follow clubs** — star any club to highlight it everywhere and filter the
   fixtures to just the clubs you follow (saved in your browser).
 - **Live alerts** — switch on the bell and the app toasts goals, red cards,
-  kick-off and full time as they happen, narrowed to the clubs you follow.
+  kick-off and full time as they happen, narrowed to the clubs you follow (only
+  kick-off in spoiler-free mode).
   Detected by diffing successive polls, so it needs no play-by-play feed.
 - **My services** — tell the app which streaming services and TV packages you
   have and the fixtures list can be narrowed to matches you can actually watch.
   Kept in your browser rather than the URL, since a shared link should not
-  filter someone else's list by your subscriptions.
+  filter someone else's list by your subscriptions. A match with no announced
+  channel shows "Channel TBA".
 - **Next-kickoff bar** — a live countdown to the next match still to come.
 - **International breaks, named** — the league stops for two or three weeks in
   September/October, November and March, and a fixture list that silently jumps
@@ -63,10 +65,14 @@ team sheets, and **every final table since the competition began in 1992-93**.
   their position, nationality and height. (Lineups appear about an hour before
   kickoff.)
 - **Add to calendar** — per-match and whole-season `.ics` export, optionally
-  filtered to the clubs you follow.
+  filtered to the clubs you follow, plus a live subscription feed that updates
+  as scores go final (on the Netlify site only).
 - **Spoiler-free mode** — **on by default**; scores are hidden globally, so a
-  finished match reads as an ordinary upcoming card until you open it. One
-  header toggle turns scores on, and that choice travels in a shared link.
+  finished match reads as an ordinary upcoming card until you open it. It also
+  hides the live minute, the winner highlight, the result letters, the season
+  record in the team panel, and the Table and Stats views (each behind a
+  "Reveal" button once a match has been played). One header toggle turns
+  scores on, and that choice travels in a shared link.
 - **Light/dark theme** — follows your system preference, with no flash on load.
 - **Shareable URLs** — view, timezone, spoiler mode, club and season persist to
   the query string; links unfurl with a title/description/image preview in chat
@@ -129,6 +135,10 @@ scripts/fetch-stats.mjs      → src/data/players.js
 scripts/fetch-history.mjs    → src/data/history.js
 ```
 
+All three write through `scripts/lib/stamp.mjs`, which stamps `src/data/meta.js`
+when the data changes, so the footer can show "Data as of" and "Live scores
+checked" times.
+
 Refresh everything with `npm run fetch:all`. The scripts use **Node built-ins
 only** — no imports from `node_modules` — so a scheduled refresh can run
 without an `npm ci` first.
@@ -151,9 +161,9 @@ data, so a bad refresh fails the build instead of shipping a wrong table.
 
 ### Known data caveats
 
-- **The 2026-27 season has not kicked off**, so the table is empty and the
-  Stats view's player leaderboards default to the most recent season that has
-  data. They switch over automatically once matches are played.
+- **Early in a season there is little data**, so the table and leaderboards are
+  thin, and the Stats view's player leaderboards default to the most recent
+  season that has data.
 - **ESPN publishes no player leaders for 2020-21.** That season is absent from
   the Stats switcher rather than shown as zeroes.
 - **Broadcasters are assigned only weeks ahead**, so most of a freshly-fetched
@@ -227,7 +237,7 @@ broadcasters (NBC, Peacock, USA Network) rather than UK ones.
 
 ## Credits
 
-Created by [Chester Ismay](https://chester.rbind.io). Source on
+Created by [Chester Ismay](https://chesterismay.com). Source on
 [GitHub](https://github.com/ismayc/premier-league). Companion to the
 [World Cup 2026 schedule viewer](https://github.com/ismayc/world-cup-viewer).
 

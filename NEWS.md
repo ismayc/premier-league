@@ -4,6 +4,10 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-11-07
+
+- **The README is up to date again.** It now covers the spoiler-free changes, the live calendar feed, "Channel TBA", and the data-age footer, and it no longer says the season has not started.
+
 ## 2026-11-02
 
 - **An unannounced channel now says "Channel TBA".** ESPN lists no channel until a few days before a match, and the card and match detail used to show nothing. Only matches still to come get the tag.
