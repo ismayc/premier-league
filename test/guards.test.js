@@ -158,6 +158,7 @@ describe('the storage namespace', () => {
     ['copa:', 'copa-america-viewer'],
     ['fwwc:', 'fiba-womens-world-cup-viewer'],
     ['fmwc:', 'fiba-mens-world-cup-viewer'],
+    ['unr:', 'the-unrivaled-schedule'],
   ]
   const OWN = 'pl:'
   const files = [...walk('src'), 'index.html'].filter(
