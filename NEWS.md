@@ -4,6 +4,10 @@ A dated changelog for the Premier League Fixtures viewer. Each heading is a cale
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-11-08
+
+- **The clock rehearsal in CI runs its seven dates in parallel.** It ran them one after another, which made that job take 8 minutes. Each date is now its own job, with the same dates, the same command, and the same coverage gate, as in the NBA viewer since September 29, 2026.
+
 ## 2026-11-07
 
 - **The README is up to date again.** It now covers the spoiler-free changes, the live calendar feed, "Channel TBA", and the data-age footer, and it no longer says the season has not started.
