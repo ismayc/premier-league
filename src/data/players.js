@@ -1005,7 +1005,7 @@ export const PLAYER_STATS = {
       {"id":"280555","name":"Bukayo Saka","short":"B. Saka","pos":"F","team":"ARS","teamName":"Arsenal","teamSlug":"eng.arsenal","value":66,"matches":35},
       {"id":"234715","name":"Lucas Paquetá","short":"L. Paquetá","pos":"M","team":"WHU","teamName":"West Ham","teamSlug":"eng.west_ham","value":65,"matches":null},
       {"id":"231859","name":"Ezri Konsa","short":"E. Konsa","pos":"D","team":"AVL","teamName":"Aston Villa","teamSlug":"eng.aston_villa","value":64,"matches":null},
-      {"id":"276218","name":"Tahith Chong","short":"T. Chong","pos":"M","team":"LTN","teamName":"Luton","teamSlug":"eng.luton","value":64,"matches":null},
+      {"id":"276218","name":"Tahith Chong","short":"T. Chong","pos":"F","team":"LTN","teamName":"Luton","teamSlug":"eng.luton","value":64,"matches":null},
       {"id":"266696","name":"Conor Gallagher","short":"C. Gallagher","pos":"M","team":"CHE","teamName":"Chelsea","teamSlug":"eng.chelsea","value":63,"matches":null},
       {"id":"250787","name":"Phil Foden","short":"P. Foden","pos":"M","team":"MNC","teamName":"Man City","teamSlug":"eng.man_city","value":60,"matches":35},
       {"id":"284960","name":"João Pedro","short":"João Pedro","pos":"F","team":"BHA","teamName":"Brighton","teamSlug":"eng.brighton","value":60,"matches":null},
