@@ -108,7 +108,7 @@ export const FIXTURES = [
   {"id":"401878754","ko":"2026-11-21T15:00:00.000Z","home":"TOT","away":"IPS","venue":"Tottenham Hotspur Stadium","city":"London","tv":["USA Net","Universo"]},
   {"id":"401878756","ko":"2026-11-21T15:00:00.000Z","home":"AVL","away":"SUN","venue":"Villa Park","city":"Birmingham","tv":["Peacock"]},
   {"id":"401879235","ko":"2026-11-21T15:00:00.000Z","home":"COV","away":"CRY","venue":"Coventry Building Society Arena","city":"Coventry","tv":["Peacock"]},
-  {"id":"401879236","ko":"2026-11-21T15:00:00.000Z","home":"CHE","away":"LEE","venue":"Stamford Bridge","city":"London"},
+  {"id":"401879236","ko":"2026-11-21T15:00:00.000Z","home":"CHE","away":"LEE","venue":"Stamford Bridge","city":"London","tv":["Peacock"]},
   {"id":"401879238","ko":"2026-11-21T15:00:00.000Z","home":"BOU","away":"NFO","venue":"Vitality Stadium","city":"Bournemouth","tv":["Peacock"]},
   {"id":"401879232","ko":"2026-11-21T17:30:00.000Z","home":"NEW","away":"ARS","venue":"St. James' Park","city":"Newcastle-upon-Tyne","tv":["USA Net","Tele"]},
   {"id":"401879234","ko":"2026-11-22T14:00:00.000Z","home":"HUL","away":"BHA","venue":"The MKM Stadium","city":"Hull","tv":["USA Net","Tele"]},
